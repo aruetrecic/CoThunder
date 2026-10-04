@@ -1,102 +1,248 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   /* Tema claro/oscuro en la RAÍZ y colores del sistema explícitos: si solo lo declara el body,
      el texto puede quedar negro sobre el fondo oscuro de la ventana (WCAG 1.4.3). */
-  :root { color-scheme: light dark; }
-  body { font: 13px/1.5 system-ui, sans-serif; max-width: 640px; padding: 14px; background: Canvas; color: CanvasText; }
+  :root {
+    color-scheme: light dark;
+    --border: color-mix(in srgb, currentColor 24%, transparent);
+    --soft: color-mix(in srgb, currentColor 6%, transparent);
+    --accent: #1a5fb4;
+  }
+  @media (prefers-color-scheme: dark) { :root { --accent: #78aeed; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 18px 20px 0; background: Canvas; color: CanvasText;
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; }
   /* Texto de ejemplo de los campos con contraste suficiente también en oscuro (≥ 4.5:1). */
   ::placeholder { color: color-mix(in srgb, currentColor 72%, transparent); opacity: 1; }
-  :focus-visible { outline: 2px solid #1a5fb4; outline-offset: 2px; }
-  h2 { font-size: 15px; margin: 18px 0 6px; }
-  input, textarea { width: 100%; box-sizing: border-box; }
-  .help { border: 1px solid color-mix(in srgb, currentColor 22%, transparent); border-radius: 8px; padding: 10px 12px; }
-  .help ul { margin: 4px 0 10px; padding-left: 18px; }
-  .help li { margin: 2px 0; }
-  .muted { opacity: .8; }
-  code { background: color-mix(in srgb, currentColor 10%, transparent); padding: 0 3px; border-radius: 3px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .muted { opacity: .85; }
+  code { background: var(--soft); padding: 0 4px; border-radius: 4px; }
+
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  header img { width: 36px; height: 36px; }
+  header h1 { font-size: 22px; margin: 0; line-height: 1.2; }
+
+  /* Pestañas */
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .tabs [role="tab"] { font: inherit; font-weight: 600; color: inherit; background: transparent; cursor: pointer;
+    padding: 10px 16px; border: 1px solid transparent; border-bottom: 0; border-radius: 10px 10px 0 0; opacity: .8; }
+  .tabs [role="tab"]:hover { opacity: 1; background: var(--soft); }
+  .tabs [role="tab"][aria-selected="true"] { opacity: 1; background: var(--soft); border-color: var(--border);
+    box-shadow: inset 0 3px 0 var(--accent); }
+  [role="tabpanel"][hidden] { display: none; }
+
+  /* Tarjetas y campos */
+  .card { border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin: 0 0 16px; }
+  .card h2 { font-size: 17px; margin: 0 0 4px; }
+  .card > p.desc { margin: 0 0 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin: 0 0 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label, .label { font-weight: 600; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  input[type="text"], input[type="url"], select, textarea {
+    width: 100%; font: inherit; color: inherit; background: transparent;
+    padding: 9px 12px; min-height: 42px; border: 1px solid var(--border); border-radius: 8px; }
+  textarea { resize: vertical; line-height: 1.5; }
+  textarea.code { font: 13px/1.5 ui-monospace, Consolas, monospace; }
+  input[type="color"] { width: 72px; height: 42px; padding: 3px; border: 1px solid var(--border); border-radius: 8px; background: transparent; }
+  input[type="file"] { font: inherit; }
+
+  /* Interruptores (casillas grandes con texto explicativo) */
+  .check { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; cursor: pointer; }
+  .check + .check { border-top: 1px solid var(--border); }
+  .check input { width: 20px; height: 20px; margin: 2px 0 0; flex: none; accent-color: var(--accent); }
+  .check strong { display: block; }
+
+  button { font: inherit; font-weight: 600; color: inherit; background: var(--soft); cursor: pointer;
+    padding: 9px 16px; min-height: 42px; border: 1px solid var(--border); border-radius: 8px; }
+  button:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+  button.primary { color: #fff; background: #1a5fb4; border-color: #1a5fb4; }
+  button.primary:hover { background: #164f96; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .count { font-weight: 600; }
+
+  details.more { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 10px; }
+  details.more > summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+  details.more[open] > summary { margin-bottom: 12px; }
+
+  /* Barra de guardar, siempre visible abajo */
+  .savebar { position: sticky; bottom: 0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    margin: 8px -20px 0; padding: 12px 20px; background: Canvas; border-top: 1px solid var(--border); }
+  .savebar .note { flex: 1; min-width: 200px; font-size: 13px; }
+  #saved { font-weight: 600; }
+
+  @media (max-width: 560px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .tabs [role="tab"] { padding: 8px 10px; }
+  }
 </style>
 </head><body>
+<div class="wrap">
+  <header>
+    <img src="../icon.svg" alt="">
+    <h1>Opciones de CoThunder</h1>
+  </header>
 
-  <h2>Configuración</h2>
-  <p><label>URL del chat de Copilot<br><input id="copilotUrl" type="url"></label></p>
-  <p><label>Plantilla base del prompt<br><textarea id="promptTemplate" rows="6"></textarea></label></p>
-  <p><label><input id="newChatByDefault" type="checkbox"> Empezar chat nuevo por defecto</label></p>
-  <p><label><input id="mdEditorDefault" type="checkbox"> Activar el editor Markdown por defecto en la redacción</label></p>
-
-  <h2>Tema del correo</h2>
-  <p><label>Tema<br>
-    <select id="emailTheme">
-      <option value="default">Por defecto</option>
-      <option value="upo">UPO corporativo</option>
-      <option value="upo-light">UPO claro</option>
-      <option value="upo-dark">UPO oscuro</option>
-      <option value="upo-mixed">UPO mixto</option>
-      <option value="github-light">GitHub (claro)</option>
-      <option value="github-dark">GitHub (oscuro)</option>
-      <option value="solarized-light">Solarized (claro)</option>
-      <option value="solarized-dark">Solarized (oscuro)</option>
-      <option value="monokai">Monokai (oscuro)</option>
-      <option value="dracula">Dracula (oscuro)</option>
-      <option value="nord">Nord (oscuro)</option>
-      <option value="onedark">One Dark (oscuro)</option>
-      <option value="custom">Personalizado</option>
-    </select>
-  </label></p>
-  <p><label>Color de acento (encabezados, tablas y citas)<br><input id="emailAccent" type="color"></label></p>
-  <p><label>CSS personalizado (para el tema «Personalizado»)<br><textarea id="emailCustomCss" rows="10"></textarea></label></p>
-  <p><label>Subir .css <input type="file" id="emailCssFile" accept=".css,text/css"></label></p>
-  <p class="muted">Parte de cualquier tema para hacer el tuyo: descárgalo como .css o pásalo a «CSS personalizado» y retócalo aquí.</p>
-  <p>
-    <label>Plantilla de partida<br>
-      <select id="emailCssBase">
-        <option value="">Plantilla genérica (comentada)</option>
-      </select>
-    </label>
-    <button type="button" id="emailCssDownload">Descargar .css</button>
-    <button type="button" id="emailCssEdit">Editar como personalizado</button>
-    <span id="cssHint" class="muted"></span>
-  </p>
-
-  <h2>Sobre ti (contexto para Copilot)</h2>
-  <p class="muted">Se añade al prompt para que Copilot sepa quién eres al redactar (tu usuario de Thunderbird es el mismo que el de Copilot). Cuanto más completo, más adaptadas serán las respuestas. Se guarda solo en tu equipo.</p>
-  <p><button id="fillFromIdentity" type="button">Tomar de mi identidad de Thunderbird</button> <span id="filled" class="muted"></span></p>
-  <p><label>Nombre<br><input id="userName" type="text" placeholder="Nombre y apellidos"></label></p>
-  <p><label>Puesto o cargo<br><input id="userRole" type="text" placeholder="Ej.: Técnico de coordinación académica"></label></p>
-  <p><label>Organización<br><input id="userOrg" type="text" placeholder="Ej.: Universidad Pablo de Olavide"></label></p>
-  <p><label>Sobre mí / qué hago<br><textarea id="userAbout" rows="3" placeholder="Ej.: Gestiono horarios y la comunicación con el profesorado."></textarea></label></p>
-  <p><label>Cómo escribo (estilo)<br><textarea id="userStyle" rows="3" placeholder="Ej.: Trato de usted. Tono institucional y cordial. Me despido con 'Un cordial saludo'. Evito emojis y tecnicismos."></textarea></label></p>
-
-  <p><button id="save">Guardar</button> <span id="saved" class="muted"></span></p>
-
-  <h2>Registro de actividad (auditoría)</h2>
-  <p><label><input id="auditEnabled" type="checkbox"> Activar registro local de actividad. Guarda solo <strong>metadatos</strong> (fecha, modo y número de destinatarios), nunca el asunto, las direcciones ni el cuerpo del correo.</label></p>
-  <p>
-    <span id="auditCount" class="muted">0 entradas</span>
-    <button id="auditExport" type="button">Exportar</button>
-    <button id="auditClear" type="button">Vaciar</button>
-  </p>
-
-  <h2>Diagnóstico</h2>
-  <p class="muted">Si Copilot deja de responder o de capturarse, aquí queda qué paso técnico falló (por ejemplo, «no encuentro el botón de enviar»). Se guarda solo en tu equipo y <strong>nunca</strong> incluye asuntos, direcciones ni texto de correos o respuestas. Cópialo y envíalo a quien mantiene CoThunder para arreglarlo rápido.</p>
-  <p>
-    <span id="diagCount" class="muted">0 entradas</span>
-    <button id="diagCopy" type="button">Copiar diagnóstico</button>
-    <button id="diagClear" type="button">Vaciar</button>
-    <span id="diagMsg" class="muted" role="status"></span>
-  </p>
-
-  <h2>Ayuda</h2>
-  <div class="help">
-    <p>La guía completa explica todas las funciones: responder, crear, acciones de un clic, resúmenes, versiones, editor Markdown, «Mejorar con Copilot», plantillas, temas, atajos y solución de problemas.</p>
-    <p>
-      <button id="openHelp" type="button">Abrir la ayuda</button>
-      <button id="openWelcome" type="button">Asistente de bienvenida</button>
-    </p>
-    <p class="muted">Requisitos: sesión iniciada en Microsoft 365 Copilot. Sin API ni claves: el correo solo viaja a Copilot.</p>
+  <div class="tabs" role="tablist" aria-label="Secciones de las opciones">
+    <button type="button" role="tab" id="tab-general" aria-controls="panel-general">General</button>
+    <button type="button" role="tab" id="tab-look" aria-controls="panel-look">Aspecto del correo</button>
+    <button type="button" role="tab" id="tab-me" aria-controls="panel-me">Sobre ti</button>
+    <button type="button" role="tab" id="tab-privacy" aria-controls="panel-privacy">Privacidad</button>
+    <button type="button" role="tab" id="tab-help" aria-controls="panel-help">Ayuda</button>
   </div>
 
-  <script src="../common.js"></script>
-  <script src="../themes.js"></script>
-  <script src="options.js"></script>
+  <!-- General -->
+  <section role="tabpanel" id="panel-general" aria-labelledby="tab-general">
+    <div class="card">
+      <h2>Comportamiento</h2>
+      <label class="check"><input id="newChatByDefault" type="checkbox">
+        <span><strong>Empezar un chat nuevo cada vez</strong><span class="muted">Cada petición parte de una conversación limpia en Copilot.</span></span></label>
+      <label class="check"><input id="mdEditorDefault" type="checkbox">
+        <span><strong>Editor Markdown activo al redactar</strong><span class="muted">Escribes a la izquierda y ves el correo maquetado a la derecha. Se alterna con Ctrl+Alt+M.</span></span></label>
+
+      <details class="more">
+        <summary>Avanzado</summary>
+        <div class="field">
+          <label for="copilotUrl">Dirección del chat de Copilot</label>
+          <input id="copilotUrl" type="url">
+          <span class="muted">Normalmente no hace falta cambiarla.</span>
+        </div>
+        <div class="field">
+          <label for="promptTemplate">Instrucción base del prompt</label>
+          <textarea id="promptTemplate" rows="6"></textarea>
+          <span class="muted">Se usa al responder. <code>{{author}}</code>, <code>{{subject}}</code> y <code>{{body}}</code> se sustituyen por el remitente, el asunto y el cuerpo.</span>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- Aspecto -->
+  <section role="tabpanel" id="panel-look" aria-labelledby="tab-look" hidden>
+    <div class="card">
+      <h2>Tema del correo</h2>
+      <p class="desc muted">Da formato a lo que escribes en Markdown (títulos, tablas, citas). En cada correo puedes cambiarlo con el menú Estilo del editor.</p>
+      <div class="grid2">
+        <div class="field">
+          <label for="emailTheme">Tema por defecto</label>
+          <select id="emailTheme">
+            <option value="default">Por defecto</option>
+            <option value="upo">UPO corporativo</option>
+            <option value="upo-light">UPO claro</option>
+            <option value="upo-dark">UPO oscuro</option>
+            <option value="upo-mixed">UPO mixto</option>
+            <option value="github-light">GitHub (claro)</option>
+            <option value="github-dark">GitHub (oscuro)</option>
+            <option value="solarized-light">Solarized (claro)</option>
+            <option value="solarized-dark">Solarized (oscuro)</option>
+            <option value="monokai">Monokai (oscuro)</option>
+            <option value="dracula">Dracula (oscuro)</option>
+            <option value="nord">Nord (oscuro)</option>
+            <option value="onedark">One Dark (oscuro)</option>
+            <option value="custom">Personalizado</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="emailAccent">Color de acento</label>
+          <div class="row"><input id="emailAccent" type="color"><span class="muted">Títulos, tablas y citas.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Crear tu propio tema</h2>
+      <p class="desc muted">Parte de cualquier tema: descárgalo como <code>.css</code> o pásalo a «CSS personalizado» y retócalo aquí. Para usarlo, elige el tema «Personalizado».</p>
+      <div class="field">
+        <label for="emailCssBase">Tema de partida</label>
+        <select id="emailCssBase">
+          <option value="">Plantilla genérica (comentada)</option>
+        </select>
+      </div>
+      <div class="row">
+        <button type="button" id="emailCssEdit">Editar como personalizado</button>
+        <button type="button" id="emailCssDownload">Descargar .css</button>
+        <span id="cssHint" class="muted" role="status"></span>
+      </div>
+      <details class="more">
+        <summary>CSS personalizado</summary>
+        <div class="field">
+          <label for="emailCustomCss">CSS del tema «Personalizado»</label>
+          <textarea id="emailCustomCss" class="code" rows="12"></textarea>
+        </div>
+        <div class="field">
+          <label for="emailCssFile">O súbelo desde un fichero</label>
+          <input type="file" id="emailCssFile" accept=".css,text/css">
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- Sobre ti -->
+  <section role="tabpanel" id="panel-me" aria-labelledby="tab-me" hidden>
+    <div class="card">
+      <h2>Sobre ti</h2>
+      <p class="desc muted">Se añade al prompt para que Copilot sepa quién escribe y adapte el tono y el rol. Se guarda solo en tu equipo. Tu firma no se incluye: la pone Thunderbird.</p>
+      <div class="row" style="margin-bottom:14px">
+        <button id="fillFromIdentity" type="button">Tomar de mi identidad de Thunderbird</button>
+        <span id="filled" class="muted" role="status"></span>
+      </div>
+      <div class="grid2">
+        <div class="field"><label for="userName">Nombre</label><input id="userName" type="text" placeholder="Nombre y apellidos"></div>
+        <div class="field"><label for="userRole">Puesto o cargo</label><input id="userRole" type="text" placeholder="Ej.: Técnico de coordinación académica"></div>
+      </div>
+      <div class="field"><label for="userOrg">Organización</label><input id="userOrg" type="text" placeholder="Ej.: Universidad Pablo de Olavide"></div>
+      <div class="field"><label for="userAbout">A qué te dedicas</label><textarea id="userAbout" rows="3" placeholder="Ej.: Gestiono horarios y la comunicación con el profesorado."></textarea></div>
+      <div class="field"><label for="userStyle">Cómo escribes</label><textarea id="userStyle" rows="3" placeholder="Ej.: Trato de usted. Tono institucional y cordial. Me despido con 'Un cordial saludo'. Evito emojis y tecnicismos."></textarea></div>
+    </div>
+  </section>
+
+  <!-- Privacidad -->
+  <section role="tabpanel" id="panel-privacy" aria-labelledby="tab-privacy" hidden>
+    <div class="card">
+      <h2>Registro de actividad</h2>
+      <label class="check"><input id="auditEnabled" type="checkbox">
+        <span><strong>Guardar un registro local de lo que se envía a Copilot</strong><span class="muted">Solo fecha, tipo y número de destinatarios; nunca el asunto, las direcciones ni el texto. Se aplica al momento.</span></span></label>
+      <div class="row">
+        <span id="auditCount" class="count">0 entradas</span>
+        <button id="auditExport" type="button">Exportar</button>
+        <button id="auditClear" type="button">Vaciar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Diagnóstico</h2>
+      <p class="desc muted">Si Copilot deja de responder, aquí queda qué paso técnico falló (por ejemplo, «no encuentro el botón de enviar»). Nunca incluye asuntos, direcciones ni texto. Cópialo y envíalo a quien mantiene CoThunder.</p>
+      <div class="row">
+        <span id="diagCount" class="count">0 entradas</span>
+        <button id="diagCopy" type="button">Copiar diagnóstico</button>
+        <button id="diagClear" type="button">Vaciar</button>
+        <span id="diagMsg" class="muted" role="status"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ayuda -->
+  <section role="tabpanel" id="panel-help" aria-labelledby="tab-help" hidden>
+    <div class="card">
+      <h2>Ayuda</h2>
+      <p class="desc">La guía completa explica todas las funciones: responder, crear, acciones de un clic, resúmenes, versiones, editor Markdown, «Mejorar con Copilot», plantillas, temas, atajos y solución de problemas.</p>
+      <div class="row">
+        <button id="openHelp" type="button" class="primary">Abrir la ayuda</button>
+        <button id="openWelcome" type="button">Asistente de bienvenida</button>
+      </div>
+      <p class="muted" style="margin:14px 0 0">Requisito: sesión iniciada en Microsoft 365 Copilot. Sin API ni claves: el correo solo viaja a Copilot.</p>
+    </div>
+  </section>
+
+  <div class="savebar">
+    <button id="save" class="primary">Guardar cambios</button>
+    <span id="saved" role="status"></span>
+    <span class="note muted">Guarda General, Aspecto y Sobre ti. Lo de Privacidad se aplica al momento.</span>
+  </div>
+</div>
+<script src="../common.js"></script>
+<script src="../themes.js"></script>
+<script src="options.js"></script>
 </body></html>

@@ -110,7 +110,9 @@ La respuesta llega en Markdown (con `#`, `**`, listas, tablas, citas). CoThunder
 
 ## 9. Opciones
 
-Desde **Complementos y temas → CoThunder → Opciones** (o el botón **?** de la ventana):
+Desde **Complementos y temas → CoThunder → Opciones**. La página tiene cinco pestañas: **General** (chat nuevo, editor Markdown y, en *Avanzado*, la dirección de Copilot y la instrucción base), **Aspecto del correo** (tema, color y tu propio tema), **Sobre ti**, **Privacidad** (registro de actividad y diagnóstico) y **Ayuda**. **Guardar cambios**, siempre visible abajo, guarda las tres primeras.
+
+En detalle:
 
 - **URL del chat de Copilot** y **plantilla base del prompt**.
 - **Empezar chat nuevo por defecto**.

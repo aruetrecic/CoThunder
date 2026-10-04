@@ -15,6 +15,32 @@ mark { background-color: #FCC100; }
 `;
 (async () => {
   const $ = (id) => document.getElementById(id);
+
+  // --- Pestañas: flechas, Inicio y Fin; recuerda la última abierta ---
+  const tabs = [...document.querySelectorAll('.tabs [role="tab"]')];
+  const selectTab = (tab, focus) => {
+    for (const t of tabs) {
+      const on = t === tab;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      $(t.getAttribute("aria-controls")).hidden = !on;
+    }
+    if (focus) tab.focus();
+    try { localStorage.setItem("optionsTab", tab.id); } catch (_) {}
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener("click", () => selectTab(t, false));
+    t.addEventListener("keydown", (e) => {
+      const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (next === undefined) return;
+      e.preventDefault();
+      selectTab(tabs[(next + tabs.length) % tabs.length], true);
+    });
+  });
+  let savedTab = null;
+  try { savedTab = localStorage.getItem("optionsTab"); } catch (_) {}
+  selectTab(tabs.find((t) => t.id === savedTab) || tabs[0], false);
+
   const cfg = await getConfig();
   $("copilotUrl").value = cfg.copilotUrl;
   $("promptTemplate").value = cfg.promptTemplate;
@@ -116,6 +142,7 @@ mark { background-color: #FCC100; }
     btn.textContent = "Editar como personalizado";
     $("emailCustomCss").value = baseCss().css;
     $("emailTheme").value = "custom";
+    $("emailCustomCss").closest("details").open = true;
     $("emailCustomCss").focus();
     $("cssHint").textContent = "Copiada a «CSS personalizado»: retócala y pulsa Guardar.";
   });

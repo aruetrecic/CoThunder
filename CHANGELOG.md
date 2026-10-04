@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.16.0] — 2026-10-05
+
+### Cambiado
+- **Opciones más claras y más grandes**: la página se organiza en pestañas (General, Aspecto del correo, Sobre ti, Privacidad y Ayuda), con tarjetas, casillas grandes con su explicación y lo avanzado plegado. Texto y controles más grandes; **Guardar cambios** siempre visible abajo.
+
 ## [2.15.0] — 2026-10-05
 
 ### Añadido
