@@ -348,6 +348,23 @@ messenger.runtime.onMessage.addListener(async (msg) => {
     }
     return { ok: true };
   }
+  // Plantillas de Formato para el menú 📄 del editor Markdown (el compose script no tiene acceso
+  // a carpetas ni mensajes). Solo se sirve el cuerpo de mensajes que ESTÁN en una carpeta de
+  // plantillas: el editor no puede pedir otros correos por id.
+  if (msg.type === "listFormatTemplates") {
+    try { return { ok: true, templates: formatTemplates(await listTemplates()) }; }
+    catch (e) { return { ok: false, templates: [] }; }
+  }
+  if (msg.type === "getFormatTemplate") {
+    try {
+      const allowed = formatTemplates(await listTemplates()).some((t) => t.id === msg.id);
+      if (!allowed) return { ok: false };
+      return { ok: true, body: await extractTemplateBody(msg.id) };
+    } catch (e) {
+      return { ok: false };
+    }
+  }
+
   if (msg.type === "refreshAgents") {
     let responded = false;
     for (const id of await findCopilotTabIds()) {

@@ -2,7 +2,7 @@
 
 Extensión MailExtension para Thunderbird 140 o superior. Lee el correo abierto, monta un prompt editable con su contenido y lo envía a la web de **Microsoft 365 Copilot** automatizando el chat con la sesión que el usuario ya tiene iniciada. No usa ninguna API ni clave: pilota la interfaz web de Copilot mediante un content script.
 
-Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25).
+Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25). La 2.10 añade al editor un menú para insertar plantillas de formato (ver §26).
 
 Plataforma objetivo: Thunderbird ESR 140 (probado en 140.11.1), **Manifest V3**. Decisión explícita del proyecto; ver §2 y el riesgo asociado en §15.
 
@@ -418,3 +418,14 @@ Con el editor activo, `keydown` (fase de captura) sobre el cuerpo intercepta **C
 `scripts/check.sh` valida manifest (SemVer), sintaxis de **todos** los JS, que existan los ficheros referenciados (manifest, `COMPOSE_SCRIPT` y páginas HTML) y ejecuta los tests. Lo usan el hook `.githooks/pre-commit` (activar con `git config core.hooksPath .githooks`), el CI y la release; `npm run check` es un atajo (`package.json` solo de tooling, fuera del `.xpi`). En Windows sin Node se relanza en WSL. `test/themes.test.js` comprueba los presets (ids únicos y alineados con el selector de Opciones, CSS parseable, sin `url()`). `.gitattributes` fija LF en el repo.
 
 Sin permisos nuevos ni cambios en el flujo de datos.
+
+## 26. Plantillas de formato en el editor Markdown (v2.10)
+
+La barra del editor (§22, §24.3) añade, antes de 🎨, un menú **📄 ▾** que inserta en el cursor el Markdown de una **plantilla de Formato**: las `Formato - …` (incluidas las sembradas, §18.5) y las plantillas **sin prefijo** del usuario, igual que el desplegable 📄 Formato de la ventana. Las `Prompt - …` y `Prompt crear - …` **no** aparecen: son instrucciones para Copilot, no contenido del correo. La clasificación vive en `formatTemplates()` (`common.js`, con test), que quita el prefijo y ordena por nombre; si hay varias cuentas, la etiqueta lleva la fuente entre paréntesis. El menú termina con «↻ Actualizar lista».
+
+El compose script no tiene acceso a carpetas ni mensajes, así que lo pide al background:
+
+- `listFormatTemplates` → `{ ok, templates: [{ id, label, source }] }` (vía `listTemplates()`, permiso `accountsRead`/`messagesRead` ya declarado).
+- `getFormatTemplate { id }` → `{ ok, body }` con `extractTemplateBody(id)`. **Solo** responde si el id es una plantilla de Formato de una carpeta de Plantillas: el editor no puede leer otros correos por id.
+
+La lista se carga al activar el editor; el cuerpo se inserta con `insertBlock` (bloque propio) y el preview lo renderiza al momento. Sin permisos nuevos ni cambios en el flujo de datos (las plantillas son locales).

@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.10.0] — 2026-10-04
+
+### Añadido
+- **Menú 📄 Plantillas en la barra del editor Markdown:** inserta en el cursor cualquier plantilla de formato (las que siembra CoThunder, como Carta institucional, Tabla comparativa o Identidad UPO, y las tuyas sin prefijo). Las de tipo «Prompt» no se muestran porque son instrucciones para Copilot. Incluye «↻ Actualizar lista».
+
 ## [2.9.0] — 2026-10-04
 
 ### Añadido

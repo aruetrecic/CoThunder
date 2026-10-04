@@ -77,6 +77,8 @@
   let emailCustomCss = "";
   // Menú de estilo de la barra: cambia el tema SOLO de este correo (no toca Opciones).
   let themeMenu = null;
+  // Menú de plantillas de Formato (las sembradas por CoThunder y las propias sin prefijo).
+  let templateMenu = null;
   let toolbarObserver = null;
 
   // --- Inserción de Markdown en el editor nativo (contenteditable) ---
@@ -314,11 +316,45 @@
       }
     });
 
+    templateMenu = makeMenu("📄", "Insertar plantilla de formato");
+    toolbar.appendChild(templateMenu.wrap);
+    loadTemplateMenu();
+
     themeMenu = makeMenu("🎨", "Estilo de este correo");
     themeMenu.wrap.style.marginLeft = "auto";
     toolbar.appendChild(themeMenu.wrap);
     fillThemeMenu();
     return toolbar;
+  }
+
+  // Menú "📄 Plantillas": pide al background las plantillas de Formato (carpetas de Plantillas de
+  // Thunderbird) e inserta en el cursor el Markdown de la elegida. "↻" recarga la lista.
+  function loadTemplateMenu() {
+    if (!templateMenu) return;
+    const menu = templateMenu;
+    menu.setItems([{ text: "Cargando plantillas…", onClick: () => {} }]);
+    const reload = { text: "↻ Actualizar lista", title: "Volver a leer las carpetas de Plantillas", onClick: loadTemplateMenu };
+    messenger.runtime.sendMessage({ type: "listFormatTemplates" }).then((res) => {
+      if (menu !== templateMenu) return;
+      const list = (res && res.templates) || [];
+      const multi = new Set(list.map((t) => t.source)).size > 1;
+      const items = list.map((t) => ({
+        text: t.label + (multi && t.source ? " (" + t.source + ")" : ""),
+        title: "Insertar «" + t.label + "»",
+        onClick: () => insertTemplate(t.id)
+      }));
+      if (!items.length) items.push({ text: "No hay plantillas de formato", onClick: () => {} });
+      items.push(reload);
+      menu.setItems(items);
+    }).catch(() => {
+      if (menu === templateMenu) menu.setItems([{ text: "No se pudieron leer las plantillas", onClick: () => {} }, reload]);
+    });
+  }
+
+  function insertTemplate(id) {
+    messenger.runtime.sendMessage({ type: "getFormatTemplate", id }).then((res) => {
+      if (res && res.ok && res.body) insertBlock(res.body);
+    }).catch(() => {});
   }
 
   // Menú "🎨 Estilo": presets de themes.js (+ "Personalizado" si hay CSS propio). Cambia el
@@ -553,6 +589,7 @@
     previewEl = null;
     toolbarEl = null;
     themeMenu = null;
+    templateMenu = null;
     active = false;
   }
 

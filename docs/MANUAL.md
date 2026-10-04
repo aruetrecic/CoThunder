@@ -87,6 +87,7 @@ CoThunder recuerda tus preferencias.
 La respuesta llega en Markdown (con `#`, `**`, listas, tablas, citas). CoThunder trae su **propio editor**: escribes a la izquierda y ves el correo maquetado a la derecha; al enviar sale ya con formato. Se enciende y apaga con el botón **Editor Markdown** o con **Ctrl+Alt+M**.
 
 - **Barra de herramientas:** negrita, cursiva, tachado, resaltado, código, enlace, imagen, emoji, cita y listas, más los menús **H ▾** (títulos 1 a 6), **Aa ▾** (negrita+cursiva, subíndice, superíndice), **▦ ▾** (tabla, bloque de código, regla, definición, nota al pie) y **ℹ ▾** (avisos).
+- **📄 ▾ Plantillas:** inserta en el cursor una plantilla de formato (Carta institucional, Tabla comparativa, Identidad UPO… y las tuyas sin prefijo). Las de tipo «Prompt» no aparecen: son instrucciones para Copilot, no texto del correo. «↻ Actualizar lista» relee la carpeta de Plantillas.
 - **🎨 ▾ Estilo:** cambia el tema de ese correo al momento. El tema por defecto se elige en Opciones.
 - **Atajos:** Ctrl+B negrita, Ctrl+I cursiva, Ctrl+K enlace, Ctrl+E código, Ctrl+1 … Ctrl+6 títulos (si la línea ya era un título, cambia el nivel).
 - **Firma y cita intactas:** tu firma de Thunderbird y el correo citado se conservan tal cual, con su formato original; solo se convierte a Markdown lo que escribes tú.

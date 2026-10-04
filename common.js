@@ -215,6 +215,18 @@ async function listTemplates() {
   return out;
 }
 
+// Plantillas de "Formato" (estructura para el cuerpo del correo): las "Formato - …" y las que no
+// llevan prefijo; quedan fuera las "Prompt - …" y "Prompt crear - …", que son instrucciones para
+// Copilot. Devuelve [{ id, label, source }] con el prefijo quitado, ordenadas por nombre.
+const TEMPLATE_PROMPT_RE = /^\s*prompt(\s+crear)?\s*-\s*/i;
+const TEMPLATE_FORMAT_RE = /^\s*formato\s*-\s*/i;
+function formatTemplates(list) {
+  return (list || [])
+    .filter((t) => !TEMPLATE_PROMPT_RE.test(t.subject || ""))
+    .map((t) => ({ id: t.id, label: (t.subject || "").replace(TEMPLATE_FORMAT_RE, "").trim() || t.subject, source: t.source }))
+    .sort((a, b) => a.label.localeCompare(b.label, "es"));
+}
+
 // Reconstruye el hilo (mensajes anteriores) siguiendo las cabeceras References / In-Reply-To.
 // Devuelve una transcripción cronológica (más antiguo → más reciente) o "" si no hay hilo.
 const THREAD_MAX_MESSAGES = 10;
@@ -394,7 +406,7 @@ async function extractTemplateBody(messageId) {
 // Exporta las funciones puras para pruebas en Node. Inerte en Thunderbird, donde no existe `module`.
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply,
+    escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates,
     buildPrompt, buildComposedPrompt, buildCreatePrompt, toneLengthInstruction,
     detectInjection, normalizeText, buildUserContext
   };

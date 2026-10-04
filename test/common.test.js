@@ -4,7 +4,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const {
-  escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply,
+  escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates,
   buildPrompt, buildCreatePrompt, toneLengthInstruction, detectInjection, buildUserContext
 } = require("../common.js");
 
@@ -25,6 +25,19 @@ test("parseRecipients: comas, punto y coma y saltos", () => {
 
 test("parseRecipients: formato Nombre <correo>", () => {
   assert.deepEqual(parseRecipients("Juan Pérez <juan@ejemplo.com>"), ["juan@ejemplo.com"]);
+});
+
+test("formatTemplates: solo formatos y sin prefijo, sin los Prompt", () => {
+  const list = [
+    { id: 1, subject: "Prompt - Negación cordial", source: "UPO" },
+    { id: 2, subject: "Formato - Tabla comparativa", source: "UPO" },
+    { id: 3, subject: "Prompt crear - Invitación a evento", source: "UPO" },
+    { id: 4, subject: "Mi plantilla propia", source: "Local" },
+    { id: 5, subject: "Formato - Carta institucional", source: "UPO" },
+  ];
+  assert.deepEqual(formatTemplates(list).map((t) => [t.id, t.label]),
+    [[5, "Carta institucional"], [4, "Mi plantilla propia"], [2, "Tabla comparativa"]]);
+  assert.deepEqual(formatTemplates(null), []);
 });
 
 test("invalidRecipients: lista lo que no es una dirección", () => {
