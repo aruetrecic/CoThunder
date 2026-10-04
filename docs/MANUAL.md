@@ -106,7 +106,7 @@ Desde **Complementos y temas → CoThunder → Opciones** (o el botón **?** de 
 
 - **URL del chat de Copilot** y **plantilla base del prompt**.
 - **Empezar chat nuevo por defecto**.
-- **Sobre ti (contexto para Copilot)**: nombre, puesto o cargo, organización, qué haces y **cómo escribes** (tratamiento de usted o tú, tono y firma). Se añade al prompt en los dos modos para que Copilot sepa quién eres y adapte el tono, el rol y la firma. El botón **«Tomar de mi identidad de Thunderbird»** rellena nombre, organización y firma desde tu identidad por defecto (solo los campos vacíos); revisa y pulsa Guardar. Se guarda solo en tu equipo.
+- **Sobre ti (contexto para Copilot)**: nombre, puesto o cargo, organización, qué haces y **cómo escribes** (tratamiento de usted o tú, tono, cómo te despides). Se añade al prompt en los dos modos para que Copilot sepa quién eres y adapte el tono y el rol. Copilot termina en la despedida, **sin firma ni datos de contacto**: los pone la firma de tu identidad de Thunderbird (casilla **Incluir mi firma**). El botón **«Tomar de mi identidad de Thunderbird»** rellena nombre y organización desde tu identidad por defecto (solo los campos vacíos); revisa y pulsa Guardar. Se guarda solo en tu equipo.
 - **Registro de actividad (auditoría)**: activar, ver el número de entradas, exportar y vaciar.
 - Guía de uso resumida.
 

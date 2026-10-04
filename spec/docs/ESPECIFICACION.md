@@ -2,7 +2,7 @@
 
 Extensión MailExtension para Thunderbird 140 o superior. Lee el correo abierto, monta un prompt editable con su contenido y lo envía a la web de **Microsoft 365 Copilot** automatizando el chat con la sesión que el usuario ya tiene iniciada. No usa ninguna API ni clave: pilota la interfaz web de Copilot mediante un content script.
 
-Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25). La 2.10 añade al editor un menú para insertar plantillas de formato (ver §26). La 2.11 lee el código fuente por bloques y añade «Ordenar» (ver §27). La 2.12 garantiza contraste WCAG AA en temas e interfaz (ver §28).
+Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25). La 2.10 añade al editor un menú para insertar plantillas de formato (ver §26). La 2.11 lee el código fuente por bloques y añade «Ordenar» (ver §27). La 2.12 garantiza contraste WCAG AA en temas e interfaz (ver §28). La 2.13 quita los pies con datos personales de plantillas y prompts (ver §29).
 
 Plataforma objetivo: Thunderbird ESR 140 (probado en 140.11.1), **Manifest V3**. Decisión explícita del proyecto; ver §2 y el riesgo asociado en §15.
 
@@ -328,11 +328,11 @@ El usuario de Thunderbird es el mismo que el de Copilot, así que su perfil enri
 
 ### 21.1 Datos y persistencia
 
-Sección "Sobre ti" en Opciones con cinco campos: **Nombre**, **Puesto o cargo**, **Organización**, **Sobre mí (qué hago)** y **Cómo escribo (estilo)**. Se guardan en `storage.local` bajo `userProfile` (`{ name, role, org, about, style }`) y persisten entre sesiones. Un botón **"Tomar de mi identidad de Thunderbird"** rellena nombre, organización y firma (esta como referencia de estilo, convertida a texto si es HTML) desde la identidad por defecto (`identities.list()[0]`), solo en los campos vacíos.
+Sección "Sobre ti" en Opciones con cinco campos: **Nombre**, **Puesto o cargo**, **Organización**, **Sobre mí (qué hago)** y **Cómo escribo (estilo)**. Se guardan en `storage.local` bajo `userProfile` (`{ name, role, org, about, style }`) y persisten entre sesiones. Un botón **"Tomar de mi identidad de Thunderbird"** rellena nombre y organización (desde la v2.13 **no** copia la firma: ver §29) desde la identidad por defecto (`identities.list()[0]`), solo en los campos vacíos.
 
 ### 21.2 Inyección en el prompt
 
-`buildUserContext(profile)` monta un bloque **"CONTEXTO DEL AUTOR"** (o `""` si no hay datos) que el popup añade en ambos modos: en `buildComposedPrompt` y `buildCreatePrompt`, justo después de la guarda anti-inyección. Indica a Copilot que use esos datos para adaptar el tono, el rol y la firma, sin copiarlos literalmente. Al ser datos del propio usuario (no del correo entrante), no son entrada no confiable.
+`buildUserContext(profile)` monta un bloque **"CONTEXTO DEL AUTOR"** (o `""` si no hay datos) que el popup añade en ambos modos: en `buildComposedPrompt` y `buildCreatePrompt`, justo después de la guarda anti-inyección. Indica a Copilot que use esos datos para adaptar el tono y el rol, sin copiarlos literalmente ni usarlos como firma (§29). Al ser datos del propio usuario (no del correo entrante), no son entrada no confiable.
 
 ### 21.3 Flujo de datos
 
@@ -465,3 +465,11 @@ Con el editor activo, la zona de escritura usa letra **monoespaciada** (para ver
 ### 28.3 Descarga con nombre fijo
 
 La release adjunta, además de `cothunder-X.Y.Z.xpi`, una copia `cothunder.xpi`, de modo que `releases/latest/download/cothunder.xpi` (botón de descarga del README) apunta siempre a la última versión.
+
+## 29. Sin pies de firma generados (v2.13)
+
+La firma con los datos del usuario (nombre, cargo, organización, teléfono, correo) la gestiona **cada usuario en su identidad de Thunderbird** y la añade la casilla «Incluir mi firma» (§18.3). CoThunder no debe generar otra, para no duplicarla ni enviar esos datos a Copilot sin necesidad:
+
+- **Plantillas sembradas** (§18.5): sin pie con datos. «Carta institucional» e «Identidad UPO» terminan en la despedida; «Correo formal con firma» pasa a **«Formato - Correo formal»**, que termina en «Un cordial saludo,». `SEED_VERSION` sube a 2 para que quien ya tenía la v1 reciba «Correo formal». La siembra deduplica por asunto y nunca modifica ni borra plantillas existentes (no hay permiso `messagesDelete`, a propósito): las copias antiguas que ya tenga un usuario se quedan como estén y puede borrarlas a mano.
+- **Instrucciones a Copilot:** `MARKDOWN_STYLE` termina con «Termina en la despedida: NO añadas firma, nombre, cargo ni datos de contacto…; Thunderbird añade la firma del usuario». `buildUserContext` pide usar el perfil para el tono y el rol, **no** como firma.
+- **«Tomar de mi identidad de Thunderbird»** ya no copia la firma a «Cómo escribo»: rellena solo nombre y organización. Menos datos personales en cada prompt (minimización, RGPD art. 5.1.c).

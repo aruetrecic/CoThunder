@@ -384,7 +384,9 @@ messenger.runtime.onMessage.addListener(async (msg) => {
 // --- Biblioteca inicial de Prompts y Formatos, sembrada en la carpeta Plantillas al instalar ---
 // Versión de la biblioteca: se siembra una sola vez por versión. Subir SOLO al añadir plantillas nuevas
 // (así, si el usuario borra alguna, no reaparece en cada actualización).
-const SEED_VERSION = 1;
+// 2: plantillas sin pie con datos personales (nombre, cargo, contacto); la firma la pone
+// Thunderbird. Volver a sembrar añade «Formato - Correo formal» a quien ya tenía la v1.
+const SEED_VERSION = 2;
 const SEED_ITEMS = [
   { subject: "Prompt - Afirmación / Aceptación", body: "Redacta una respuesta afirmativa y cordial: confirma o acepta lo solicitado, deja claros los siguientes pasos y muestra disposición a colaborar." },
   { subject: "Prompt - Negación cordial", body: "Redacta una respuesta que declina lo solicitado de forma cordial y respetuosa: agradece el mensaje, explica el motivo con tacto y, si es posible, ofrece una alternativa." },
@@ -396,7 +398,7 @@ const SEED_ITEMS = [
   { subject: "Prompt - Agradecimiento", body: "Redacta un agradecimiento sincero y breve por lo indicado en el correo, cerrando con una nota cordial." },
   { subject: "Prompt - Seguimiento / Recordatorio", body: "Redacta un recordatorio cordial sobre un asunto pendiente: referencia el mensaje anterior, resume lo que queda por resolver y pide una actualización." },
   { subject: "Prompt - Disculpa / Incidencia", body: "Redacta una disculpa profesional: reconoce el problema o el retraso, explica brevemente qué ha pasado y propón una solución o los próximos pasos." },
-  { subject: "Formato - Carta institucional", body: "# [Saludo formal]\n\n[Introducción: motivo del mensaje]\n\n[Desarrollo: expón el asunto con detalle]\n\n**[Petición o conclusión concreta]**\n\n[Despedida formal]\n\n[Nombre y cargo]" },
+  { subject: "Formato - Carta institucional", body: "# [Saludo formal]\n\n[Introducción: motivo del mensaje]\n\n[Desarrollo: expón el asunto con detalle]\n\n**[Petición o conclusión concreta]**\n\n[Despedida formal]" },
   { subject: "Formato - Respuesta breve", body: "[Saludo]\n\n[Respuesta directa en 2-3 frases]\n\n[Despedida]" },
   { subject: "Formato - Lista de puntos", body: "# [Saludo]\n\n[Frase introductoria]\n\n- [Punto 1]\n- [Punto 2]\n- [Punto 3]\n\n[Cierre]" },
   { subject: "Formato - Tabla comparativa", body: "# [Saludo]\n\n[Introducción breve]\n\n| [Concepto] | [Detalle] |\n|---|---|\n| [elemento] | [valor] |\n| [elemento] | [valor] |\n\n[Cierre]" },
@@ -411,13 +413,13 @@ const SEED_ITEMS = [
   { subject: "Prompt - Escalado / Urgencia", body: "Comunica que el asunto se escala por su urgencia o gravedad: indica a qué nivel se eleva y el plazo de actuación previsto." },
   { subject: "Prompt - Resumen ejecutivo", body: "Resume el correo o el hilo en los puntos clave, las decisiones tomadas y las acciones pendientes, de forma concisa." },
   { subject: "Prompt - Traducción", body: "Traduce el contenido del correo al idioma solicitado, manteniendo el tono, el registro y el significado del original." },
-  { subject: "Formato - Correo formal con firma", body: "Estimado/a [Nombre]:\n\n[Párrafo 1]\n\n[Párrafo 2]\n\nQuedo a su disposición para cualquier aclaración.\n\nUn cordial saludo,\n[Nombre]\n[Cargo] · [Organización]\n[Teléfono] · [Correo]" },
+  { subject: "Formato - Correo formal", body: "Estimado/a [Nombre]:\n\n[Párrafo 1]\n\n[Párrafo 2]\n\nQuedo a su disposición para cualquier aclaración.\n\nUn cordial saludo," },
   { subject: "Formato - Pasos numerados", body: "# [Título o saludo]\n\n[Contexto breve]\n\n1. [Paso 1]\n2. [Paso 2]\n3. [Paso 3]\n\n[Cierre]" },
   { subject: "Formato - Preguntas y respuestas", body: "# [Saludo]\n\n**[Pregunta 1]**\n[Respuesta 1]\n\n**[Pregunta 2]**\n[Respuesta 2]\n\n[Cierre]" },
   { subject: "Formato - Resumen con acciones", body: "# [Asunto]\n\n**Resumen:** [síntesis en 1-2 frases]\n\n## Puntos clave\n- [Punto 1]\n- [Punto 2]\n\n## Acciones pendientes\n- [ ] [Acción 1] — [responsable / plazo]\n- [ ] [Acción 2] — [responsable / plazo]" },
   { subject: "Formato - Confirmación de cita", body: "# [Saludo]\n\nConfirmo nuestra [reunión o cita]:\n\n- **Fecha:** [fecha]\n- **Hora:** [hora]\n- **Lugar / Enlace:** [lugar o enlace]\n- **Asunto:** [tema]\n\n[Cierre]" },
   { subject: "Formato - Propuesta comercial", body: "# [Saludo]\n\n[Presentación breve]\n\n## Propuesta\n| Concepto | Detalle | Importe |\n|---|---|---|\n| [elemento] | [detalle] | [importe] |\n| [elemento] | [detalle] | [importe] |\n\n**Total:** [total]\n\n**Condiciones:** [condiciones] · **Validez:** [validez]\n\n[Cierre y llamada a la acción]" },
-  { subject: "Formato - Identidad UPO", body: "# [Saludo institucional]\n\n[Introducción breve y clara]\n\n[Cuerpo: desarrollo del asunto, con tono institucional]\n\n**[Idea o dato clave]**\n\n> [Nota o aviso destacado]\n\n[Despedida institucional]\n[Nombre]\n[Cargo] · Universidad Pablo de Olavide\n\n---\nIdentidad UPO (referencia de estilo): tono institucional, claro y cordial, con estructura de encabezado, cuerpo y despedida. Colores de marca (oficiales del MIC): azul corporativo #003772 (Pantone 281C) para títulos y acentos; amarillo #FCC100 (Pantone 123C) solo como acento puntual, nunca como fondo de texto de lectura; texto #1A1A1A sobre blanco. Tipografía Franklin Gothic (o Arial como alternativa). No inventes otros colores ni tipografías. Jerarquía: el azul manda, el amarillo resalta, el blanco respira." },
+  { subject: "Formato - Identidad UPO", body: "# [Saludo institucional]\n\n[Introducción breve y clara]\n\n[Cuerpo: desarrollo del asunto, con tono institucional]\n\n**[Idea o dato clave]**\n\n> [Nota o aviso destacado]\n\n[Despedida institucional]\n\n---\nIdentidad UPO (referencia de estilo): tono institucional, claro y cordial, con estructura de encabezado, cuerpo y despedida. Colores de marca (oficiales del MIC): azul corporativo #003772 (Pantone 281C) para títulos y acentos; amarillo #FCC100 (Pantone 123C) solo como acento puntual, nunca como fondo de texto de lectura; texto #1A1A1A sobre blanco. Tipografía Franklin Gothic (o Arial como alternativa). No inventes otros colores ni tipografías. Jerarquía: el azul manda, el amarillo resalta, el blanco respira." },
   // --- Plantillas específicas del modo "Crear desde Copilot" (correos nuevos desde cero) ---
   { subject: "Prompt crear - Convocatoria de reunión", body: "Redacta una convocatoria de reunión clara: indica el motivo y el objetivo, propón fecha, hora y lugar o enlace, incluye un orden del día breve y pide confirmación de asistencia." },
   { subject: "Prompt crear - Invitación a evento", body: "Redacta una invitación a un evento: presenta el evento y su propósito, indica fecha, hora y lugar, explica por qué merece la pena asistir y cómo confirmar o inscribirse." },

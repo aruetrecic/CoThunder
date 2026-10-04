@@ -38,15 +38,8 @@ mark { background-color: #FCC100; }
       if (!id) { $("filled").textContent = "No hay identidad configurada"; return; }
       if (id.name && !$("userName").value.trim()) $("userName").value = id.name;
       if (id.organization && !$("userOrg").value.trim()) $("userOrg").value = id.organization;
-      if (id.signature && !$("userStyle").value.trim()) {
-        let sig = id.signature;
-        if (!id.signatureIsPlainText) {
-          const doc = new DOMParser().parseFromString(sig, "text/html");
-          sig = (doc.body ? doc.body.textContent : sig);
-        }
-        sig = sig.replace(/\r/g, "").replace(/\n{3,}/g, "\n\n").trim();
-        if (sig) $("userStyle").value = "Firmo así:\n" + sig;
-      }
+      // La firma NO se copia al perfil: la añade Thunderbird al correo, y así sus datos de
+      // contacto no viajan a Copilot en cada prompt.
       $("filled").textContent = "Rellenado. Revisa y pulsa Guardar.";
       setTimeout(() => { $("filled").textContent = ""; }, 5000);
     } catch (_) {

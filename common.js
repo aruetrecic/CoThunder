@@ -13,7 +13,9 @@ const MARKDOWN_STYLE =
   "- Tablas para comparar datos o presentar información estructurada.\n" +
   "- Citas (>), incluidas anidadas.\n" +
   "- Código en línea (`código`) y bloques de código con lenguaje (```).\n" +
-  "- Enlaces [texto](url), imágenes ![alt](url) y líneas divisorias (---).";
+  "- Enlaces [texto](url), imágenes ![alt](url) y líneas divisorias (---).\n" +
+  "Termina en la despedida: NO añadas firma, nombre, cargo ni datos de contacto (teléfono, correo, " +
+  "dirección) al final; Thunderbird añade la firma del usuario.";
 
 // Directiva de formato que se añade SIEMPRE en buildPrompt (independiente de la plantilla editable,
 // para que una plantilla guardada antigua no anule el Markdown de la respuesta).
@@ -100,10 +102,11 @@ function buildUserContext(profile) {
   if (o.role && o.role.trim()) lines.push("Puesto o cargo: " + o.role.trim());
   if (o.org && o.org.trim()) lines.push("Organización: " + o.org.trim());
   if (o.about && o.about.trim()) lines.push("Sobre mí: " + o.about.trim());
-  if (o.style && o.style.trim()) lines.push("Cómo escribo (estilo, tratamiento y firma): " + o.style.trim());
+  if (o.style && o.style.trim()) lines.push("Cómo escribo (estilo y tratamiento): " + o.style.trim());
   if (!lines.length) return "";
   return "CONTEXTO DEL AUTOR (quien escribe este correo; su usuario de Thunderbird es el mismo que el " +
-    "de Copilot). Úsalo para adaptar el tono, el rol y la firma; no lo copies literalmente:\n" + lines.join("\n");
+    "de Copilot). Úsalo para adaptar el tono y el rol; no lo copies literalmente ni lo uses como firma " +
+    "(la firma la añade Thunderbird):\n" + lines.join("\n");
 }
 
 function getConfig() {

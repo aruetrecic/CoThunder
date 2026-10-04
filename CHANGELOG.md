@@ -3,6 +3,14 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.13.0] — 2026-10-04
+
+### Cambiado
+- **Sin pies de firma en plantillas ni respuestas:** la firma con tus datos (nombre, cargo, teléfono, correo) ya la tienes configurada en tu identidad de Thunderbird. Las plantillas «Carta institucional» e «Identidad UPO» terminan ahora en la despedida, y «Correo formal con firma» pasa a llamarse **«Correo formal»**, sin pie. Copilot recibe la instrucción de terminar en la despedida, sin firma ni datos de contacto, para no duplicar tu firma.
+- **«Tomar de mi identidad de Thunderbird»** (Opciones › Sobre ti) ya no copia tu firma: rellena nombre y organización. Así tus datos de contacto no viajan a Copilot en cada prompt.
+
+> Si ya tenías las plantillas antiguas, CoThunder no las modifica ni las borra (son tuyas). Puedes borrar a mano «Formato - Correo formal con firma» de tu carpeta *Plantillas*; la nueva «Formato - Correo formal» se añade sola. En «Carta institucional» e «Identidad UPO» basta con abrirlas y quitar las últimas líneas de datos.
+
 ## [2.12.0] — 2026-10-04
 
 ### Corregido

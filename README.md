@@ -69,7 +69,7 @@ Paso a paso completo, con todos los campos: **[manual de uso](docs/MANUAL.md)**.
 - **Agente**: *Copilot por defecto* o cualquiera de tus **agentes fijados** en la barra lateral de Copilot (↻ para refrescar).
 - **Prompt** y **Formato** desde tus **plantillas de Thunderbird**; **Tono** (formal, cercano, directo, negativa cordial) y **Longitud**.
 - **Incluir mi firma**, respuesta **siempre maquetada en Markdown** y **Regenerar** para pedir otra versión.
-- **Contexto «Sobre ti»** (en Opciones): nombre, cargo, organización y cómo escribes, para que Copilot adapte el tono y la firma.
+- **Contexto «Sobre ti»** (en Opciones): nombre, cargo, organización y cómo escribes, para que Copilot adapte el tono. La firma con tus datos la pone Thunderbird: Copilot termina en la despedida.
 - Ventana en **pestañas** que cabe en pantallas pequeñas o con escalado del 125-150 %; **Ctrl+Enter** para enviar.
 - **Degradación segura**: si falla la escritura en Copilot, el prompt se copia al portapapeles; si no llega la respuesta, se avisa con una notificación.
 
