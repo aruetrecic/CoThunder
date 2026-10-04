@@ -68,7 +68,8 @@ Paso a paso completo, con todos los campos: **[manual de uso](docs/MANUAL.md)**.
 
 - **Agente**: *Copilot por defecto* o cualquiera de tus **agentes fijados** en la barra lateral de Copilot (↻ para refrescar).
 - **Prompt** y **Formato** desde tus **plantillas de Thunderbird**; **Tono** (formal, cercano, directo, negativa cordial) y **Longitud**.
-- **Incluir mi firma**, respuesta **siempre maquetada en Markdown** y **Regenerar** para pedir otra versión.
+- **Incluir mi firma**: tu firma de Thunderbird (logo, datos, aviso legal) se añade **en tu equipo** al final del correo generado; Copilot nunca la ve.
+- Respuesta **siempre maquetada en Markdown** y **Regenerar** para pedir otra versión.
 - **Contexto «Sobre ti»** (en Opciones): nombre, cargo, organización y cómo escribes, para que Copilot adapte el tono. La firma con tus datos la pone Thunderbird: Copilot termina en la despedida.
 - Ventana en **pestañas** que cabe en pantallas pequeñas o con escalado del 125-150 %; **Ctrl+Enter** para enviar.
 - **Degradación segura**: si falla la escritura en Copilot, el prompt se copia al portapapeles; si no llega la respuesta, se avisa con una notificación.
@@ -124,6 +125,8 @@ Al instalar se siembra una biblioteca de ejemplo en tu carpeta *Plantillas*. El 
 | `Prompt crear - Título` | Instrucción para Copilot al **crear** un correo. |
 | `Formato - Título` (o sin prefijo) | Estructura del correo: se usa como referencia en Copilot y se inserta desde el menú **📄** del editor. |
 
+Las plantillas no llevan pie con datos personales: terminan en la despedida y tu firma la añade Thunderbird.
+
 Para crear las tuyas, redacta un mensaje (en Markdown si quieres), ponle el prefijo en el asunto y usa **Archivo › Guardar como plantilla**.
 
 ## Accesibilidad
@@ -135,6 +138,16 @@ Para crear las tuyas, redacta un mensaje (en Markdown si quieres), ponle el pref
 ## Privacidad y seguridad
 
 El contenido de los correos solo viaja a **Microsoft 365 Copilot**, el mismo destino al que ya envías datos al usar Copilot. Sin telemetría, sin terceros, sin claves. La ventana muestra siempre el prompt antes de enviarlo y la primera vez avisa del tratamiento. Opcionalmente, un **registro de actividad local** (solo metadatos).
+
+**Qué le llega a Copilot y qué no**
+
+| Le llega | No le llega |
+|---|---|
+| El correo que respondes (remitente, asunto, cuerpo) y, si lo marcas, el hilo | **Tu firma** de Thunderbird: se añade en tu equipo después de la respuesta |
+| Tu perfil «Sobre ti» (nombre, cargo, organización, cómo escribes) | **Las firmas dentro del correo leído**: la tuya citada (aunque cambien los saltos de línea), las marcadas por Thunderbird y las de texto plano tras `-- ` |
+| Las plantillas de Prompt y Formato que elijas | Contraseñas ni claves: no hay API ni servidores propios, y nada sale hacia otro destino |
+
+Copilot tiene además la instrucción de **terminar en la despedida**, sin firma ni datos de contacto, para no duplicar tu firma.
 
 Análisis detallado (uso en la UPO y usuario general, ENS y riesgos): **[informe de seguridad](docs/SEGURIDAD.md)**.
 

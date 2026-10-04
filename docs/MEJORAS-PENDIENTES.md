@@ -1,12 +1,13 @@
 # Mejoras pendientes
 
-Propuestas tras la v2.12.0 (4 de octubre de 2026), ordenadas por prioridad. Esfuerzo: **B** bajo, **M** medio, **A** alto.
+Propuestas tras la v2.12.0 (4 de octubre de 2026; última publicada: v2.13.2), ordenadas por prioridad. Esfuerzo: **B** bajo, **M** medio, **A** alto.
 
 ## 1. Primero: verificar en Thunderbird real
 
 Todo lo de las versiones 2.7–2.12 se ha probado en Edge headless, no dentro de Thunderbird. Antes de seguir construyendo:
 
 - [ ] **Lista de comprobación manual** (`docs/PRUEBAS-THUNDERBIRD.md`) y pasarla una vez: menús de la barra (se abren y se cierran), 🎨 Estilo, 📄 Plantillas con la carpeta real, **⇥ Ordenar + Ctrl+Z**, atajos (que Ctrl+B no aplique además la negrita de Thunderbird), firma de la UPO intacta en vista previa y en el correo enviado, lista escrita con Enter = una sola lista, ventana al 50 % de alto, pestañas y Ctrl+Enter. **B**
+- [ ] **Firma fuera del prompt (v2.13.2):** responder a un correo que cite tu firma y comprobar en la pestaña 📜 Prompt que no aparece (ni el logo ni el aviso legal), y que «Cómo escribo» ya no tiene el «Firmo así: …». **B**
 - [ ] **Límite real del prompt de Copilot:** el aviso usa 16.000 caracteres como estimación. Medirlo y ajustar `PROMPT_MAX`. **B**
 
 ## 2. Accesibilidad y robustez del correo (alta)
