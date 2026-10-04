@@ -4,7 +4,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const {
-  escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates, stripCopiedSignature, stripOwnSignatures, stripPlainSignature,
+  escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates, promptTemplates, stripCopiedSignature, stripOwnSignatures, stripPlainSignature,
   buildPrompt, buildCreatePrompt, toneLengthInstruction, detectInjection, buildUserContext
 } = require("../common.js");
 
@@ -80,6 +80,18 @@ test("formatTemplates: solo formatos y sin prefijo, sin los Prompt", () => {
   assert.deepEqual(formatTemplates(list).map((t) => [t.id, t.label]),
     [[5, "Carta institucional"], [4, "Mi plantilla propia"], [2, "Tabla comparativa"]]);
   assert.deepEqual(formatTemplates(null), []);
+  assert.deepEqual(formatTemplates(list, { sort: false }).map((t) => t.id), [2, 4, 5]);
+});
+
+test("promptTemplates: separa los de responder y los de crear", () => {
+  const list = [
+    { id: 1, subject: "Prompt - Negación cordial", source: "UPO" },
+    { id: 2, subject: "Formato - Tabla comparativa", source: "UPO" },
+    { id: 3, subject: "Prompt crear - Invitación a evento", source: "UPO" },
+  ];
+  assert.deepEqual(promptTemplates(list, "reply").map((t) => [t.id, t.label]), [[1, "Negación cordial"]]);
+  assert.deepEqual(promptTemplates(list, "create").map((t) => [t.id, t.label]), [[3, "Invitación a evento"]]);
+  assert.deepEqual(promptTemplates(undefined, "reply"), []);
 });
 
 test("invalidRecipients: lista lo que no es una dirección", () => {

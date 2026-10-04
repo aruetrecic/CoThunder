@@ -225,10 +225,44 @@
     insertMd(md);
   }
 
-  const BTN_CSS = "cursor:pointer;border:1px solid #d0d7de;background:#fff;color:#1f2328;border-radius:4px;" +
-    "padding:2px 5px;font:13px sans-serif;white-space:nowrap;";
+  // Estilo de la barra: clases en la hoja propia (no en línea) para poder usar :hover, :focus-visible
+  // y el tema oscuro. Los colores van en variables; data-dark las cambia cuando el editor es oscuro.
+  const T = "#" + IDS.toolbar;
+  const TOOLBAR_CSS =
+    T + "{--ct-bar:#f6f8fa;--ct-line:#d0d7de;--ct-btn:#fff;--ct-fg:#1f2328;--ct-hover:#eaeef2;--ct-focus:#0969da;" +
+    "position:fixed;top:0;left:0;width:50%;box-sizing:border-box;display:flex;align-items:center;" +
+    "flex-wrap:wrap;gap:2px;padding:4px;background:var(--ct-bar);border-bottom:1px solid var(--ct-line);z-index:10;}" +
+    T + "[data-dark]{--ct-bar:#161b22;--ct-line:#3d444d;--ct-btn:#21262d;--ct-fg:#e6edf3;--ct-hover:#30363d;--ct-focus:#4493f8;" +
+    "color-scheme:dark;}" +
+    T + " button{cursor:pointer;border:1px solid var(--ct-line);background:var(--ct-btn);color:var(--ct-fg);" +
+    "border-radius:4px;padding:2px 5px;font:13px sans-serif;white-space:nowrap;}" +
+    T + " button:hover{background:var(--ct-hover);}" +
+    T + " button:focus-visible{outline:2px solid var(--ct-focus);outline-offset:1px;}" +
+    T + " [role=menu]{display:none;position:absolute;top:100%;left:0;margin-top:2px;z-index:20;flex-direction:column;" +
+    "min-width:max-content;max-height:60vh;overflow:auto;padding:3px;gap:1px;background:var(--ct-btn);" +
+    "border:1px solid var(--ct-line);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.18);}" +
+    T + " [role=menuitem]{border-color:transparent;text-align:left;}";
+
+  // Al entrar en la barra con el teclado se guarda el cursor del editor; las acciones lo
+  // recuperan antes de escribir, para que el Markdown vaya donde estaba el usuario.
+  let savedRange = null;
+
+  function inToolbar(node) {
+    return !!(toolbarEl && node && toolbarEl.contains(node));
+  }
+
+  function returnToEditor() {
+    if (!inToolbar(document.activeElement)) return;
+    bodyEl.focus();
+    if (savedRange) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(savedRange);
+    }
+  }
 
   function runSpec(spec) {
+    returnToEditor();
     switch (spec.kind) {
       case "wrap": wrap(spec.before, spec.after); break;
       case "prefix": prefixLine(spec.value); break;
@@ -246,67 +280,147 @@
     btn.textContent = label;
     btn.title = title;
     btn.setAttribute("aria-label", title);
-    btn.style.cssText = BTN_CSS;
+    btn.tabIndex = -1;
     // No robar la selección del editor al pulsar el botón.
     btn.addEventListener("mousedown", (e) => e.preventDefault());
     btn.addEventListener("click", onClick);
     return btn;
   }
 
+  const isOpen = (popup) => popup.style.display === "flex";
+
   function closeMenus(except) {
     if (!toolbarEl) return;
-    toolbarEl.querySelectorAll("[data-cothunder-popup]").forEach((p) => {
-      if (p !== except) p.style.display = "none";
+    toolbarEl.querySelectorAll("[role=menu]").forEach((p) => {
+      if (p === except) return;
+      p.style.display = "none";
+      p.previousElementSibling.setAttribute("aria-expanded", "false");
     });
   }
 
+  function openMenu(popup, focusIndex) {
+    closeMenus(popup);
+    popup.style.display = "flex";
+    popup.previousElementSibling.setAttribute("aria-expanded", "true");
+    // Si se sale por la derecha de la barra, se alinea a la derecha del botón.
+    popup.style.left = "0"; popup.style.right = "auto";
+    const bar = toolbarEl.getBoundingClientRect(), r = popup.getBoundingClientRect();
+    if (r.right > bar.right) { popup.style.left = "auto"; popup.style.right = "0"; }
+    if (focusIndex !== undefined) {
+      const items = popup.querySelectorAll("[role=menuitem]");
+      if (items.length) items[(focusIndex + items.length) % items.length].focus();
+    }
+  }
+
   // Menú desplegable propio: botón "label ▾" + panel de botones. Devuelve { wrap, setItems, setLabel }.
+  let menuCount = 0;
   function makeMenu(label, title) {
     const wrapEl = document.createElement("span");
     wrapEl.style.cssText = "position:relative;display:inline-flex;";
     const popup = document.createElement("div");
-    popup.setAttribute("data-cothunder-popup", "");
+    popup.id = IDS.toolbar + "-menu" + (++menuCount);
     popup.setAttribute("role", "menu");
-    popup.style.cssText =
-      "display:none;position:absolute;top:100%;left:0;margin-top:2px;z-index:20;flex-direction:column;" +
-      "min-width:max-content;max-height:60vh;overflow:auto;padding:3px;gap:1px;background:#fff;" +
-      "border:1px solid #d0d7de;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.18);";
-    const btn = makeButton(label + " ▾", title, () => {
-      const open = popup.style.display !== "none";
-      closeMenus(popup);
-      if (open) { popup.style.display = "none"; return; }
-      popup.style.display = "flex";
-      // Si se sale por la derecha de la barra, se alinea a la derecha del botón.
-      popup.style.left = "0"; popup.style.right = "auto";
-      const bar = toolbarEl.getBoundingClientRect(), r = popup.getBoundingClientRect();
-      if (r.right > bar.right) { popup.style.left = "auto"; popup.style.right = "0"; }
+    popup.setAttribute("aria-label", title);
+    const btn = makeButton(label + " ▾", title, (e) => {
+      if (isOpen(popup)) { closeMenus(null); return; }
+      // Abierto con Enter o espacio (sin ratón, detail 0): el foco pasa a la primera opción.
+      openMenu(popup, e.detail === 0 ? 0 : undefined);
     });
     btn.setAttribute("aria-haspopup", "menu");
+    btn.setAttribute("aria-expanded", "false");
+    btn.setAttribute("aria-controls", popup.id);
     wrapEl.append(btn, popup);
     const setItems = (items) => {
       popup.replaceChildren();
       for (const it of items) {
-        const item = makeButton(it.text, it.title || it.text, () => { popup.style.display = "none"; it.onClick(); });
+        const item = makeButton(it.text, it.title || it.text, () => {
+          // Con el teclado el foco vuelve al botón del menú; la acción lo lleva al editor si escribe.
+          if (inToolbar(document.activeElement)) btn.focus();
+          closeMenus(null);
+          it.onClick();
+        });
         item.setAttribute("role", "menuitem");
-        item.style.cssText = BTN_CSS + "border-color:transparent;text-align:left;";
-        item.addEventListener("mouseenter", () => { item.style.background = "#eaeef2"; });
-        item.addEventListener("mouseleave", () => { item.style.background = "#fff"; });
         popup.appendChild(item);
       }
     };
-    const setLabel = (text, t) => { btn.textContent = text + " ▾"; btn.title = t; btn.setAttribute("aria-label", t); };
+    const setLabel = (text, t) => {
+      btn.textContent = text + " ▾"; btn.title = t; btn.setAttribute("aria-label", t); popup.setAttribute("aria-label", t);
+    };
     return { wrap: wrapEl, setItems, setLabel };
+  }
+
+  // Controles de primer nivel de la barra (botones y botones de menú), en orden.
+  function toolbarControls() {
+    return Array.from(toolbarEl.querySelectorAll(":scope > button, :scope > span > button"));
+  }
+
+  // Foco itinerante (WAI-ARIA toolbar): solo un control de la barra está en el orden de tabulación.
+  function focusControl(btn) {
+    for (const b of toolbarControls()) b.tabIndex = b === btn ? 0 : -1;
+    btn.focus();
+  }
+
+  // Alt+F10 desde el editor: guarda el cursor y lleva el foco al control activo de la barra.
+  function enterToolbar() {
+    const sel = window.getSelection();
+    savedRange = sel && sel.rangeCount && bodyEl.contains(sel.anchorNode) ? sel.getRangeAt(0).cloneRange() : null;
+    const controls = toolbarControls();
+    focusControl(controls.find((b) => b.tabIndex === 0) || controls[0]);
+  }
+
+  // Teclado dentro de la barra: flechas izquierda/derecha, Inicio y Fin entre controles; flechas
+  // arriba/abajo, Inicio y Fin dentro de un menú; Escape cierra el menú (y, con todo cerrado,
+  // vuelve al editor); Tab cierra el menú abierto.
+  function onToolbarKey(e) {
+    const target = e.target;
+    const popup = target.closest("[role=menu]");
+    if (popup) {
+      const items = Array.from(popup.querySelectorAll("[role=menuitem]"));
+      const i = items.indexOf(target);
+      const go = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: items.length - 1 }[e.key];
+      if (go !== undefined) items[(go + items.length) % items.length].focus();
+      else if (e.key === "Escape") { closeMenus(null); focusControl(popup.previousElementSibling); }
+      else if (e.key === "Tab") { closeMenus(null); return; }
+      else return;
+    } else {
+      const controls = toolbarControls();
+      const i = controls.indexOf(target);
+      if (i < 0) return;
+      const menu = target.getAttribute("aria-haspopup") ? target.nextElementSibling : null;
+      const go = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: controls.length - 1 }[e.key];
+      if (go !== undefined) { closeMenus(null); focusControl(controls[(go + controls.length) % controls.length]); }
+      else if (menu && (e.key === "ArrowDown" || e.key === "ArrowUp")) openMenu(menu, e.key === "ArrowDown" ? 0 : -1);
+      else if (e.key === "Escape") { if (Array.from(toolbarEl.querySelectorAll("[role=menu]")).some(isOpen)) closeMenus(null); else returnToEditor(); }
+      else return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  // Tema de la barra: oscuro si el fondo real del editor es oscuro; si es transparente, el del sistema.
+  function isDarkEditor() {
+    for (let n = bodyEl; n && n.nodeType === 1; n = n.parentElement) {
+      const m = getComputedStyle(n).backgroundColor.match(/[\d.]+/g);
+      if (!m || (m.length > 3 && Number(m[3]) === 0)) continue;
+      const [r, g, b] = m.map(Number);
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b < 128;
+    }
+    return darkQuery.matches;
+  }
+
+  function applyToolbarTheme() {
+    if (toolbarEl) toolbarEl.toggleAttribute("data-dark", isDarkEditor());
   }
 
   function buildToolbar() {
     const toolbar = document.createElement("div");
     toolbar.id = IDS.toolbar;
+    toolbar.setAttribute("role", "toolbar");
+    toolbar.setAttribute("aria-label", "Formato Markdown (Alt+F10 para llegar con el teclado)");
     // No editable ni revisado por el corrector: la barra vive dentro del cuerpo editable.
     toolbar.contentEditable = "false";
     toolbar.spellcheck = false;
-    toolbar.style.cssText =
-      "position:fixed;top:0;left:0;width:50%;box-sizing:border-box;display:flex;align-items:center;" +
-      "flex-wrap:wrap;gap:2px;padding:4px;background:#f6f8fa;border-bottom:1px solid #d0d7de;z-index:10;";
+    toolbar.addEventListener("keydown", onToolbarKey);
 
     TOOLBAR_ITEMS.forEach((spec) => {
       if (spec.menu) {
@@ -326,6 +440,7 @@
     themeMenu.wrap.style.marginLeft = "auto";
     toolbar.appendChild(themeMenu.wrap);
     fillThemeMenu();
+    toolbar.querySelector("button").tabIndex = 0;
     return toolbar;
   }
 
@@ -624,6 +739,14 @@
     e: () => wrap("`", "`"),
   };
   function onShortcut(e) {
+    // Con el foco en la barra, sus teclas las maneja onToolbarKey (los atajos no escriben en el editor).
+    if (inToolbar(e.target)) return;
+    if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.key === "F10") {
+      e.preventDefault();
+      e.stopPropagation();
+      enterToolbar();
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && e.key.toLowerCase() === "f") {
       e.preventDefault();
       e.stopPropagation();
@@ -640,9 +763,12 @@
     action();
   }
 
+  // Escape con el foco en el editor cierra un menú abierto con el ratón (en la barra: onToolbarKey).
   function onMenuKey(e) {
-    if (e.key === "Escape") closeMenus(null);
+    if (e.key === "Escape" && !inToolbar(e.target)) closeMenus(null);
   }
+
+  const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
   function activate() {
     if (active) return;
@@ -661,7 +787,7 @@
       "background:#fff;color:#111;padding:10px;" +
       // El preview no hereda la letra monoespaciada de la zona de escritura: es el correo final.
       "font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;}" +
-      "#" + IDS.preview + " img{max-width:100%;height:auto;}";
+      "#" + IDS.preview + " img{max-width:100%;height:auto;}" + TOOLBAR_CSS;
     style.textContent = layout(40);
     (document.head || document.documentElement).appendChild(style);
 
@@ -677,6 +803,8 @@
       style.textContent = layout(Math.max(40, Math.ceil(toolbarEl.getBoundingClientRect().height) + 6));
     };
     fit();
+    applyToolbarTheme();
+    darkQuery.addEventListener("change", applyToolbarTheme);
     if (typeof ResizeObserver === "function") {
       toolbarObserver = new ResizeObserver(fit);
       toolbarObserver.observe(toolbarEl);
@@ -707,7 +835,9 @@
     if (toolbarObserver) { toolbarObserver.disconnect(); toolbarObserver = null; }
     document.removeEventListener("mousedown", onOutsideMenu, true);
     document.removeEventListener("keydown", onMenuKey, true);
+    darkQuery.removeEventListener("change", applyToolbarTheme);
     previewEl = null;
+    savedRange = null;
     toolbarEl = null;
     themeMenu = null;
     templateMenu = null;

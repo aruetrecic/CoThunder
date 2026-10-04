@@ -110,7 +110,7 @@ Sustituye a Markdown Here, que dejó de funcionar en las versiones nuevas de Thu
 | **📄 ▾** | Inserta tus **plantillas de formato** en el cursor. |
 | **🎨 ▾** | Cambia el **estilo** de ese correo al momento. |
 
-- **Atajos:** Ctrl+B, Ctrl+I, Ctrl+K (enlace), Ctrl+E (código) y Ctrl+1…6 (títulos).
+- **Atajos:** Ctrl+B, Ctrl+I, Ctrl+K (enlace), Ctrl+E (código) y Ctrl+1…6 (títulos). **Alt+F10** lleva a la barra, que se maneja con las flechas y Escape.
 - **Firma y cita intactas:** tu firma y el correo citado se conservan con su formato original.
 - **13 temas** (UPO corporativo, claro, oscuro y mixto; GitHub; Solarized; Monokai; Dracula; Nord; One Dark) más uno **personalizado**. En Opciones puedes **descargar cualquier tema** como `.css` o editarlo como base del tuyo.
 - Cobertura completa de Markdown (básico y extendido), resaltado de sintaxis y estilos **en línea** para que el correo se vea igual en cualquier cliente.

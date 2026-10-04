@@ -3,6 +3,16 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.14.0] — 2026-10-05
+
+### Añadido
+- **Barra del editor con el teclado:** **Alt+F10** lleva a la barra. Las flechas izquierda y derecha pasan de un botón a otro; Enter o flecha abajo abre un menú y las flechas arriba y abajo recorren sus opciones. **Escape** vuelve al botón y después al texto, con el cursor donde estaba. Los lectores de pantalla anuncian la barra y si cada menú está abierto o cerrado.
+
+### Cambiado
+- **Barra en tema oscuro:** si Thunderbird está en oscuro, la barra y sus menús también (antes eran siempre claros). La vista previa sigue en blanco, como lo verá el destinatario.
+- Los desplegables de plantillas de la ventana y el menú 📄 del editor usan la misma clasificación por asunto.
+- El `.xpi` se construye con `scripts/build.sh` (`npm run build`), con la lista de ficheros en un solo sitio.
+
 ## [2.13.2] — 2026-10-04
 
 ### Corregido

@@ -237,23 +237,18 @@
     const templates = await listTemplates().catch(() => []);
     const multiSource = new Set(templates.map((t) => t.source)).size > 1;
     // "Prompt - …" son prompts de respuesta; "Prompt crear - …" son de creación (solo en modo create).
-    const promptReplyRe = /^\s*prompt\s*-\s*/i;
-    const promptCreateRe = /^\s*prompt\s+crear\s*-\s*/i;
-    const formatRe = /^\s*formato\s*-\s*/i;
-    const promptRe = mode === "create" ? promptCreateRe : promptReplyRe;
-    const fill = (sel, items, re) => {
+    // La clasificación es la de common.js, la misma que usa el menú 📄 del editor.
+    const fill = (sel, items) => {
       for (const t of items) {
         const opt = document.createElement("option");
         opt.value = String(t.id);
-        const label = t.subject.replace(re, "").trim() || t.subject;
-        opt.textContent = multiSource ? `${label} (${t.source})` : label;
+        opt.textContent = multiSource ? `${t.label} (${t.source})` : t.label;
         sel.appendChild(opt);
       }
     };
-    fill($("prompt-sel"), templates.filter((t) => promptRe.test(t.subject)), promptRe);
+    fill($("prompt-sel"), promptTemplates(templates, mode));
     // Los formatos se comparten entre modos; se excluyen ambos tipos de Prompt.
-    fill($("format-sel"), templates.filter((t) => formatRe.test(t.subject) ||
-      (!promptReplyRe.test(t.subject) && !promptCreateRe.test(t.subject))), formatRe);
+    fill($("format-sel"), formatTemplates(templates, { sort: false }));
 
     const onSelChange = async (sel, assign, busyMsg) => {
       $("send").disabled = true;

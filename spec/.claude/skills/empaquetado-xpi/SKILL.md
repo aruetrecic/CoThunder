@@ -33,17 +33,13 @@ En Windows sin Node en el PATH se relanza solo dentro de WSL. Si no termina en `
 
 ## 4. Empaquetar
 
-Solo entra en el paquete lo que Thunderbird necesita, con **lista blanca** (la misma que `.github/workflows/release.yml`): nada de `test/`, `scripts/`, `docs/`, `spec/`, `package.json` ni ficheros ocultos.
+Solo entra en el paquete lo que Thunderbird necesita, con **lista blanca**: nada de `test/`, `scripts/`, `docs/`, `spec/`, `package.json` ni ficheros ocultos. La lista vive **solo** en `scripts/build.sh`, que también usa `.github/workflows/release.yml`:
 
 ```bash
-VERSION=$(node -p "JSON.parse(require('fs').readFileSync('manifest.json')).version")
-rm -f cothunder-*.xpi
-zip -r "cothunder-${VERSION}.xpi" manifest.json common.js background.js content-copilot.js \
-  content-compose.js markdown.js themes.js compose.css icon.svg popup options -x '*.md' -q
-unzip -l "cothunder-${VERSION}.xpi"
+bash scripts/build.sh      # o: npm run build
 ```
 
-Revisar el listado: manifest.json, los JS de la raíz, compose.css, icon.svg, popup/ y options/, y nada más. Si se añade un fichero de runtime nuevo, incluirlo **aquí y en `release.yml`**; `scripts/check.sh` avisará si falta en disco pero no si falta en la lista del zip.
+Borra los `.xpi` anteriores, comprueba que existe cada fichero de la lista, empaqueta, valida el manifest del paquete y muestra el listado. Revisarlo: manifest.json, los JS de la raíz, compose.css, icon.svg, popup/ y options/, y nada más. Si se añade un fichero de runtime nuevo, incluirlo en el array `FILES` de `scripts/build.sh`.
 
 ## 5. Verificación del paquete
 

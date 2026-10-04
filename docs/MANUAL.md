@@ -92,6 +92,7 @@ La respuesta llega en Markdown (con `#`, `**`, listas, tablas, citas). CoThunder
 - **📄 ▾ Plantillas:** inserta en el cursor una plantilla de formato (Carta institucional, Tabla comparativa, Identidad UPO… y las tuyas sin prefijo). Las de tipo «Prompt» no aparecen: son instrucciones para Copilot, no texto del correo. «↻ Actualizar lista» relee la carpeta de Plantillas.
 - **🎨 ▾ Estilo:** cambia el tema de ese correo al momento. El tema por defecto se elige en Opciones.
 - **Atajos:** Ctrl+B negrita, Ctrl+I cursiva, Ctrl+K enlace, Ctrl+E código, Ctrl+1 … Ctrl+6 títulos (si la línea ya era un título, cambia el nivel).
+- **Barra con el teclado:** **Alt+F10** lleva a la barra. Las flechas izquierda y derecha pasan de un botón a otro; Enter o flecha abajo abre un menú y las flechas arriba y abajo recorren sus opciones. **Escape** vuelve atrás: primero al botón y luego al texto, con el cursor donde estaba. Si Thunderbird está en tema oscuro, la barra también.
 - **Firma y cita intactas:** tu firma de Thunderbird y el correo citado se conservan tal cual, con su formato original; solo se convierte a Markdown lo que escribes tú.
 
 ## 8. Privacidad y registro de actividad

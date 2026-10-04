@@ -311,14 +311,25 @@ function signatureAsText(identity) {
 
 // Plantillas de "Formato" (estructura para el cuerpo del correo): las "Formato - …" y las que no
 // llevan prefijo; quedan fuera las "Prompt - …" y "Prompt crear - …", que son instrucciones para
-// Copilot. Devuelve [{ id, label, source }] con el prefijo quitado, ordenadas por nombre.
+// Copilot. Devuelve [{ id, label, source }] con el prefijo quitado, ordenadas por nombre (o en el
+// orden de las carpetas con { sort: false }).
+const TEMPLATE_PROMPT_REPLY_RE = /^\s*prompt\s*-\s*/i;
+const TEMPLATE_PROMPT_CREATE_RE = /^\s*prompt\s+crear\s*-\s*/i;
 const TEMPLATE_PROMPT_RE = /^\s*prompt(\s+crear)?\s*-\s*/i;
 const TEMPLATE_FORMAT_RE = /^\s*formato\s*-\s*/i;
-function formatTemplates(list) {
-  return (list || [])
+const templateItem = (t, re) => ({ id: t.id, label: (t.subject || "").replace(re, "").trim() || t.subject, source: t.source });
+function formatTemplates(list, { sort = true } = {}) {
+  const items = (list || [])
     .filter((t) => !TEMPLATE_PROMPT_RE.test(t.subject || ""))
-    .map((t) => ({ id: t.id, label: (t.subject || "").replace(TEMPLATE_FORMAT_RE, "").trim() || t.subject, source: t.source }))
-    .sort((a, b) => a.label.localeCompare(b.label, "es"));
+    .map((t) => templateItem(t, TEMPLATE_FORMAT_RE));
+  return sort ? items.sort((a, b) => a.label.localeCompare(b.label, "es")) : items;
+}
+
+// Plantillas de "Prompt": "Prompt - …" para responder y "Prompt crear - …" para crear
+// (mode "create"). Devuelve [{ id, label, source }] sin el prefijo, en el orden de las carpetas.
+function promptTemplates(list, mode) {
+  const re = mode === "create" ? TEMPLATE_PROMPT_CREATE_RE : TEMPLATE_PROMPT_REPLY_RE;
+  return (list || []).filter((t) => re.test(t.subject || "")).map((t) => templateItem(t, re));
 }
 
 // Reconstruye el hilo (mensajes anteriores) siguiendo las cabeceras References / In-Reply-To.
@@ -500,7 +511,7 @@ async function extractTemplateBody(messageId) {
 // Exporta las funciones puras para pruebas en Node. Inerte en Thunderbird, donde no existe `module`.
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates, stripCopiedSignature, stripOwnSignatures, stripPlainSignature,
+    escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates, promptTemplates, stripCopiedSignature, stripOwnSignatures, stripPlainSignature,
     buildPrompt, buildComposedPrompt, buildCreatePrompt, toneLengthInstruction,
     detectInjection, normalizeText, buildUserContext
   };

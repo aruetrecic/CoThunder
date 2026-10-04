@@ -24,26 +24,15 @@ jobs:
       - name: Validar (manifest, sintaxis JS, referencias y tests)
         run: bash scripts/check.sh
 
-      - name: Verificar que existen los ficheros de la extensión
-        run: |
-          for f in manifest.json common.js background.js content-copilot.js content-compose.js markdown.js themes.js compose.css \
-                   popup/popup.html popup/popup.js popup/popup.css \
-                   options/options.html options/options.js icon.svg; do
-            test -f "$f" || { echo "FALTA: $f"; exit 1; }
-          done
-          echo "Ficheros de la extensión OK"
-
       - name: Empaquetar XPI
         id: pack
         run: |
+          # La lista blanca de ficheros vive en scripts/build.sh (comprueba que existen y lista el paquete).
+          XPI=$(bash scripts/build.sh | tail -1)
           VERSION=$(node -p "JSON.parse(require('fs').readFileSync('manifest.json')).version")
-          XPI="cothunder-${VERSION}.xpi"
-          zip -r "$XPI" manifest.json common.js background.js content-copilot.js content-compose.js markdown.js themes.js compose.css icon.svg popup options -x '*.md'
           # Copia con nombre fijo: el README enlaza a releases/latest/download/cothunder.xpi,
           # que así siempre descarga la última versión.
           cp "$XPI" cothunder.xpi
-          echo "Contenido del paquete:"
-          unzip -l "$XPI"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "xpi=$XPI" >> "$GITHUB_OUTPUT"
 

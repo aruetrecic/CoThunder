@@ -4,6 +4,7 @@
   "description": "Tooling de desarrollo de CoThunder (la extensión no usa dependencias npm en runtime).",
   "scripts": {
     "check": "bash scripts/check.sh",
+    "build": "bash scripts/build.sh",
     "test": "node --test"
   }
 }

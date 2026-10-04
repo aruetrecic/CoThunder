@@ -49,5 +49,5 @@ for f in common.js background.js content-copilot.js popup/popup.js options/optio
 node -e "JSON.parse(require('fs').readFileSync('manifest.json')); console.log('manifest OK')"
 
 # Empaquetar (ver skill empaquetado-xpi para el proceso completo)
-zip -r cothunder.xpi . -x '.*' -x 'docs/*' -x '*.xpi' -x 'CLAUDE.md'
+bash scripts/build.sh   # lista blanca en un solo sitio
 ```

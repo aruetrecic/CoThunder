@@ -55,8 +55,6 @@ bash scripts/a11y-themes.sh
 # Activar el hook de pre-commit (una vez por clon)
 git config core.hooksPath .githooks
 
-# Empaquetar con lista blanca (ver skill empaquetado-xpi; misma lista que release.yml)
-VERSION=$(node -p "JSON.parse(require('fs').readFileSync('manifest.json')).version")
-zip -r "cothunder-${VERSION}.xpi" manifest.json common.js background.js content-copilot.js \
-  content-compose.js markdown.js themes.js compose.css icon.svg popup options -x '*.md' -q
+# Empaquetar con lista blanca (única lista en scripts/build.sh; la usan la skill y release.yml)
+bash scripts/build.sh            # o: npm run build
 ```
