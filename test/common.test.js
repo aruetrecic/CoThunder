@@ -4,7 +4,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const {
-  escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates, stripCopiedSignature,
+  escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates, stripCopiedSignature, stripOwnSignatures, stripPlainSignature,
   buildPrompt, buildCreatePrompt, toneLengthInstruction, detectInjection, buildUserContext
 } = require("../common.js");
 
@@ -25,6 +25,33 @@ test("parseRecipients: comas, punto y coma y saltos", () => {
 
 test("parseRecipients: formato Nombre <correo>", () => {
   assert.deepEqual(parseRecipients("Juan Pérez <juan@ejemplo.com>"), ["juan@ejemplo.com"]);
+});
+
+// Firma real de ejemplo (como sale de la identidad) y la misma, citada con otros saltos de línea.
+const SIG_UPO = "Antonio Rueda Treviño\nGestor de Sistemas e Informática del Área de Tecnologías de la Información y las Comunicaciones\n" +
+  "Avenida Rectora Rosario Valpuesta, número 1. CP 41089. Dos Hermanas (Sevilla)\nEdificio 9 - Planta 1 - Despacho 4\n" +
+  "Tel: 681 314 995 - Interno: 2042\naruetre@cic.upo.es | https://www.upo.es/cic\n" +
+  "Sus datos personales contenidos en esta comunicación y los que nos facilite son tratados por la Universidad Pablo de Olavide, en calidad de responsable del tratamiento.";
+
+test("stripOwnSignatures: quita la firma propia citada aunque cambien los saltos de línea", () => {
+  const body = "Hola Antonio, te confirmo la reunión del jueves.\nUn saludo, Ana\n" +
+    "[imagen: Marca genérica de la Universidad pablo de Olavide]\nAntonio\nRueda Treviño\nGestor\nde Sistemas e Informática del Área de Tecnologías de\n" +
+    "la Información y las Comunicaciones\nAvenida Rectora Rosario Valpuesta, número 1. CP 41089.\nDos Hermanas (Sevilla)\n" +
+    "Edificio 9 - Planta 1 - Despacho 4\nTel: 681 314 995 - Interno: 2042\naruetre@cic.upo.es\n| https://www.upo.es/cic\n" +
+    "Sus datos personales contenidos en esta comunicación y\nlos que nos facilite son tratados por la Universidad\nPablo de\nOlavide, en calidad de responsable del tratamiento.";
+  assert.equal(stripOwnSignatures(body, [SIG_UPO]), "Hola Antonio, te confirmo la reunión del jueves.\nUn saludo, Ana");
+});
+
+test("stripOwnSignatures: si la firma no aparece entera, quita sus líneas largas pero no el nombre", () => {
+  const body = "Hola Antonio Rueda Treviño:\nGracias.\nAvenida Rectora Rosario Valpuesta, número 1. CP 41089. Dos Hermanas (Sevilla)";
+  assert.equal(stripOwnSignatures(body, [SIG_UPO]), "Hola Antonio Rueda Treviño:\nGracias.");
+  assert.equal(stripOwnSignatures("Sin firma.", [SIG_UPO]), "Sin firma.");
+  assert.equal(stripOwnSignatures("Texto", []), "Texto");
+});
+
+test("stripPlainSignature: corta desde '-- ' hasta el final o hasta la cita", () => {
+  assert.equal(stripPlainSignature("Hola\n-- \nAntonio\nTel 1"), "Hola");
+  assert.equal(stripPlainSignature("Respuesta\n-- \nFirma\n> texto citado"), "Respuesta\n> texto citado");
 });
 
 test("stripCopiedSignature: quita solo el bloque copiado de la firma", () => {

@@ -167,6 +167,9 @@ function normalizeText(t) {
 function htmlToText(html) {
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc.querySelectorAll("style, script, head, noscript, title, link, meta").forEach((n) => n.remove());
+  // Firmas marcadas por Thunderbird (también dentro de citas): datos de contacto y avisos legales
+  // que no aportan nada a Copilot y no deben viajar en el prompt.
+  doc.querySelectorAll(".moz-signature").forEach((n) => n.remove());
   // Representa las imágenes por su texto alternativo (no se puede enviar la imagen en sí).
   doc.querySelectorAll("img").forEach((img) => {
     const alt = (img.getAttribute("alt") || "").trim();
@@ -189,12 +192,69 @@ function findPart(part, type) {
   return "";
 }
 
+// Firma en texto plano (RFC 3676): desde una línea "-- " hasta el final o hasta que empieza una
+// cita (">"), para no comerse el texto citado que venga después.
+function stripPlainSignature(text) {
+  const lines = String(text || "").replace(/\r/g, "").split("\n");
+  const out = [];
+  let skipping = false;
+  for (const line of lines) {
+    if (/^-- ?$/.test(line)) { skipping = true; continue; }
+    if (skipping && /^>/.test(line)) skipping = false;
+    if (!skipping) out.push(line);
+  }
+  return out.join("\n");
+}
+
+// Firmas de las identidades del usuario, como texto (cacheadas por página).
+let ownSignaturesPromise = null;
+function ownSignatureTexts() {
+  if (!ownSignaturesPromise) {
+    ownSignaturesPromise = (async () => {
+      const ids = await messenger.identities.list().catch(() => []);
+      return (ids || []).map((id) => {
+        const sig = (id && id.signature) || "";
+        if (!sig) return "";
+        return id.signatureIsPlainText ? normalizeText(sig) : htmlToText(sig);
+      }).filter(Boolean);
+    })().catch(() => []);
+  }
+  return ownSignaturesPromise;
+}
+
+// Quita del texto las firmas propias del usuario aunque vengan citadas y con otros saltos de
+// línea (p. ej. su firma dentro del correo de quien le responde). Primero la firma completa
+// (con el "--" y las [imagen: …] del logo que la preceden); si no aparece entera, cada línea
+// LARGA de la firma (≥ 8 palabras: dirección, aviso legal…). Las líneas cortas, como el nombre,
+// no se quitan sueltas para no borrar un "Hola Antonio" del cuerpo.
+const SIG_LINE_MIN_WORDS = 8;
+function sigRegex(text) {
+  const words = String(text).trim().split(/\s+/).filter(Boolean).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return words.length ? words.join("\\s+") : null;
+}
+function stripOwnSignatures(text, signatures) {
+  let t = String(text || "");
+  for (const sig of signatures || []) {
+    const whole = sigRegex(sig);
+    if (!whole) continue;
+    const re = new RegExp("(?:^|\\n)(?:[>\\s]*--\\s*\\n)?(?:[>\\s]*\\[imagen:[^\\]]*\\]\\s*)*" + whole, "g");
+    const before = t;
+    t = t.replace(re, "\n");
+    if (t !== before) continue;
+    for (const line of String(sig).split("\n")) {
+      if (line.trim().split(/\s+/).length < SIG_LINE_MIN_WORDS) continue;
+      t = t.replace(new RegExp(sigRegex(line), "g"), "");
+    }
+  }
+  return t === text ? t : normalizeText(t);
+}
+
 async function extractBody(messageId) {
   const full = await messenger.messages.getFull(messageId);
   // Prioriza el HTML (extraer solo el texto visible excluye CSS/scripts); si no hay, usa el texto plano.
   const html = findPart(full, "text/html");
-  let text = html ? htmlToText(html) : normalizeText(findPart(full, "text/plain"));
-  text = text.trim();
+  let text = html ? htmlToText(html) : normalizeText(stripPlainSignature(findPart(full, "text/plain")));
+  text = stripOwnSignatures(text, await ownSignatureTexts()).trim();
   if (text.length > MAX_BODY) text = text.slice(0, MAX_BODY) + "\n[correo truncado]";
   return text;
 }
@@ -440,7 +500,7 @@ async function extractTemplateBody(messageId) {
 // Exporta las funciones puras para pruebas en Node. Inerte en Thunderbird, donde no existe `module`.
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates, stripCopiedSignature,
+    escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates, stripCopiedSignature, stripOwnSignatures, stripPlainSignature,
     buildPrompt, buildComposedPrompt, buildCreatePrompt, toneLengthInstruction,
     detectInjection, normalizeText, buildUserContext
   };

@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.13.2] — 2026-10-04
+
+### Corregido
+- **Tu firma seguía llegando a Copilot dentro del correo que respondes.** Cuando alguien te contesta, su mensaje incluye el tuyo citado con la firma completa (logo, datos y aviso legal), y lo mismo pasaba con «Incluir el hilo». Ahora, al leer el correo, se quitan las firmas marcadas por Thunderbird y **tu propia firma aunque venga citada con otros saltos de línea**. Las firmas en texto plano (tras `-- `) también se quitan. Tu nombre suelto en el texto (por ejemplo, «Hola Antonio») no se toca.
+
 ## [2.13.1] — 2026-10-04
 
 ### Corregido
