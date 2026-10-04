@@ -139,8 +139,14 @@
     if (selectedId && agents.some((a) => a.id === selectedId)) sel.value = selectedId;
   };
 
-  // Botón de ayuda: abre la página de opciones (que incluye la guía de uso).
-  $("help").addEventListener("click", () => { try { messenger.runtime.openOptionsPage(); } catch (_) {} });
+  // Ayuda: abre la guía completa en una pestaña (botón ? o F1), en la sección de esta ventana.
+  const openHelp = () => messenger.tabs.create({ url: messenger.runtime.getURL("pages/help.html") + (mode === "create" ? "#crear" : "#ventana") }).catch(() => {});
+  $("help").addEventListener("click", openHelp);
+  document.addEventListener("keydown", (e) => { if (e.key === "F1") { e.preventDefault(); openHelp(); } });
+
+  // «Más opciones» plegado o abierto como lo dejó el usuario.
+  try { $("more").open = localStorage.getItem("moreOpen") === "1"; } catch (_) {}
+  $("more").addEventListener("toggle", () => { try { localStorage.setItem("moreOpen", $("more").open ? "1" : "0"); } catch (_) {} });
 
   // Mini editor Markdown reutilizable: cablea los botones de una barra a su textarea
   // (envuelve la selección o prefija las líneas). Se usa en "Prompt a enviar" y "¿Qué quieres crear?".
@@ -185,7 +191,9 @@
   setupMdBar($("prompt-mdbar"), $("prompt"));
   setupMdBar($("brief-mdbar"), $("create-brief"));
 
-  let message, body, cfg, promptBody = null, formatBody = null, threadBody = null;
+  let message, body, cfg, promptBody = null, formatBody = null, threadBody = null, detectedLang = "";
+  // Idioma de la respuesta: el elegido o, con «Como el correo», el detectado en el cuerpo.
+  const replyLanguage = () => ($("reply-language").value === "auto" ? detectedLang : $("reply-language").value);
 
   // Compone el prompt según el modo: creación (brief/contexto/idioma) o respuesta (correo + hilo).
   // El contexto del autor (perfil del usuario) se añade en ambos modos si está configurado.
@@ -200,7 +208,8 @@
       : buildComposedPrompt(message, body, {
           userContext, template: cfg.promptTemplate, promptBody, formatBody,
           thread: $("includeThread").checked ? threadBody : null,
-          tone: $("tone").value, length: $("length").value
+          tone: $("tone").value, length: $("length").value,
+          language: replyLanguage(), versions: Number($("versions").value) || 1
         });
   };
   const rebuildPrompt = () => { $("prompt").value = composePrompt(); updatePromptCount(); };
@@ -213,6 +222,8 @@
       message = await messenger.messages.get(messageId);
       if (!message) { setStatus("err", "No se pudo cargar el correo"); return; }
       body = await extractBody(message.id);
+      detectedLang = detectLanguage(body);
+      if (detectedLang) $("reply-language").options[0].textContent = "Como el correo (" + LANG_NAMES[detectedLang].toLowerCase() + ")";
     } else {
       message = null;
       body = "";
@@ -269,6 +280,8 @@
     $("length").addEventListener("change", () => { rebuildPrompt(); messenger.storage.local.set({ prefLength: $("length").value }).catch(() => {}); });
     $("includeSignature").addEventListener("change", () => messenger.storage.local.set({ prefSignature: $("includeSignature").checked }).catch(() => {}));
     $("includeQuote").addEventListener("change", () => messenger.storage.local.set({ prefQuote: $("includeQuote").checked }).catch(() => {}));
+    $("reply-language").addEventListener("change", rebuildPrompt);
+    $("versions").addEventListener("change", rebuildPrompt);
 
     // Reconstruye el prompt al editar los campos de creación (solo existen en modo creación).
     ["create-brief", "create-context"].forEach((id) => {
@@ -339,34 +352,78 @@
     $("refreshAgents").disabled = false;
   });
 
+  // --- Progreso de la petición en curso: pasos, segundos de espera y Cancelar ---
+  const STAGES = ["opening", "typing", "waiting", "done"];
+  let currentToken = null, elapsedTimer = null, waitingSince = 0;
+  const stopElapsed = () => { clearInterval(elapsedTimer); elapsedTimer = null; };
+  const showStage = (stage) => {
+    $("progress").hidden = false;
+    const at = STAGES.indexOf(stage);
+    $("progress").querySelectorAll("li").forEach((li) => {
+      const i = STAGES.indexOf(li.dataset.stage);
+      li.classList.toggle("done", at >= 0 && (i < at || (stage === "done" && i === at)));
+      li.classList.toggle("active", i === at && stage !== "done");
+    });
+    if (stage === "waiting" && !elapsedTimer) {
+      waitingSince = Date.now();
+      $("elapsed").textContent = "";
+      elapsedTimer = setInterval(() => { $("elapsed").textContent = "(" + Math.round((Date.now() - waitingSince) / 1000) + " s)"; }, 1000);
+    }
+    if (stage !== "waiting") stopElapsed();
+    $("cancel").hidden = stage === "done";
+  };
+  // El background y la ventana de Copilot avisan de cada paso; solo se atiende el de esta petición.
+  messenger.runtime.onMessage.addListener((m) => {
+    if (!m || m.type !== "copilotProgress" || m.token !== currentToken) return;
+    if (m.stage === "error") {
+      stopElapsed();
+      $("cancel").hidden = true;
+      setStatus("err", copilotErrorText(m.reason));
+      return;
+    }
+    if (m.stage === "cancelled") {
+      stopElapsed();
+      $("progress").hidden = true;
+      setStatus("", "Cancelado");
+      $("send").disabled = false; $("regen").disabled = false;
+      return;
+    }
+    showStage(m.stage);
+    if (m.stage === "waiting") setStatus("busy", "Copilot está escribiendo…");
+    if (m.stage === "done") setStatus("ok", Number($("versions").value) > 1 && mode === "reply"
+      ? "Respuesta recibida: elige una versión en la ventana nueva"
+      : "Respuesta recibida: se abre el correo");
+  });
+  $("cancel").addEventListener("click", () => {
+    if (!currentToken) return;
+    $("cancel").disabled = true;
+    messenger.runtime.sendMessage({ type: "cancelCopilot", token: currentToken }).catch(() => {})
+      .finally(() => { $("cancel").disabled = false; });
+  });
+
   // Envío, compartido por "Enviar a Copilot" y "Regenerar" (este último fuerza chat nuevo).
   const doSend = async (forceNewChat) => {
     $("send").disabled = true;
     $("regen").disabled = true;
     setStatus("busy", "Enviando a Copilot…");
+    const requestId = "c" + Date.now() + Math.floor(Math.random() * 1e6);
+    currentToken = mode === "create" ? requestId : String(message.id);
+    showStage("opening");
     let res;
     try {
       const agentId = $("agent").value;
       const agentLabel = agentId && $("agent").selectedOptions[0] ? $("agent").selectedOptions[0].dataset.label || "" : "";
       await messenger.storage.local.set({ lastAgentId: agentId });
-      // Primera línea distintiva para que Copilot titule el chat con fecha/hora y asunto, en vez de
-      // resumir la guía anti-inyección (que hacía que todos los chats se titularan "Seguridad").
-      const now = new Date();
-      const p2 = (n) => String(n).padStart(2, "0");
-      const stamp = `${now.getFullYear()}_${p2(now.getMonth() + 1)}_${p2(now.getDate())}_${p2(now.getHours())}_${p2(now.getMinutes())}`;
-      const kind = mode === "create" ? "Creacion" : "Preguntar";
-      // Título: el que escriba el usuario o, si lo deja vacío, el asunto (respuesta) o el brief (creación).
+      // Título del chat: el que escriba el usuario o, si lo deja vacío, el asunto (respuesta) o el brief (creación).
       const userTitle = ($("chat-title").value || "").trim();
-      const asunto = (userTitle || (mode === "create" ? $("create-brief").value : ((message && message.subject) || "")))
-        .trim().replace(/\s+/g, " ").slice(0, 60);
-      const chatTitle = `${stamp} ${kind}${asunto ? ": " + asunto : ""}`;
+      const asunto = userTitle || (mode === "create" ? $("create-brief").value : ((message && message.subject) || ""));
+      const title = chatTitle(mode === "create" ? "Creacion" : "Preguntar", asunto);
       const base = {
-        type: "sendToCopilot", prompt: chatTitle + "\n\n" + $("prompt").value,
-        newChat: forceNewChat || $("newChat").checked,
+        type: "sendToCopilot", prompt: title + "\n\n" + $("prompt").value,
+        newChat: forceNewChat || $("newChat").checked, title: (message && message.subject) || "",
         agentId, agentLabel, includeSignature: $("includeSignature").checked
       };
       if (mode === "create") {
-        const requestId = "c" + Date.now() + Math.floor(Math.random() * 1e6);
         res = await messenger.runtime.sendMessage({
           ...base, mode: "create", requestId,
           to: ($("recipient-to").value || "").trim(),
@@ -374,17 +431,23 @@
           bcc: ($("recipient-bcc").value || "").trim()
         });
       } else {
-        res = await messenger.runtime.sendMessage({ ...base, mode: "reply", messageId: message.id, includeQuote: $("includeQuote").checked });
+        res = await messenger.runtime.sendMessage({ ...base, mode: "reply", messageId: message.id,
+          includeQuote: $("includeQuote").checked, versions: Number($("versions").value) || 1 });
       }
     } catch (e) {
       res = { ok: false, reason: e && e.message ? e.message : String(e) };
     }
     if (res && res.ok) {
-      setStatus("ok", "Enviado; se abrirá la respuesta");
       $("regen").hidden = false;
+    } else if (res && res.reason === "cancelled") {
+      $("progress").hidden = true;
+      setStatus("", "Cancelado");
     } else {
-      try { await navigator.clipboard.writeText($("prompt").value); } catch (_) {}
-      setStatus("err", "No se pudo enviar; prompt copiado al portapapeles");
+      stopElapsed();
+      $("cancel").hidden = true;
+      let copied = false;
+      try { await navigator.clipboard.writeText($("prompt").value); copied = true; } catch (_) {}
+      setStatus("err", copilotErrorText(res && res.reason) + (copied ? " (Prompt copiado al portapapeles.)" : ""));
     }
     $("send").disabled = false;
     $("regen").disabled = false;

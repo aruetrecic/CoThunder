@@ -2,7 +2,7 @@
   color-scheme: light dark;
   --border: color-mix(in srgb, currentColor 28%, transparent);
   --accent: #1a5fb4;
-  --accent-2: #1a9c7a;
+  --accent-2: #137a5f;   /* verde con texto blanco ≥ 4.5:1 (el anterior, #1a9c7a, daba 3.45) */
 }
 * { box-sizing: border-box; }
 /* Texto de ejemplo de los campos con contraste suficiente también en oscuro (WCAG ≥ 4.5:1). */
@@ -173,4 +173,30 @@ textarea.invalid { border-color: #c01c28; }
 @media (prefers-color-scheme: dark) {
   .hint.err, .count.over { color: #ff7b72; }
   textarea.invalid { border-color: #ff7b72; }
+}
+
+/* «Más opciones»: plegable con el mismo aspecto que los campos. */
+.more { flex: none; border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px 8px; }
+.more > summary { cursor: pointer; font-size: 12px; font-weight: 700; padding: 4px 0; opacity: .85; }
+.more[open] > summary { margin-bottom: 6px; }
+.more > .grid4, .more > .field { margin-top: 8px; }
+.tabpanel > .more { flex: none; }
+
+/* Progreso de la petición: pasos con estado, tiempo de espera y Cancelar. */
+.progress { flex: none; display: flex; align-items: center; gap: 10px; font-size: 12px;
+  padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.progress[hidden] { display: none; }
+.steps { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 0; list-style: none; flex: 1; }
+.steps li { display: flex; align-items: center; gap: 5px; opacity: .7; }
+.steps li::before { content: ""; width: 9px; height: 9px; border-radius: 50%; border: 2px solid currentColor; flex: none; }
+.steps li.active { opacity: 1; font-weight: 700; }
+.steps li.active::before { border-color: #e5a50a; background: #e5a50a; }
+.steps li.done { opacity: 1; }
+.steps li.done::before { border-color: #26a269; background: #26a269; }
+#cancel { flex: none; padding: 4px 10px; font: inherit; color: inherit; background: transparent;
+  border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+#cancel:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  .steps li.active::before { animation: ct-pulse 1.2s ease-in-out infinite; }
+  @keyframes ct-pulse { 50% { opacity: .35; } }
 }

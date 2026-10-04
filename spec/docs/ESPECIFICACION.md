@@ -2,7 +2,7 @@
 
 Extensión MailExtension para Thunderbird 140 o superior. Lee el correo abierto, monta un prompt editable con su contenido y lo envía a la web de **Microsoft 365 Copilot** automatizando el chat con la sesión que el usuario ya tiene iniciada. No usa ninguna API ni clave: pilota la interfaz web de Copilot mediante un content script.
 
-Versión de esta especificación: 2.14.0. Corresponde a la versión 2.14.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25). La 2.10 añade al editor un menú para insertar plantillas de formato (ver §26). La 2.11 lee el código fuente por bloques y añade «Ordenar» (ver §27). La 2.12 garantiza contraste WCAG AA en temas e interfaz (ver §28). La 2.13 quita los pies con datos personales de plantillas y prompts (ver §29). La 2.14 hace la barra del editor manejable con el teclado y la adapta al tema oscuro (ver §30).
+Versión de esta especificación: 2.15.0. Corresponde a la versión 2.15.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25). La 2.10 añade al editor un menú para insertar plantillas de formato (ver §26). La 2.11 lee el código fuente por bloques y añade «Ordenar» (ver §27). La 2.12 garantiza contraste WCAG AA en temas e interfaz (ver §28). La 2.13 quita los pies con datos personales de plantillas y prompts (ver §29). La 2.14 hace la barra del editor manejable con el teclado y la adapta al tema oscuro (ver §30). La 2.15 añade acciones de un clic, resúmenes, varias versiones, idioma de respuesta, «Mejorar con Copilot», progreso con Cancelar, aviso de sesión caducada, diagnóstico, iconos SVG, asistente de bienvenida y ayuda integrada (ver §31).
 
 Plataforma objetivo: Thunderbird ESR 140 (probado en 140.11.1), **Manifest V3**. Decisión explícita del proyecto; ver §2 y el riesgo asociado en §15.
 
@@ -30,7 +30,7 @@ Qué no hace:
 - API WebExtension de Thunderbird via el objeto global `messenger`.
 - Background como **event page** (`background: { scripts: [...] }`; Thunderbird/Firefox usan event pages en MV3, no service workers). En MV3 el background es no persistente por definición: **no declarar `persistent`** (da advertencia). Consecuencia: el estado en memoria (p. ej. el id de la ventana de Copilot) puede perderse cuando el background se descarga; hay que persistirlo (`storage.session`/`storage.local`) y reconstruirlo.
 - **Registro del content script en runtime**, no declarativo: en MV3 no existe el key `content_scripts`. Se registra desde el background con la API de scripting disponible en la plataforma (`scripting.registerContentScripts` o, en su defecto, `contentScripts.register`). Requiere el permiso correspondiente (`scripting`) y el host permission de Copilot. **A validar en el spike (§15.1).**
-- Permisos: `accountsRead` (carpetas/plantillas), `messagesRead`, `compose`, `storage`, `scripting`, `notifications` (aviso si falla la captura), y `host_permissions` con el dominio de Microsoft 365 Copilot (no `<all_urls>`: el destino es un dominio fijo y configurable). En MV3 `host_permissions` es un key separado de `permissions`.
+- Permisos: `accountsRead` (carpetas/plantillas), `messagesRead`, `compose`, `storage`, `scripting`, `notifications` (aviso si falla la captura), `menus` (menú contextual «CoThunder», §31.1), y `host_permissions` con el dominio de Microsoft 365 Copilot (no `<all_urls>`: el destino es un dominio fijo y configurable). En MV3 `host_permissions` es un key separado de `permissions`.
 - El content script solo actúa sobre páginas cargadas en **pestañas**; Copilot debe abrirse como pestaña o como ventana que aloje una pestaña web (ver §8.1).
 - JavaScript vanilla, `"use strict"` en todos los ficheros. Sin dependencias externas en runtime.
 
@@ -499,3 +499,63 @@ Probado en Edge headless con un editor simulado: navegación, `aria-expanded`, i
 
 - La clasificación de plantillas por asunto vive solo en `common.js`: `formatTemplates(list, { sort })` y `promptTemplates(list, mode)`, con tests. La usan la ventana (desplegables, en el orden de las carpetas) y el menú 📄 del editor (por orden alfabético).
 - La lista blanca del `.xpi` vive solo en `scripts/build.sh` (`npm run build`), que usan la skill de empaquetado y `release.yml`.
+
+## 31. Productividad, robustez y ayuda (v2.15)
+
+### 31.1 Acciones de un clic (menú contextual)
+
+Menú **CoThunder** en los contextos `message_list` (clic derecho sobre la lista de mensajes) y `message_display_action` (clic derecho sobre el botón del visor): *Resumir con Copilot*, *Responder aceptando*, *Responder declinando*, *Acusar recibo* (`QUICK_ACTIONS`, `common.js`), *Responder con mi prompt* (submenú con las plantillas `Prompt - …`, rellenado en `menus.onShown`), *Abrir la ventana de CoThunder…* y *Ayuda*. Con varios mensajes seleccionados solo queda activa la de resumir (las de respuesta se desactivan).
+
+Las acciones no abren la ventana: `quickAction` (background) monta el prompt con los ajustes guardados (`lastAgentId`, `prefTone`, `prefLength`, `prefSignature`, `prefQuote`), el idioma detectado del correo (§31.4) y `newChatByDefault`, avisa con una notificación y la respuesta sigue el flujo normal (§17).
+
+**Permiso nuevo: `menus`.** Solo añade entradas a menús contextuales de Thunderbird; no da acceso a datos nuevos (los mensajes se leen con `messagesRead`, como hasta ahora). El background rehace el menú en cada arranque del event page (`menus.removeAll` + `create` con ids fijos), así no hay duplicados.
+
+### 31.2 Resúmenes
+
+`buildSummaryPrompt(messages, opts)` (`common.js`, con tests): guarda anti-inyección, perfil del autor, instrucción de resumen (uno: lo esencial, peticiones, plazos y si requiere respuesta; varios: una línea por correo y lista «Pendiente de responder» por urgencia) y salida en un bloque ```markdown. Máximo **10 correos** (`SUMMARY_MAX_MESSAGES`) y **3.000 caracteres** por correo (`SUMMARY_MSG_CHARS`); los cuerpos pasan por `extractBody` (sin firmas, §29). El resultado se abre en `pages/result.html` (`kind: "summary"`) con *Copiar* (Markdown) y, si es un solo correo, *Responder…* (abre la ventana de CoThunder para ese mensaje). Modo de token `summary` (prefijo `s`).
+
+### 31.3 Varias versiones
+
+En la ventana (solo respuesta), *Más opciones › Versiones* = 1, 2 o 3. Con más de una, `buildComposedPrompt` sustituye `MARKDOWN_INSTRUCTION` por `versionsInstruction(n)`: todas las versiones en **un único** bloque de código, cada una precedida de una línea `=== VERSIÓN n ===`. Al llegar, `splitVersions` (con tests) las separa; si hay más de una, se abre `pages/result.html` (`kind: "versions"`) con una pestaña por versión (patrón *tabs* accesible) y *Usar esta versión* → `useVersion` → `openReplyWithText`. Si solo llega una, se abre directamente y se anota en el diagnóstico (`versiones-sin-separar`).
+
+### 31.4 Idioma de la respuesta
+
+`detectLanguage(text)` (`common.js`, con tests): cuenta palabras vacías frecuentes de es, en, fr, de, pt e it; exige al menos 8 palabras, 3 coincidencias y un 30 % de ventaja sobre el segundo idioma; si no, devuelve "" y se mantiene la instrucción base («en el mismo idioma del mensaje»). La ventana muestra *Responder en: Como el correo (inglés)* con opción de forzar otro; `buildComposedPrompt` añade «Escribe la respuesta en …» + `CREATE_LANGS`. Las acciones de un clic usan siempre el detectado. Se añaden portugués e italiano también al modo creación.
+
+### 31.5 «Mejorar con Copilot» en el editor
+
+Menú ✨ de la barra del editor (§22) con `IMPROVE_ACTIONS` (`common.js`): más formal, más cercano, más corto, desarrollar, corregir, traducir al inglés y al español; el editor pide la lista al background (`listImproveActions`), así hay una sola definición. Flujo: el compose script lee la selección como Markdown (`nodesToMarkdown` sobre `range.cloneContents()`), guarda el rango y envía `improveText { action, text }`; el background monta `buildImprovePrompt` (fragmento delimitado, con la orden de no obedecer instrucciones dentro del texto) y lanza la petición con token `i…` y `opts { mode: "improve", tabId }`. La respuesta vuelve a esa pestaña con `cothunder-improved { token, text }` (vallas de código quitadas con `stripCodeFences`) y sustituye el rango con `execCommand("insertHTML")` (un `<p>` por bloque, `sourceBlocksHtml`), deshacible con Ctrl+Z. Una sola mejora a la vez; estados en una línea `role="status"` de la barra.
+
+**Flujo de datos:** solo el texto seleccionado por el usuario (su propio borrador) viaja a Copilot, el mismo destino de siempre.
+
+### 31.6 Progreso y Cancelar
+
+`startCopilotRequest` (background) es ahora el camino único de todas las peticiones (ventana, menú, editor). Emite `copilotProgress { token, stage }`: `opening` (background), `typing`, `waiting`, `done` (content script) y `error`/`cancelled` con `reason`. La ventana muestra los cuatro pasos, los segundos de espera y **Cancelar** → `cancelCopilot`: el background marca `cancel_<token>` en `storage.session` (corta `deliverWithRetry` y descarta la respuesta) y envía `cancelPrompt` al content script, que deja de esperar y pulsa el botón *Detener* de Copilot si lo encuentra (`SELECTORS.stopButton`). Los mensajes de error para el usuario están en `COPILOT_ERRORS` (`common.js`).
+
+### 31.7 Sesión caducada
+
+Dos señales: (1) en `deliverWithRetry`, si la pestaña de Copilot está `complete` pero su URL no es legible durante más de 3 s, ha salido del dominio con permiso, es decir, a la página de inicio de sesión de Microsoft; (2) en el content script, si no aparece el editor y hay un enlace o botón de inicio de sesión (`SELECTORS.signIn`). En ambos casos `reason: "login"`: se trae al frente la ventana de Copilot y se dice al usuario que inicie sesión y repita. No requiere el permiso `tabs`.
+
+### 31.8 Diagnóstico técnico
+
+`diag(ev, detail)` (background) guarda en `storage.local.diagLog` (máximo 200) `{ ts, v, ev, detail }`: selector no encontrado (editor, enviar, chat nuevo, respuesta), agente no encontrado, sin sesión, envío fallido con su motivo, captura vacía, tiempo de respuesta. `detail` se recorta a 120 caracteres y **nunca** contiene asuntos, direcciones ni texto de correos o respuestas. Opciones › Diagnóstico muestra el número de entradas, lo copia al portapapeles (con versión y navegador) y lo vacía.
+
+### 31.9 Iconos SVG en la barra del editor
+
+Los botones con emoji pasan a iconos SVG propios de 16×16 (`ICONS`, `content-compose.js`) creados con `createElementNS`, con trazo `currentColor` (siguen el tema claro/oscuro de §30.2). Los menús siguen mostrando texto. Añade el botón **?** (ayuda del editor) y el menú ✨ (§31.5).
+
+### 31.10 Asistente de bienvenida
+
+`pages/welcome.html` se abre en una pestaña **solo al instalar** (`onInstalled`, `reason: "install"`) y desde la ayuda u Opciones: abre Copilot (`openCopilot`), comprueba la sesión (`checkCopilot`: `closed`/`login`/`loading`/`ok` + agentes, vía `checkSession` en el content script), elige el tema por defecto (`emailTheme`) y el agente por defecto (`lastAgentId`).
+
+### 31.11 Ventana más compacta
+
+En la pestaña ⚙️ Opciones, lo menos usado (tono, longitud, idioma, versiones y título del chat) va en un `<details>` **Más opciones**; la ventana recuerda si quedó abierto (`localStorage`), además del tamaño y la pestaña, como antes. El botón *Regenerar* pasa a un verde con contraste AA (#137a5f).
+
+### 31.12 Ayuda integrada
+
+`pages/help.html` explica todas las funciones, con índice, búsqueda sin tildes (`help.js`) y anclas por sección. Se abre desde el botón **?** de la ventana (y `F1`, en la sección del modo), el **?** del editor (`openHelp` → `#editor`), el menú contextual, Opciones y el asistente. Opciones deja de llevar la guía larga y enlaza a la ayuda.
+
+### 31.13 Ficheros y pruebas
+
+Nueva carpeta `pages/` (`pages.css`, `help.*`, `result.*`, `welcome.*`), incluida en la lista blanca de `scripts/build.sh`; `scripts/check.sh` comprueba sus referencias. Pruebas: `test/features.test.js` (idioma, versiones, vallas, resumen, mejorar, título del chat, errores). Todas las páginas nuevas y la ventana pasan `scripts/a11y-ui-audit.js` en claro y oscuro (Edge headless con `messenger` simulado); la barra del editor y «Mejorar» se probaron igual, incluido Ctrl+Z.

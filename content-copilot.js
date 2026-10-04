@@ -6,8 +6,24 @@ const SELECTORS = {
   sendButton: "button.fai-SendButton, button.fai-ChatInput__send",
   newChat: '[data-testid="newChatButton"]',
   reply: '[data-testid="markdown-reply"]',                    // texto de la respuesta del asistente (el último)
-  loading: '[data-testid="loading-message"]'                 // presente mientras Copilot genera
+  loading: '[data-testid="loading-message"]',                // presente mientras Copilot genera
+  // Botón "Detener" mientras genera (para Cancelar). Si no se encuentra, se deja terminar.
+  stopButton: 'button[data-testid="stopGeneratingButton"], button.fai-StopButton, button[aria-label*="Detener"], button[aria-label*="Stop"]',
+  // Indicios de que no hay sesión: botón o enlace de inicio de sesión de Microsoft en la página.
+  signIn: 'a[href*="login.microsoftonline.com"], a[href*="login.live.com"], button[data-testid="signInButton"], #mectrl_headerPicture[aria-label*="Iniciar"]'
 };
+
+// Avisos al background y a la ventana de CoThunder: progreso de una petición y diagnóstico técnico
+// (solo qué paso o selector falló; nunca el texto del correo ni de la respuesta).
+function progress(token, stage, extra) {
+  messenger.runtime.sendMessage(Object.assign({ type: "copilotProgress", token, stage }, extra || {})).catch(() => {});
+}
+function diag(ev, detail) {
+  messenger.runtime.sendMessage({ type: "diag", ev, detail: String(detail || "").slice(0, 120) }).catch(() => {});
+}
+// Tokens cancelados por el usuario: la espera de la respuesta se corta y no se abre nada.
+const cancelled = new Set();
+const signInVisible = () => !!document.querySelector(SELECTORS.signIn);
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -164,7 +180,7 @@ function extractReplyText(el) {
 }
 
 // Espera a que la respuesta del asistente aparezca (nodo nuevo o texto cambiado) y su texto se estabilice.
-function waitForReply(baselineCount, baselineText, timeoutMs = 120000) {
+function waitForReply(baselineCount, baselineText, token, timeoutMs = 120000) {
   return new Promise((resolve) => {
     const start = Date.now();
     let last = "";
@@ -176,6 +192,7 @@ function waitForReply(baselineCount, baselineText, timeoutMs = 120000) {
       return appeared && e ? extractReplyText(e) : "";
     };
     const tick = setInterval(() => {
+      if (cancelled.has(token)) { clearInterval(tick); resolve(null); return; }
       const nodes = document.querySelectorAll(SELECTORS.reply);
       const el = nodes[nodes.length - 1];
       const text = el ? el.textContent.trim() : "";
@@ -186,7 +203,11 @@ function waitForReply(baselineCount, baselineText, timeoutMs = 120000) {
         last = text;
         stableSince = Date.now();
       }
-      if (Date.now() - start > timeoutMs) { clearInterval(tick); resolve(finish()); }
+      if (Date.now() - start > timeoutMs) {
+        clearInterval(tick);
+        diag("timeout-respuesta", appeared ? "texto sin estabilizar" : "sin respuesta nueva (" + SELECTORS.reply + ")");
+        resolve(finish());
+      }
     }, 500);
   });
 }
@@ -199,23 +220,46 @@ messenger.runtime.onMessage.addListener(async (msg) => {
     if (agents.length) messenger.storage.local.set({ agents }).catch(() => {});
     return { agents };
   }
+  if (msg.type === "cancelPrompt") {
+    cancelled.add(msg.token);
+    const stop = document.querySelector(SELECTORS.stopButton);
+    if (stop) stop.click();
+    return { ok: true };
+  }
+  if (msg.type === "checkSession") {
+    return { ok: true, editor: !!document.querySelector(SELECTORS.editor), signIn: signInVisible() };
+  }
   if (msg.type !== "sendPrompt") return;
+  const token = msg.messageId;
+  progress(token, "typing");
   if (msg.agentId || msg.agentLabel) {
-    selectAgent(msg.agentId, msg.agentLabel);
+    if (!selectAgent(msg.agentId, msg.agentLabel)) diag("agente-no-encontrado", msg.agentId || "por nombre");
     await delay(1500);
   } else if (msg.newChat) {
-    await startNewChat();
+    if (!(await startNewChat())) diag("selector-no-encontrado", "newChat " + SELECTORS.newChat);
   }
-  if (!(await typeIntoEditor(msg.prompt))) return { ok: false, reason: "no-editor" };
+  if (cancelled.has(token)) return { ok: false, reason: "cancelled" };
+  if (!(await typeIntoEditor(msg.prompt))) {
+    // Sin editor: o no hay sesión (página de inicio de sesión) o Microsoft ha cambiado la interfaz.
+    if (signInVisible()) { diag("sin-sesion", "aviso de inicio de sesión en la página"); return { ok: false, reason: "login" }; }
+    diag("selector-no-encontrado", "editor " + SELECTORS.editor);
+    return { ok: false, reason: "no-editor" };
+  }
   const baseNodes = document.querySelectorAll(SELECTORS.reply);
   const baseline = baseNodes.length;
   const baselineText = baseline ? baseNodes[baseline - 1].textContent.trim() : "";
   await delay(300);
-  if (!clickSend()) return { ok: false, reason: "no-send" };
-  // Fase 2: en segundo plano, espera la respuesta y la devuelve con su messageId (para no cruzar correos).
-  const replyToMessageId = msg.messageId;
-  waitForReply(baseline, baselineText).then((text) => {
-    messenger.runtime.sendMessage({ type: "copilotReply", text, messageId: replyToMessageId }).catch(() => {});
+  if (cancelled.has(token)) return { ok: false, reason: "cancelled" };
+  if (!clickSend()) { diag("selector-no-encontrado", "enviar " + SELECTORS.sendButton); return { ok: false, reason: "no-send" }; }
+  progress(token, "waiting");
+  // Fase 2: en segundo plano, espera la respuesta y la devuelve con su token (para no cruzar correos).
+  const started = Date.now();
+  waitForReply(baseline, baselineText, token).then((text) => {
+    if (text === null) { progress(token, "cancelled"); return; }
+    if (text) diag("ok", "respuesta en " + Math.round((Date.now() - started) / 1000) + " s");
+    else if (!document.querySelector(SELECTORS.reply)) diag("selector-no-encontrado", "respuesta " + SELECTORS.reply);
+    progress(token, text ? "done" : "error", text ? null : { reason: "capture" });
+    messenger.runtime.sendMessage({ type: "copilotReply", text, messageId: token }).catch(() => {});
   });
   return { ok: true };
 });

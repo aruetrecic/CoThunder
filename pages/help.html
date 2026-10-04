@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ayuda de CoThunder</title>
+<link rel="stylesheet" href="pages.css">
+<style>
+  .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; align-items: start; }
+  nav.toc { position: sticky; top: 12px; font-size: 13px; }
+  nav.toc ol { list-style: none; margin: 8px 0 0; padding: 0; }
+  nav.toc li { margin: 1px 0; }
+  nav.toc a { display: block; padding: 3px 8px; border-radius: 6px; color: inherit; text-decoration: none; }
+  nav.toc a:hover { background: var(--soft); }
+  #q { width: 100%; }
+  #noresults[hidden] { display: none; }
+  section[hidden] { display: none; }
+  @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } nav.toc { position: static; } }
+</style>
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <img src="../icon.svg" alt="">
+    <div class="grow">
+      <h1>Ayuda de CoThunder</h1>
+      <div class="muted">Thunderbird + Microsoft 365 Copilot, sin API ni claves.</div>
+    </div>
+    <button type="button" id="openOptions">Opciones</button>
+    <button type="button" id="openWelcome">Asistente de bienvenida</button>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Índice de la ayuda">
+      <label for="q" class="muted">Buscar en la ayuda</label>
+      <input type="search" id="q" placeholder="Ej.: versiones, firma, Alt+F10">
+      <ol>
+        <li><a href="#inicio">Primeros pasos</a></li>
+        <li><a href="#ventana">Responder a un correo</a></li>
+        <li><a href="#crear">Crear un correo nuevo</a></li>
+        <li><a href="#menu">Acciones de un clic</a></li>
+        <li><a href="#resumen">Resúmenes</a></li>
+        <li><a href="#versiones">Varias versiones</a></li>
+        <li><a href="#idioma">Idioma de la respuesta</a></li>
+        <li><a href="#progreso">Progreso y Cancelar</a></li>
+        <li><a href="#editor">Editor Markdown</a></li>
+        <li><a href="#mejorar">Mejorar con Copilot</a></li>
+        <li><a href="#plantillas">Prompts y Formatos</a></li>
+        <li><a href="#temas">Temas del correo</a></li>
+        <li><a href="#agentes">Agentes</a></li>
+        <li><a href="#perfil">Sobre ti</a></li>
+        <li><a href="#atajos">Atajos de teclado</a></li>
+        <li><a href="#privacidad">Privacidad</a></li>
+        <li><a href="#problemas">Problemas y soluciones</a></li>
+      </ol>
+    </nav>
+
+    <main id="content">
+      <p id="noresults" class="note" hidden>No hay ninguna sección con ese texto. Prueba con otra palabra.</p>
+
+      <section id="inicio">
+        <h2>Primeros pasos</h2>
+        <p class="lead">CoThunder lee el correo, monta un prompt que puedes revisar, se lo pasa a <strong>Microsoft 365 Copilot</strong> con tu sesión y trae la respuesta a una ventana de redacción, ya maquetada.</p>
+        <p>Tienes tres puntos de entrada:</p>
+        <ul>
+          <li><strong>Preguntar a Copilot</strong>: botón en la barra del <strong>visor de un mensaje</strong>. Responde al correo abierto.</li>
+          <li><strong>Crear desde Copilot</strong>: botón en la <strong>barra principal</strong>. Redacta un correo nuevo desde cero.</li>
+          <li><strong>Menú CoThunder</strong>: clic derecho sobre uno o varios correos de la lista (o sobre el botón del visor). Acciones de un clic sin abrir ninguna ventana.</li>
+        </ul>
+        <p>Requisito: <strong>sesión iniciada en Microsoft 365 Copilot</strong>. La primera vez se abre su ventana para que entres; déjala abierta. El <a href="welcome.html">asistente de bienvenida</a> comprueba que todo está listo.</p>
+      </section>
+
+      <section id="ventana">
+        <h2>Responder a un correo</h2>
+        <ol>
+          <li>Abre el correo y pulsa <strong>Preguntar a Copilot</strong>.</li>
+          <li>En la pestaña <strong>⚙️ Opciones</strong> elige, si quieres, <strong>Agente</strong>, <strong>Prompt</strong> (qué hacer) y <strong>Formato</strong> (estructura).</li>
+          <li>En <strong>Más opciones</strong> (plegable; la ventana recuerda si lo dejaste abierto): <strong>Tono</strong>, <strong>Longitud</strong>, <strong>Responder en</strong> (idioma), <strong>Versiones</strong> y <strong>Título del chat</strong>.</li>
+          <li>Casillas: <strong>Empezar chat nuevo</strong>, <strong>Incluir mi firma</strong>, <strong>Incluir el correo citado</strong> e <strong>Incluir el hilo</strong> (mensajes anteriores como contexto).</li>
+          <li>En <strong>📜 Prompt</strong> ves y puedes editar exactamente lo que se enviará. Un contador avisa si es tan largo que Copilot podría cortarlo.</li>
+          <li>Pulsa <strong>Enviar a Copilot</strong> o <kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Verás el <a href="#progreso">progreso</a> paso a paso.</li>
+          <li>Se abre la respuesta al remitente, con tu firma si la marcaste. <strong>Regenerar</strong> pide otra versión en un chat nuevo.</li>
+        </ol>
+        <p>Si el correo intenta manipular a la IA (por ejemplo, «ignora las instrucciones anteriores»), la ventana te avisa y el prompt lleva una protección para que Copilot lo trate como datos.</p>
+        <p>La ventana recuerda su tamaño, su posición, la última pestaña y tus preferencias (tono, longitud, firma, cita, hilo, agente). Cambia de pestaña con <kbd>Ctrl</kbd>+<kbd>RePág</kbd>/<kbd>AvPág</kbd>; <kbd>F1</kbd> abre esta ayuda.</p>
+      </section>
+
+      <section id="crear">
+        <h2>Crear un correo nuevo</h2>
+        <ol>
+          <li>Pulsa <strong>Crear desde Copilot</strong> en la barra principal.</li>
+          <li>En <strong>✍️ Redactar</strong>, describe el correo en <strong>¿Qué quieres crear?</strong>. Añade, si quieres, <strong>Contexto / notas</strong> e <strong>Idioma</strong>.</li>
+          <li>En <strong>✉️ Destinatarios</strong>, Para, CC y CCO admiten varias direcciones (una por línea o separadas por comas, también <code>Nombre &lt;correo&gt;</code>). Las no válidas se marcan en rojo y se avisa antes de enviar.</li>
+          <li>Envía. Se abre un correo nuevo con el <strong>asunto</strong> y el <strong>cuerpo</strong> generados y los destinatarios.</li>
+        </ol>
+        <p>En este modo, el selector Prompt muestra tus plantillas <code>Prompt crear - …</code>.</p>
+      </section>
+
+      <section id="menu">
+        <h2>Acciones de un clic (menú CoThunder)</h2>
+        <p>Haz clic derecho sobre un correo de la lista, o sobre el botón <strong>Preguntar a Copilot</strong> del visor, y entra en <strong>CoThunder</strong>:</p>
+        <table>
+          <thead><tr><th>Acción</th><th>Qué hace</th></tr></thead>
+          <tbody>
+            <tr><td>Resumir con Copilot</td><td>Abre una ventana con el resumen: lo esencial, lo que te piden, plazos y si requiere respuesta. Con varios correos seleccionados, un único resumen de todos (hasta 10) y lo que queda pendiente de responder.</td></tr>
+            <tr><td>Responder aceptando</td><td>Respuesta afirmativa y cordial, con los siguientes pasos.</td></tr>
+            <tr><td>Responder declinando</td><td>Negativa respetuosa, con el motivo y una alternativa si cabe.</td></tr>
+            <tr><td>Acusar recibo</td><td>Confirma que lo has recibido y da un plazo aproximado.</td></tr>
+            <tr><td>Responder con mi prompt</td><td>Submenú con tus plantillas <code>Prompt - …</code>.</td></tr>
+            <tr><td>Abrir la ventana de CoThunder…</td><td>La ventana completa, para ajustar antes de enviar.</td></tr>
+          </tbody>
+        </table>
+        <p>Las acciones usan tus últimos ajustes (agente, tono, longitud, firma y cita) y responden en el <a href="#idioma">idioma del correo</a>. Una notificación confirma que se ha enviado; la respuesta se abre sola al llegar.</p>
+      </section>
+
+      <section id="resumen">
+        <h2>Resúmenes</h2>
+        <p>El resumen se abre en una ventana propia, maquetado, con dos botones: <strong>Copiar</strong> (el Markdown, para pegarlo donde quieras) y, si es de un solo correo, <strong>Responder…</strong>, que abre la ventana de CoThunder para ese correo.</p>
+        <p>Cada correo se recorta a 3.000 caracteres para el resumen; tu firma no se envía (ver <a href="#privacidad">privacidad</a>).</p>
+      </section>
+
+      <section id="versiones">
+        <h2>Varias versiones</h2>
+        <p>En <strong>Más opciones › Versiones</strong> elige <strong>Dos</strong> o <strong>Tres</strong>. Copilot escribe varias respuestas con enfoques distintos y se abre una ventana para compararlas: una pestaña por versión, con la vista maquetada. Pulsa <strong>Usar esta versión</strong> y se abre la respuesta con ella.</p>
+        <p>Si Copilot devolviera una sola, se abre directamente.</p>
+      </section>
+
+      <section id="idioma">
+        <h2>Idioma de la respuesta</h2>
+        <p>CoThunder detecta el idioma del correo (español, inglés, francés, alemán, portugués o italiano) y pide a Copilot que responda en él. En <strong>Más opciones › Responder en</strong> verás «Como el correo (inglés)», por ejemplo; cámbialo si quieres contestar en otro idioma. Si el correo es muy corto para saberlo, Copilot sigue la instrucción base («en el mismo idioma del mensaje»).</p>
+      </section>
+
+      <section id="progreso">
+        <h2>Progreso y Cancelar</h2>
+        <p>Al enviar, la ventana muestra cuatro pasos: <strong>Abriendo Copilot → Escribiendo el prompt → Esperando la respuesta</strong> (con los segundos que lleva) <strong>→ Respuesta recibida</strong>. <strong>Cancelar</strong> detiene la petición: no se abre ninguna redacción y, si Copilot estaba escribiendo, se le pide que pare.</p>
+        <p>Si no has iniciado sesión, CoThunder lo detecta, deja la ventana de Copilot delante y te lo dice. Inicia sesión y vuelve a pulsar Enviar.</p>
+      </section>
+
+      <section id="editor">
+        <h2>Editor Markdown</h2>
+        <p>En la ventana de redacción escribes Markdown a la izquierda y ves el correo maquetado a la derecha; al enviar sale ya con formato. Se activa y desactiva con el botón <strong>Editor Markdown</strong> o con <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>M</kbd>.</p>
+        <h3>La barra</h3>
+        <ul>
+          <li><strong>H ▾</strong> títulos 1 a 6 · <strong>B</strong> negrita · <strong>I</strong> cursiva · <strong>S</strong> tachado · resaltado · <strong>&lt;/&gt;</strong> código · <strong>Aa ▾</strong> negrita+cursiva, subíndice, superíndice.</li>
+          <li>Enlace, cita, lista, lista numerada y tarea.</li>
+          <li><strong>Insertar ▾</strong>: imagen, emoji, tabla, bloque de código, regla, lista de definición y nota al pie. <strong>Avisos ▾</strong>: nota, consejo, importante, advertencia y precaución.</li>
+          <li><strong>Ordenar</strong> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>): alinea tablas, tabula listas y separa bloques sin cambiar el resultado. Se deshace con <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</li>
+          <li><strong>Mejorar con Copilot ▾</strong>: ver <a href="#mejorar">abajo</a>.</li>
+          <li><strong>Plantillas ▾</strong>: inserta tus plantillas de formato en el cursor.</li>
+          <li><strong>Estilo ▾</strong>: cambia el tema de este correo (el predeterminado se elige en Opciones). <strong>?</strong> abre esta sección.</li>
+        </ul>
+        <h3>Con el teclado</h3>
+        <p><kbd>Alt</kbd>+<kbd>F10</kbd> lleva a la barra. Las flechas izquierda y derecha pasan de un botón a otro; <kbd>Enter</kbd> o flecha abajo abre un menú y las flechas arriba y abajo recorren sus opciones. <kbd>Escape</kbd> vuelve atrás: al botón y después al texto, con el cursor donde estaba.</p>
+        <h3>Bueno saber</h3>
+        <ul>
+          <li>Tu <strong>firma</strong> y el <strong>correo citado</strong> se conservan tal cual, con su formato.</li>
+          <li>Puedes escribir cada línea de una lista o de una tabla con Enter: se unen en una sola.</li>
+          <li>Al pegar desde una web o desde otro correo, el formato se convierte a Markdown.</li>
+          <li>Si Thunderbird está en tema oscuro, la barra también. La vista previa sigue en blanco: es el correo tal como lo verá el destinatario.</li>
+        </ul>
+      </section>
+
+      <section id="mejorar">
+        <h2>Mejorar con Copilot (en el editor)</h2>
+        <p>Selecciona un trozo de tu borrador y elige en el menú <strong>Mejorar con Copilot</strong>: <strong>Más formal</strong>, <strong>Más cercano</strong>, <strong>Más corto</strong>, <strong>Desarrollar</strong>, <strong>Corregir</strong>, <strong>Traducir al inglés</strong> o <strong>Traducir al español</strong>.</p>
+        <p>La barra muestra «Mejorando con Copilot…» y, al llegar, el texto nuevo sustituye a la selección. <kbd>Ctrl</kbd>+<kbd>Z</kbd> lo deshace. Solo se envía a Copilot el texto seleccionado.</p>
+      </section>
+
+      <section id="plantillas">
+        <h2>Prompts y Formatos (plantillas)</h2>
+        <p>Son plantillas normales de Thunderbird (carpeta <em>Plantillas</em> de cualquier cuenta). Se distinguen por el asunto:</p>
+        <ul>
+          <li><code>Prompt - Título</code>: qué hacer al responder (selector Prompt y menú «Responder con mi prompt»).</li>
+          <li><code>Prompt crear - Título</code>: qué hacer al crear un correo nuevo.</li>
+          <li><code>Formato - Título</code> o sin prefijo: estructura de referencia; también se insertan desde el editor.</li>
+        </ul>
+        <p>Para crear una: escribe el mensaje (en Markdown si quieres), pon el prefijo en el asunto y usa <strong>Archivo › Guardar como › Plantilla</strong>. Los huecos tipo <code>[nombre]</code> o <code>[fecha]</code> los rellena Copilot. Al instalar CoThunder se crea una biblioteca de ejemplo.</p>
+      </section>
+
+      <section id="temas">
+        <h2>Temas del correo</h2>
+        <p>En <strong>Opciones › Tema del correo</strong> eliges el tema por defecto (Por defecto, UPO, GitHub, Solarized, Monokai, Dracula, Nord, One Dark…) y el color de acento. Todos cumplen el contraste WCAG AA, también los oscuros. Puedes partir de cualquiera, descargarlo como <code>.css</code> y crear el tuyo en «CSS personalizado». En el editor, <strong>Estilo ▾</strong> cambia el tema solo de ese correo.</p>
+      </section>
+
+      <section id="agentes">
+        <h2>Agentes</h2>
+        <p>CoThunder lista los agentes que tienes <strong>fijados en la barra lateral</strong> de Copilot. Si falta uno, fíjalo en Copilot y pulsa <strong>↻</strong> en la ventana. Se recuerda el último que usaste; también lo usan las acciones de un clic.</p>
+      </section>
+
+      <section id="perfil">
+        <h2>Sobre ti</h2>
+        <p>En <strong>Opciones › Sobre ti</strong> indica nombre, cargo, organización, a qué te dedicas y cómo escribes (tratamiento, tono, despedida). Se añade al prompt para que Copilot adapte el tono y el rol. Copilot termina en la despedida: la firma la pone Thunderbird.</p>
+      </section>
+
+      <section id="atajos">
+        <h2>Atajos de teclado</h2>
+        <table>
+          <thead><tr><th>Dónde</th><th>Atajo</th><th>Qué hace</th></tr></thead>
+          <tbody>
+            <tr><td>Ventana</td><td><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td><td>Enviar a Copilot</td></tr>
+            <tr><td>Ventana</td><td><kbd>Ctrl</kbd>+<kbd>RePág</kbd> / <kbd>AvPág</kbd></td><td>Pestaña anterior / siguiente</td></tr>
+            <tr><td>Ventana</td><td><kbd>F1</kbd></td><td>Abrir esta ayuda</td></tr>
+            <tr><td>Redacción</td><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>M</kbd></td><td>Activar o desactivar el editor Markdown</td></tr>
+            <tr><td>Editor</td><td><kbd>Ctrl</kbd>+<kbd>B</kbd> / <kbd>I</kbd> / <kbd>E</kbd> / <kbd>K</kbd></td><td>Negrita, cursiva, código, enlace</td></tr>
+            <tr><td>Editor</td><td><kbd>Ctrl</kbd>+<kbd>1</kbd> … <kbd>6</kbd></td><td>Título 1 a 6 (cambia el nivel si ya lo era)</td></tr>
+            <tr><td>Editor</td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd></td><td>Ordenar el Markdown</td></tr>
+            <tr><td>Editor</td><td><kbd>Alt</kbd>+<kbd>F10</kbd></td><td>Ir a la barra (flechas, Enter, Escape)</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="privacidad">
+        <h2>Privacidad</h2>
+        <ul>
+          <li>El contenido solo viaja a <strong>Microsoft 365 Copilot</strong>, con tu sesión. Sin API, sin claves, sin telemetría ni terceros.</li>
+          <li><strong>Tu firma no va a Copilot</strong>: se quita del correo leído (también si viene citada) y la añade Thunderbird en local al abrir la respuesta.</li>
+          <li>Con <strong>Mejorar con Copilot</strong> solo se envía el texto que seleccionas; con los resúmenes, los correos elegidos (recortados).</li>
+          <li><strong>Registro de actividad</strong> (opcional, Opciones): solo fecha, modo y número de destinatarios, nunca asuntos, direcciones ni texto.</li>
+          <li><strong>Diagnóstico</strong> (Opciones): guarda en tu equipo qué paso técnico falló (por ejemplo, «no encuentro el botón de enviar») para arreglarlo rápido si Microsoft cambia Copilot. Nunca guarda texto de correos ni respuestas. Puedes copiarlo o vaciarlo.</li>
+        </ul>
+      </section>
+
+      <section id="problemas">
+        <h2>Problemas y soluciones</h2>
+        <table>
+          <thead><tr><th>Qué pasa</th><th>Qué hacer</th></tr></thead>
+          <tbody>
+            <tr><td>«No has iniciado sesión en Microsoft 365 Copilot»</td><td>Entra en la ventana de Copilot que se ha puesto delante y vuelve a pulsar Enviar.</td></tr>
+            <tr><td>«No encuentro el chat de Copilot» o «el botón de enviar»</td><td>Espera a que Copilot termine de cargar y repite. Si sigue, Microsoft puede haber cambiado su web: en <strong>Opciones › Diagnóstico</strong> pulsa <strong>Copiar</strong> y envíalo a quien mantiene CoThunder. Mientras, si enviabas desde la ventana, el prompt queda copiado en el portapapeles para pegarlo a mano en Copilot.</td></tr>
+            <tr><td>Copilot tarda mucho</td><td>El paso «Esperando la respuesta» muestra los segundos. Puedes <strong>Cancelar</strong> y probar con un prompt más corto (sin hilo, por ejemplo).</td></tr>
+            <tr><td>No se capturó la respuesta</td><td>La tienes en la ventana de Copilot: cópiala desde allí.</td></tr>
+            <tr><td>No aparece mi agente</td><td>Fíjalo en la barra lateral de Copilot y pulsa <strong>↻</strong>.</td></tr>
+            <tr><td>El prompt es demasiado largo</td><td>Quita el hilo o recorta el correo en la pestaña Prompt. El primer clic en Enviar avisa; el segundo envía igualmente.</td></tr>
+            <tr><td>No veo el menú CoThunder</td><td>Haz clic derecho sobre un correo de la <strong>lista</strong> de mensajes, no sobre su contenido.</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="help.js"></script>
+</body></html>

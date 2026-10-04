@@ -41,6 +41,9 @@ Valoración: apto para uso interno controlado. Para despliegue amplio en la UPO 
 | Aviso de tratamiento la primera vez | Sí (v2.3) | `popup/` (`privacyAck`) |
 | Registro de actividad local opcional (solo metadatos) | Sí (v2.3) | `background.js` (`logActivity`), Opciones |
 | Correlación por token (no cruza respuestas) | Sí | `background.js`, `content-copilot.js` |
+| Cancelar una petición en curso | Sí (v2.15) | `popup/`, `background.js`, `content-copilot.js` |
+| Detección de sesión caducada | Sí (v2.15) | `background.js` (`deliverWithRetry`), `content-copilot.js` |
+| Diagnóstico técnico local sin contenido | Sí (v2.15) | `background.js` (`diag`), Opciones |
 | Pruebas automatizadas de la lógica pura | Sí (v2.3) | `test/` (`node --test`) |
 | Firma del paquete (XPI) | Pendiente (infraestructura) | Publicación |
 
@@ -52,6 +55,9 @@ Valoración: apto para uso interno controlado. Para despliegue amplio en la UPO 
 - Minimización parcial: el cuerpo se trunca a 12.000 caracteres y el hilo a 10 mensajes de 2.000.
 - Aviso de tratamiento la primera vez (cubre el mínimo informativo); conviene enlazar la política de uso de IA de la organización.
 - Registro de actividad opcional para acreditar el tratamiento sin guardar contenido.
+- **Resúmenes** (v2.15): viajan los correos que el usuario selecciona, hasta 10 y recortados a 3.000 caracteres, sin firmas.
+- **Mejorar con Copilot** (v2.15): viaja solo el fragmento del borrador que el usuario selecciona.
+- **Diagnóstico** (v2.15): registro técnico local (qué selector o paso falló, tiempos), máximo 200 entradas, sin asuntos, direcciones ni texto; solo sale del equipo si el usuario lo copia.
 - El **perfil del usuario** («Sobre ti», v2.4) se guarda solo en `storage.local` y viaja a Copilot como parte del prompt. Al ser información del propio usuario (el mismo en Thunderbird y en Copilot), no introduce una categoría nueva de dato de terceros.
 
 ### 4.2 Inyección de prompts
@@ -68,7 +74,8 @@ Valoración: apto para uso interno controlado. Para despliegue amplio en la UPO 
 
 ### 4.4 Permisos
 
-- `accountsRead`, `messagesRead`, `messagesImport`, `compose`, `storage`, `scripting`, `notifications` y `host_permissions` solo para `*://m365.cloud.microsoft/*`. Acotados y justificados.
+- `accountsRead`, `messagesRead`, `messagesImport`, `compose`, `storage`, `scripting`, `notifications`, `menus` y `host_permissions` solo para `*://m365.cloud.microsoft/*`. Acotados y justificados.
+- `menus` (v2.15) solo añade el menú contextual «CoThunder»; no da acceso a datos nuevos.
 - `messagesImport` se usa solo para sembrar la biblioteca de plantillas de ejemplo; es un permiso potente y conviene documentar su motivo.
 
 ### 4.5 Almacenamiento

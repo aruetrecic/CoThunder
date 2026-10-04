@@ -3,6 +3,28 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.15.0] — 2026-10-05
+
+### Añadido
+- **Menú CoThunder** (clic derecho sobre un correo de la lista o sobre el botón del visor): **Resumir**, **Responder aceptando**, **Responder declinando**, **Acusar recibo** y **Responder con mi prompt**, en un clic y sin abrir la ventana. Usa tus últimos ajustes.
+- **Resúmenes** de uno o varios correos (hasta 10) en una ventana propia, con *Copiar* y *Responder…*.
+- **Varias versiones**: pide 2 o 3 respuestas distintas y elige una en una ventana con pestañas.
+- **Responder en el idioma del correo**: se detecta (español, inglés, francés, alemán, portugués, italiano) y se puede cambiar. Portugués e italiano también al crear.
+- **✨ Mejorar con Copilot** en el editor: selecciona texto y hazlo más formal, más cercano, más corto, desarróllalo, corrígelo o tradúcelo. Ctrl+Z lo deshace.
+- **Progreso paso a paso** con los segundos de espera y botón **Cancelar**.
+- **Aviso de sesión caducada**: si no has iniciado sesión en Copilot, te lo dice y deja su ventana delante, en vez de esperar hasta agotar el tiempo.
+- **Diagnóstico** en Opciones: registro técnico local (qué paso falló, sin texto de correos) que se copia en un clic.
+- **Ayuda integrada** con buscador (botón **?**, **F1**, el **?** del editor y el menú) y **asistente de bienvenida** al instalar.
+
+### Cambiado
+- La barra del editor usa **iconos SVG** propios en lugar de emoji: se ven igual en todos los sistemas y en tema oscuro.
+- La ventana agrupa tono, longitud, idioma, versiones y título del chat en **Más opciones** (plegable, recuerda su estado).
+- Mensajes de error más claros según la causa (sesión, interfaz de Copilot cambiada, tiempo agotado).
+- Nuevo permiso **`menus`**, solo para el menú contextual.
+
+### Corregido
+- El botón **Regenerar** tenía poco contraste (3,45:1); ahora cumple WCAG AA.
+
 ## [2.14.0] — 2026-10-05
 
 ### Añadido

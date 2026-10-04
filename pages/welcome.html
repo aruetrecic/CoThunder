@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bienvenida a CoThunder</title>
+<link rel="stylesheet" href="pages.css">
+<style>
+  .wrap { max-width: 720px; }
+  .step { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 4px 12px; }
+  .num { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 700;
+    color: #fff; background: #1a5fb4; }
+  .step h2 { border: 0; margin: 2px 0 4px; padding: 0; font-size: 16px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 8px 0 2px; }
+  select { min-width: 240px; }
+</style>
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <img src="../icon.svg" alt="">
+    <div class="grow">
+      <h1>Bienvenida a CoThunder</h1>
+      <div class="muted">Tres pasos y listo. Puedes volver aquí desde la ayuda.</div>
+    </div>
+  </header>
+
+  <section class="card step" aria-labelledby="s1">
+    <div class="num" aria-hidden="true">1</div>
+    <div>
+      <h2 id="s1">Inicia sesión en Microsoft 365 Copilot</h2>
+      <p>CoThunder usa tu sesión de Copilot, sin claves. Abre Copilot, entra con tu cuenta y deja esa ventana abierta.</p>
+      <div class="row">
+        <button type="button" id="open" class="primary">Abrir Copilot</button>
+        <button type="button" id="check">Comprobar</button>
+        <span id="state" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card step" aria-labelledby="s2">
+    <div class="num" aria-hidden="true">2</div>
+    <div>
+      <h2 id="s2">Elige el aspecto de tus correos</h2>
+      <p>El tema da formato a lo que escribes en Markdown (títulos, tablas, citas). Lo puedes cambiar en cada correo.</p>
+      <div class="row">
+        <label for="theme">Tema</label>
+        <select id="theme"></select>
+        <span id="themeSaved" class="muted" role="status"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card step" aria-labelledby="s3">
+    <div class="num" aria-hidden="true">3</div>
+    <div>
+      <h2 id="s3">Agente por defecto (opcional)</h2>
+      <p>Si usas agentes de Copilot, elige el que responderá por defecto. Aparecen al comprobar la sesión (paso 1).</p>
+      <div class="row">
+        <label for="agent">Agente</label>
+        <select id="agent"><option value="">Copilot por defecto</option></select>
+        <span id="agentSaved" class="muted" role="status"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="s4">
+    <h2 id="s4" style="border:0;margin-top:0;padding:0">Y ahora, a usarlo</h2>
+    <ul>
+      <li>Con un correo abierto, pulsa <strong>Preguntar a Copilot</strong> en la barra del mensaje.</li>
+      <li>Para un correo nuevo, <strong>Crear desde Copilot</strong> en la barra principal.</li>
+      <li>Clic derecho sobre un correo de la lista › <strong>CoThunder</strong>: resumir, aceptar o declinar en un clic.</li>
+    </ul>
+    <div class="row">
+      <a class="btn" href="help.html">Ver la ayuda completa</a>
+      <button type="button" id="done" class="primary">Empezar</button>
+    </div>
+  </section>
+</div>
+<script src="../themes.js"></script>
+<script src="welcome.js"></script>
+</body></html>

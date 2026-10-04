@@ -34,7 +34,7 @@ const m = JSON.parse(fs.readFileSync("manifest.json"));
 const refs = new Set([...(m.background?.scripts || []), m.options_ui?.page, ...Object.values(m.icons || {})].filter(Boolean));
 const bg = fs.readFileSync("background.js", "utf8").match(/COMPOSE_SCRIPT = \{[^}]*\}/);
 if (bg) for (const f of bg[0].match(/"[\w./-]+\.(js|css)"/g) || []) refs.add(f.slice(1, -1));
-for (const html of ["popup/popup.html", "options/options.html"]) {
+for (const html of ["popup/popup.html", "options/options.html", ...fs.readdirSync("pages").filter((f) => f.endsWith(".html")).map((f) => "pages/" + f)]) {
   for (const [, src] of fs.readFileSync(html, "utf8").matchAll(/(?:src|href)="([^"]+\.(?:js|css|svg))"/g)) {
     refs.add(path.normalize(path.join(path.dirname(html), src)).replace(/\\/g, "/"));
   }

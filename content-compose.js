@@ -32,7 +32,7 @@
     { label: "B", title: "Negrita (Ctrl+B)", kind: "wrap", before: "**", after: "**" },
     { label: "I", title: "Cursiva (Ctrl+I)", kind: "wrap", before: "*", after: "*" },
     { label: "S", title: "Tachado", kind: "wrap", before: "~~", after: "~~" },
-    { label: "🖍", title: "Resaltado", kind: "wrap", before: "==", after: "==" },
+    { label: "svg:highlight", title: "Resaltado", kind: "wrap", before: "==", after: "==" },
     { label: "</>", title: "Código en línea (Ctrl+E)", kind: "wrap", before: "`", after: "`" },
     { menu: "Aa", title: "Más formato", items: [
       { label: "B+I", title: "Negrita y cursiva", kind: "wrap", before: "***", after: "***" },
@@ -40,13 +40,13 @@
       { label: "x²", title: "Superíndice", kind: "wrap", before: "^", after: "^" },
     ] },
     // Enlaces y multimedia
-    { label: "🔗", title: "Enlace (Ctrl+K)", kind: "link" },
+    { label: "svg:link", title: "Enlace (Ctrl+K)", kind: "link" },
     // Listas y cita
-    { label: "❝", title: "Cita", kind: "prefix", value: "> " },
-    { label: "•", title: "Lista", kind: "prefix", value: "- " },
-    { label: "1.", title: "Lista numerada", kind: "prefix", value: "1. " },
-    { label: "☑", title: "Tarea", kind: "prefix", value: "- [ ] " },
-    { menu: "▦", title: "Insertar", items: [
+    { label: "svg:quote", title: "Cita", kind: "prefix", value: "> " },
+    { label: "svg:list", title: "Lista", kind: "prefix", value: "- " },
+    { label: "svg:olist", title: "Lista numerada", kind: "prefix", value: "1. " },
+    { label: "svg:task", title: "Tarea", kind: "prefix", value: "- [ ] " },
+    { menu: "svg:plus", title: "Insertar", items: [
       { label: "🖼", title: "Imagen", kind: "image" },
       { label: "😀", title: "Emoji", kind: "insert", value: ":smile:" },
       { label: "▦", title: "Tabla", kind: "block", template: "| Col 1 | Col 2 |\n| --- | --- |\n|  |  |" },
@@ -55,14 +55,14 @@
       { label: "Def", title: "Lista de definición", kind: "block", template: "término\n: definición" },
       { label: "†", title: "Nota al pie (añade «[^1]: ...» al final)", kind: "insert", value: "[^1]" },
     ] },
-    { menu: "ℹ", title: "Avisos (admonitions)", items: [
+    { menu: "svg:info", title: "Avisos (admonitions)", items: [
       { label: "ℹ", title: "Nota", kind: "block", template: "> [!NOTE]\n> " },
       { label: "💡", title: "Consejo", kind: "block", template: "> [!TIP]\n> " },
       { label: "❗", title: "Importante", kind: "block", template: "> [!IMPORTANT]\n> " },
       { label: "⚠", title: "Advertencia", kind: "block", template: "> [!WARNING]\n> " },
       { label: "🛑", title: "Precaución", kind: "block", template: "> [!CAUTION]\n> " },
     ] },
-    { label: "⇥", title: "Ordenar el Markdown: alinea tablas, tabula listas y separa bloques (Ctrl+Shift+F)", kind: "format" },
+    { label: "svg:format", title: "Ordenar el Markdown: alinea tablas, tabula listas y separa bloques (Ctrl+Shift+F)", kind: "format" },
   ];
 
   let active = false;
@@ -241,7 +241,11 @@
     T + " [role=menu]{display:none;position:absolute;top:100%;left:0;margin-top:2px;z-index:20;flex-direction:column;" +
     "min-width:max-content;max-height:60vh;overflow:auto;padding:3px;gap:1px;background:var(--ct-btn);" +
     "border:1px solid var(--ct-line);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.18);}" +
-    T + " [role=menuitem]{border-color:transparent;text-align:left;}";
+    T + " [role=menuitem]{border-color:transparent;text-align:left;}" +
+    T + " button{display:inline-flex;align-items:center;gap:2px;min-height:24px;}" +
+    T + " svg{fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;}" +
+    T + " .ct-status{flex:1 1 100%;font:12px sans-serif;color:var(--ct-fg);padding:2px 4px;}" +
+    T + " .ct-status:empty{display:none;}";
 
   // Al entrar en la barra con el teclado se guarda el cursor del editor; las acciones lo
   // recuperan antes de escribir, para que el Markdown vaya donde estaba el usuario.
@@ -274,10 +278,50 @@
     }
   }
 
+  // Iconos SVG propios (16×16, trazo en currentColor: siguen el tema claro/oscuro de la barra y se
+  // ven igual en todos los sistemas, a diferencia de los emoji). Se crean con createElementNS.
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const ICONS = {
+    highlight: ["M3 13.5h6", "M5 11.5l1-3 5.5-5.5 2 2L8 10.5l-3 1z"],
+    link: ["M6.5 9.5l3-3", "M7.5 4.5l1-1a2.5 2.5 0 013.5 3.5l-1 1", "M8.5 11.5l-1 1A2.5 2.5 0 014 9l1-1"],
+    quote: ["M3 12V9.5C3 7 4 5.5 6 4.5", "M3 9.5h3V12H3z", "M9 12V9.5c0-2.5 1-4 3-5", "M9 9.5h3V12H9z"],
+    list: ["M6 4h8", "M6 8h8", "M6 12h8", "M2.5 4h.5", "M2.5 8h.5", "M2.5 12h.5"],
+    olist: ["M6.5 4h7.5", "M6.5 8h7.5", "M6.5 12h7.5", "M2.5 2.5L3.5 2v4", "M2 10.5c0-.8 2.5-.8 2 .5L2 13.5h2.5"],
+    task: ["M2.5 2.5h11v11h-11z", "M5 8l2 2 4-4.5"],
+    plus: ["M2.5 2.5h11v11h-11z", "M8 5v6", "M5 8h6"],
+    info: ["M8 1.8a6.2 6.2 0 100 12.4A6.2 6.2 0 008 1.8z", "M8 7v4.5", "M8 4.6v.1"],
+    format: ["M2 3.5h12", "M5 6.5h9", "M5 9.5h9", "M2 12.5h12", "M2 6l1.5 1.5L2 9"],
+    template: ["M4 1.8h5l3 3v9.4H4z", "M9 1.8v3h3", "M6 8h4", "M6 10.5h4"],
+    palette: ["M8 1.8a6.2 6.2 0 000 12.4c1 0 1.5-.6 1.5-1.3 0-.9-.8-1.1-.8-2 0-.6.5-1.1 1.2-1.1H12a2.2 2.2 0 002.2-2.2C14.2 4.4 11.4 1.8 8 1.8z", "M5 7.2v.1", "M7 4.7v.1", "M10 4.9v.1"],
+    sparkle: ["M8 1.8l1.4 4.3 4.3 1.4-4.3 1.4L8 13.2 6.6 8.9 2.3 7.5l4.3-1.4z", "M13 11.5v3", "M11.5 13h3"],
+    help: ["M8 1.8a6.2 6.2 0 100 12.4A6.2 6.2 0 008 1.8z", "M6.2 6.2a1.9 1.9 0 113 1.6c-.7.4-1.2.8-1.2 1.6", "M8 11.4v.1"]
+  };
+  function iconEl(name) {
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("viewBox", "0 0 16 16");
+    svg.setAttribute("width", "16");
+    svg.setAttribute("height", "16");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    for (const d of ICONS[name] || []) {
+      const p = document.createElementNS(SVG_NS, "path");
+      p.setAttribute("d", d);
+      svg.appendChild(p);
+    }
+    return svg;
+  }
+  // Contenido de un botón: "svg:nombre" pinta el icono; el resto es texto. suffix va detrás (▾).
+  function setButtonContent(btn, label, suffix) {
+    btn.replaceChildren();
+    if (String(label).startsWith("svg:")) btn.appendChild(iconEl(label.slice(4)));
+    else btn.appendChild(document.createTextNode(label));
+    if (suffix) btn.appendChild(document.createTextNode(suffix));
+  }
+
   function makeButton(label, title, onClick) {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.textContent = label;
+    setButtonContent(btn, label);
     btn.title = title;
     btn.setAttribute("aria-label", title);
     btn.tabIndex = -1;
@@ -321,11 +365,12 @@
     popup.id = IDS.toolbar + "-menu" + (++menuCount);
     popup.setAttribute("role", "menu");
     popup.setAttribute("aria-label", title);
-    const btn = makeButton(label + " ▾", title, (e) => {
+    const btn = makeButton(label, title, (e) => {
       if (isOpen(popup)) { closeMenus(null); return; }
       // Abierto con Enter o espacio (sin ratón, detail 0): el foco pasa a la primera opción.
       openMenu(popup, e.detail === 0 ? 0 : undefined);
     });
+    setButtonContent(btn, label, " ▾");
     btn.setAttribute("aria-haspopup", "menu");
     btn.setAttribute("aria-expanded", "false");
     btn.setAttribute("aria-controls", popup.id);
@@ -344,7 +389,7 @@
       }
     };
     const setLabel = (text, t) => {
-      btn.textContent = text + " ▾"; btn.title = t; btn.setAttribute("aria-label", t); popup.setAttribute("aria-label", t);
+      setButtonContent(btn, text, " ▾"); btn.title = t; btn.setAttribute("aria-label", t); popup.setAttribute("aria-label", t);
     };
     return { wrap: wrapEl, setItems, setLabel };
   }
@@ -432,16 +477,95 @@
       }
     });
 
-    templateMenu = makeMenu("📄", "Insertar plantilla de formato");
+    improveMenu = makeMenu("svg:sparkle", "Mejorar con Copilot el texto seleccionado");
+    toolbar.appendChild(improveMenu.wrap);
+    loadImproveMenu();
+
+    templateMenu = makeMenu("svg:template", "Insertar plantilla de formato");
     toolbar.appendChild(templateMenu.wrap);
     loadTemplateMenu();
 
-    themeMenu = makeMenu("🎨", "Estilo de este correo");
+    themeMenu = makeMenu("svg:palette", "Estilo de este correo");
     themeMenu.wrap.style.marginLeft = "auto";
     toolbar.appendChild(themeMenu.wrap);
     fillThemeMenu();
+
+    toolbar.appendChild(makeButton("svg:help", "Ayuda del editor", () => {
+      messenger.runtime.sendMessage({ type: "openHelp", anchor: "editor" }).catch(() => {});
+    }));
+
+    // Avisos breves de la barra (p. ej. «Mejorando con Copilot…»), leídos por los lectores de pantalla.
+    statusEl = document.createElement("div");
+    statusEl.className = "ct-status";
+    statusEl.setAttribute("role", "status");
+    statusEl.setAttribute("aria-live", "polite");
+    toolbar.appendChild(statusEl);
     toolbar.querySelector("button").tabIndex = 0;
     return toolbar;
+  }
+
+  // --- ✨ Mejorar con Copilot: reescribe la selección (más formal, más corto, corregir, traducir…) ---
+  // El background pone el prompt y entrega la respuesta con "cothunder-improved"; el texto nuevo
+  // sustituye la selección guardada con insertHTML, así que Ctrl+Z lo deshace.
+  let improveMenu = null;
+  let statusEl = null;
+  let statusTimer = null;
+  let improving = null; // { token, range }
+
+  function setToolbarStatus(text, keepMs) {
+    if (!statusEl) return;
+    clearTimeout(statusTimer);
+    statusEl.textContent = text || "";
+    if (text && keepMs) statusTimer = setTimeout(() => { if (statusEl) statusEl.textContent = ""; }, keepMs);
+  }
+
+  function loadImproveMenu() {
+    if (!improveMenu) return;
+    const menu = improveMenu;
+    messenger.runtime.sendMessage({ type: "listImproveActions" }).then((res) => {
+      if (menu !== improveMenu) return;
+      const items = ((res && res.actions) || []).map((a) => ({ text: a.label, title: a.label + " (texto seleccionado)", onClick: () => improveSelection(a.id) }));
+      menu.setItems(items.length ? items : [{ text: "No disponible", onClick: () => {} }]);
+    }).catch(() => {});
+  }
+
+  function improveSelection(action) {
+    returnToEditor();
+    if (improving) { setToolbarStatus("Ya hay una mejora en curso; espera a que termine.", 4000); return; }
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || sel.isCollapsed || !bodyEl.contains(sel.anchorNode) || inToolbar(sel.anchorNode)) {
+      setToolbarStatus("Selecciona primero el texto que quieres mejorar.", 5000);
+      return;
+    }
+    const range = sel.getRangeAt(0).cloneRange();
+    const text = nodesToMarkdown(Array.from(range.cloneContents().childNodes));
+    if (!text.trim()) { setToolbarStatus("Selecciona primero el texto que quieres mejorar.", 5000); return; }
+    improving = { token: null, range };
+    setToolbarStatus("Mejorando con Copilot…");
+    messenger.runtime.sendMessage({ type: "improveText", action, text }).then((res) => {
+      if (res && res.ok) { if (improving) improving.token = res.token; return; }
+      improving = null;
+      setToolbarStatus(res && res.reason === "login"
+        ? "Inicia sesión en Copilot (ventana abierta) y vuelve a intentarlo."
+        : "No se pudo enviar a Copilot" + (res && res.reason ? " (" + res.reason + ")" : "") + ".", 8000);
+    }).catch(() => { improving = null; setToolbarStatus("No se pudo enviar a Copilot.", 6000); });
+  }
+
+  function applyImproved(token, text) {
+    if (!improving || (improving.token && improving.token !== token)) return;
+    const { range } = improving;
+    improving = null;
+    if (!text) { setToolbarStatus("No llegó la respuesta de Copilot; revísala en su ventana.", 8000); return; }
+    bodyEl.focus();
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    const blocks = text.replace(/\r/g, "").split(/\n{2,}/).filter((b) => b.trim());
+    let ok = false;
+    try { ok = document.execCommand("insertHTML", false, sourceBlocksHtml(blocks)); } catch (e) { ok = false; }
+    if (!ok) insertMd(text);
+    scheduleRender();
+    setToolbarStatus("Texto mejorado. Ctrl+Z para deshacer.", 6000);
   }
 
   // Menú "📄 Plantillas": pide al background las plantillas de Formato (carpetas de Plantillas de
@@ -482,7 +606,7 @@
     const list = PRESETS.map((p) => ({ id: p.id, name: p.name }));
     if (emailCustomCss.trim() || emailTheme === "custom") list.push({ id: "custom", name: "Personalizado" });
     const current = list.find((t) => t.id === emailTheme) || list[0];
-    themeMenu.setLabel("🎨", "Estilo de este correo: " + (current ? current.name : "") +
+    themeMenu.setLabel("svg:palette", "Estilo de este correo: " + (current ? current.name : "") +
       " (el tema por defecto se elige en Opciones)");
     themeMenu.setItems(list.map((t) => ({
       text: (current && t.id === current.id ? "✓ " : "\u2003") + t.name,
@@ -841,6 +965,9 @@
     toolbarEl = null;
     themeMenu = null;
     templateMenu = null;
+    improveMenu = null;
+    statusEl = null;
+    improving = null;
     active = false;
   }
 
@@ -852,6 +979,7 @@
     if (msg && msg.type === "cothunder-ping") { respond({ ok: true }); return true; }
     if (msg && msg.type === "cothunder-finalize") { respond({ html: finalHtml() }); return true; }
     if (msg && msg.type === "cothunder-toggle") { toggle(); respond({ active }); return true; }
+    if (msg && msg.type === "cothunder-improved") { applyImproved(msg.token, msg.text); respond({ ok: true }); return true; }
   });
 
   // Encendido por defecto según el ajuste de Opciones (activable/desactivable con el botón o el atajo).

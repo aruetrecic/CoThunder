@@ -14,13 +14,19 @@ Guía paso a paso para usar CoThunder en Thunderbird 140 o superior. Para instal
 8. [Privacidad y registro de actividad](#8-privacidad-y-registro-de-actividad)
 9. [Opciones](#9-opciones)
 10. [Problemas frecuentes](#10-problemas-frecuentes)
+11. [Acciones de un clic, resúmenes y versiones](#11-acciones-de-un-clic-resúmenes-y-versiones)
+12. [Mejorar con Copilot](#12-mejorar-con-copilot)
+13. [Progreso, sesión y diagnóstico](#13-progreso-sesión-y-diagnóstico)
 
 ## 1. Primeros pasos
 
-CoThunder añade dos botones:
+La primera vez se abre un **asistente de bienvenida** que comprueba tu sesión de Copilot y te deja elegir tema y agente. La **ayuda integrada** está siempre a mano con el botón **?** (o **F1**).
+
+CoThunder añade dos botones y un menú:
 
 - **Preguntar a Copilot**, en la barra del **visor de un mensaje** (cuando tienes un correo abierto). Sirve para **responder**.
 - **Crear desde Copilot**, en la **barra principal** de Thunderbird. Sirve para **redactar un correo nuevo desde cero**.
+- **CoThunder**, en el menú del **clic derecho** sobre los correos de la lista: acciones de un clic (sección 11).
 
 La primera vez que abras una de las dos ventanas, verás un aviso de que el contenido se envía a Microsoft 365 Copilot. Pulsa **Entendido** para continuar; no vuelve a aparecer.
 
@@ -33,7 +39,7 @@ Ambas ventanas necesitan que tengas **sesión iniciada en Copilot**. La primera 
 3. Ajusta lo que quieras. La ventana tiene dos pestañas, **⚙️ Opciones** y **📜 Prompt**; el botón **Enviar a Copilot** queda siempre visible abajo:
    - **Agente** (opcional): elige un agente de Copilot para que aporte su conocimiento.
    - **Prompt** y **Formato** (opcional): elige una de tus plantillas.
-   - **Tono** y **Longitud** (opcional).
+   - En **Más opciones** (plegable): **Tono**, **Longitud**, **Responder en** (idioma; por defecto el del correo, detectado) y **Versiones** (una, dos o tres para elegir).
    - **Incluir mi firma**, **Incluir el correo citado**, **Incluir el hilo** (mensajes anteriores).
    - **Empezar chat nuevo**: parte de una conversación limpia en Copilot.
    - Edita el **Prompt a enviar** a mano si quieres; la mini barra Markdown ayuda a dar formato.
@@ -86,11 +92,12 @@ CoThunder recuerda tus preferencias.
 
 La respuesta llega en Markdown (con `#`, `**`, listas, tablas, citas). CoThunder trae su **propio editor**: escribes a la izquierda y ves el correo maquetado a la derecha; al enviar sale ya con formato. Se enciende y apaga con el botón **Editor Markdown** o con **Ctrl+Alt+M**.
 
-- **Barra de herramientas:** negrita, cursiva, tachado, resaltado, código, enlace, cita y listas, más los menús **H ▾** (títulos 1 a 6), **Aa ▾** (negrita+cursiva, subíndice, superíndice), **▦ ▾** (imagen, emoji, tabla, bloque de código, regla, definición, nota al pie) y **ℹ ▾** (avisos).
-- **⇥ Ordenar** (o **Ctrl+Shift+F**): deja el código fuente limpio sin cambiar el resultado: alinea las columnas de las tablas, tabula las listas anidadas (4 espacios por nivel), deja una línea en blanco entre bloques y quita espacios sobrantes. Se deshace con Ctrl+Z. La zona de escritura usa letra monoespaciada para que la alineación se vea.
+- **Barra de herramientas:** negrita, cursiva, tachado, resaltado, código, enlace, cita y listas, más los menús **H ▾** (títulos 1 a 6), **Aa ▾** (negrita+cursiva, subíndice, superíndice), **Insertar ▾** (imagen, emoji, tabla, bloque de código, regla, definición, nota al pie) y **Avisos ▾**. Los botones usan iconos propios; pasa el ratón por encima para ver su nombre.
+- **Ordenar** (o **Ctrl+Shift+F**): deja el código fuente limpio sin cambiar el resultado: alinea las columnas de las tablas, tabula las listas anidadas (4 espacios por nivel), deja una línea en blanco entre bloques y quita espacios sobrantes. Se deshace con Ctrl+Z. La zona de escritura usa letra monoespaciada para que la alineación se vea.
 - **Listas y tablas línea a línea:** puedes escribir cada elemento de una lista o cada fila de una tabla pulsando Enter; CoThunder las une en una sola lista o tabla (antes cada Enter partía la lista).
-- **📄 ▾ Plantillas:** inserta en el cursor una plantilla de formato (Carta institucional, Tabla comparativa, Identidad UPO… y las tuyas sin prefijo). Las de tipo «Prompt» no aparecen: son instrucciones para Copilot, no texto del correo. «↻ Actualizar lista» relee la carpeta de Plantillas.
-- **🎨 ▾ Estilo:** cambia el tema de ese correo al momento. El tema por defecto se elige en Opciones.
+- **✨ Mejorar con Copilot ▾:** reescribe el texto seleccionado (sección 12).
+- **Plantillas ▾:** inserta en el cursor una plantilla de formato (Carta institucional, Tabla comparativa, Identidad UPO… y las tuyas sin prefijo). Las de tipo «Prompt» no aparecen: son instrucciones para Copilot, no texto del correo. «↻ Actualizar lista» relee la carpeta de Plantillas.
+- **Estilo ▾:** cambia el tema de ese correo al momento. El tema por defecto se elige en Opciones.
 - **Atajos:** Ctrl+B negrita, Ctrl+I cursiva, Ctrl+K enlace, Ctrl+E código, Ctrl+1 … Ctrl+6 títulos (si la línea ya era un título, cambia el nivel).
 - **Barra con el teclado:** **Alt+F10** lleva a la barra. Las flechas izquierda y derecha pasan de un botón a otro; Enter o flecha abajo abre un menú y las flechas arriba y abajo recorren sus opciones. **Escape** vuelve atrás: primero al botón y luego al texto, con el cursor donde estaba. Si Thunderbird está en tema oscuro, la barra también.
 - **Firma y cita intactas:** tu firma de Thunderbird y el correo citado se conservan tal cual, con su formato original; solo se convierte a Markdown lo que escribes tú.
@@ -109,12 +116,32 @@ Desde **Complementos y temas → CoThunder → Opciones** (o el botón **?** de 
 - **Empezar chat nuevo por defecto**.
 - **Sobre ti (contexto para Copilot)**: nombre, puesto o cargo, organización, qué haces y **cómo escribes** (tratamiento de usted o tú, tono, cómo te despides). Se añade al prompt en los dos modos para que Copilot sepa quién eres y adapte el tono y el rol. Copilot termina en la despedida, **sin firma ni datos de contacto**: los pone la firma de tu identidad de Thunderbird (casilla **Incluir mi firma**). El botón **«Tomar de mi identidad de Thunderbird»** rellena nombre y organización desde tu identidad por defecto (solo los campos vacíos); revisa y pulsa Guardar. Se guarda solo en tu equipo.
 - **Registro de actividad (auditoría)**: activar, ver el número de entradas, exportar y vaciar.
-- Guía de uso resumida.
+- **Diagnóstico**: copiar o vaciar el registro técnico (sección 13).
+- Enlaces a la **ayuda** y al **asistente de bienvenida**.
 
 ## 10. Problemas frecuentes
 
 - **No escribe en Copilot / no captura la respuesta:** comprueba que tienes sesión iniciada en Copilot en la ventana que abre CoThunder. Si la interfaz de Copilot cambió, el prompt se copia al portapapeles y se avisa; pégalo a mano mientras se actualiza CoThunder.
-- **La respuesta no se ve maquetada:** instala Markdown Here Revival (sección 7).
+- **La respuesta no se ve maquetada:** activa el editor Markdown con su botón o con Ctrl+Alt+M (sección 7).
 - **No aparece mi agente:** fíjalo en la barra lateral de Copilot y pulsa **↻**.
 - **La ventana se ve pequeña o los campos apretados:** puedes redimensionarla; recuerda su tamaño. Si no cabe todo, aparece una barra de scroll.
 - **Acabo de recargar la extensión y otro complemento (Markdown Here) no responde:** reinicia Thunderbird; recargar una extensión temporal puede dejar otros complementos en estado inconsistente.
+
+## 11. Acciones de un clic, resúmenes y versiones
+
+**Menú CoThunder.** Clic derecho sobre un correo de la lista (o sobre el botón *Preguntar a Copilot* del visor) › **CoThunder**:
+
+- **Resumir con Copilot**: se abre una ventana con el resumen (lo esencial, lo que te piden, plazos y si requiere respuesta). Con **varios correos seleccionados** (hasta 10) hace un único resumen con lo pendiente de responder. Botones **Copiar** y, si es un solo correo, **Responder…**.
+- **Responder aceptando**, **Responder declinando**, **Acusar recibo** y **Responder con mi prompt** (tus plantillas `Prompt - …`): envían directamente con tus últimos ajustes (agente, tono, longitud, firma, cita) en el idioma del correo. Una notificación lo confirma y la respuesta se abre sola.
+
+**Varias versiones.** En la ventana, *Más opciones › Versiones › Dos* o *Tres*. Se abre una ventana con una pestaña por versión; pulsa **Usar esta versión**.
+
+## 12. Mejorar con Copilot
+
+En el editor Markdown, selecciona un trozo de tu borrador y elige en el menú ✨ **Más formal**, **Más cercano**, **Más corto**, **Desarrollar**, **Corregir**, **Traducir al inglés** o **Traducir al español**. Al llegar, el texto nuevo sustituye a la selección; **Ctrl+Z** lo deshace. Solo se envía el texto seleccionado.
+
+## 13. Progreso, sesión y diagnóstico
+
+- Al enviar, la ventana muestra los pasos (**Abriendo Copilot → Escribiendo → Esperando** con los segundos **→ Recibida**) y el botón **Cancelar**.
+- Si no has iniciado sesión en Copilot, CoThunder lo detecta, pone su ventana delante y te lo dice.
+- **Opciones › Diagnóstico** guarda qué paso técnico falló (sin texto de correos). Si algo deja de funcionar, pulsa **Copiar diagnóstico** y envíalo a quien mantiene CoThunder.

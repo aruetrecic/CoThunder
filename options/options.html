@@ -77,51 +77,23 @@
     <button id="auditClear" type="button">Vaciar</button>
   </p>
 
+  <h2>Diagnóstico</h2>
+  <p class="muted">Si Copilot deja de responder o de capturarse, aquí queda qué paso técnico falló (por ejemplo, «no encuentro el botón de enviar»). Se guarda solo en tu equipo y <strong>nunca</strong> incluye asuntos, direcciones ni texto de correos o respuestas. Cópialo y envíalo a quien mantiene CoThunder para arreglarlo rápido.</p>
+  <p>
+    <span id="diagCount" class="muted">0 entradas</span>
+    <button id="diagCopy" type="button">Copiar diagnóstico</button>
+    <button id="diagClear" type="button">Vaciar</button>
+    <span id="diagMsg" class="muted" role="status"></span>
+  </p>
+
   <h2>Ayuda</h2>
   <div class="help">
-    <p><strong>Cómo se usa</strong></p>
-    <ul>
-      <li>Abre un correo y pulsa el botón de <strong>Copilot</strong> en el visor.</li>
-      <li>Ajusta las opciones de la ventana, revisa el prompt y pulsa <strong>Enviar a Copilot</strong>.</li>
-      <li>Copilot escribe la respuesta y se abre una ventana de composición con ella (respuesta al remitente).</li>
-    </ul>
-
-    <p><strong>Crear desde Copilot</strong> (barra principal)</p>
-    <ul>
-      <li>El botón <strong>Crear desde Copilot</strong> de la barra principal redacta un <strong>correo nuevo desde cero</strong> (no una respuesta), sin necesidad de tener un correo abierto. Convive con <strong>Preguntar a Copilot</strong> (del visor de mensajes); cada uno mantiene su función.</li>
-      <li>Rellena <strong>📝 ¿Qué quieres crear?</strong> (la instrucción base, que crece con la ventana), y opcionalmente <strong>👤 Para / contexto</strong> y <strong>🌐 Idioma</strong>. Se reutilizan Agente, Prompt, Formato, Tono y Longitud.</li>
-      <li>Destinatarios en cajas separadas: <strong>✉️ Para</strong>, <strong>📋 CC</strong> y <strong>🕶️ CCO</strong>. Cada una admite <strong>varias direcciones</strong> separadas por comas; solo se usan las válidas.</li>
-      <li>Los prompts propios de creación están en tus plantillas con asunto <code>Prompt crear - …</code> (aparecen solo en este modo); los <code>Formato - …</code> se comparten con el modo respuesta.</li>
-      <li>Copilot genera el <strong>asunto</strong> y el <strong>cuerpo</strong>, y se abre un correo nuevo con ambos (y los destinatarios, si los indicaste). Tras enviar, el botón <strong>Regenerar</strong> pide otra versión en la misma ventana.</li>
-    </ul>
-
-    <p><strong>Opciones de la ventana</strong></p>
-    <ul>
-      <li><strong>Pestañas</strong>: los campos se reparten en pestañas para que la ventana quepa en pantallas pequeñas o con escalado del 125-150 %. Al crear: <strong>✍️ Redactar</strong>, <strong>✉️ Destinatarios</strong> (con un contador), <strong>⚙️ Opciones</strong> y <strong>📜 Prompt</strong>; al responder: <strong>⚙️ Opciones</strong> y <strong>📜 Prompt</strong>. El botón <strong>Enviar</strong> está siempre visible. Cambia de pestaña con <kbd>Ctrl</kbd>+<kbd>RePág</kbd>/<kbd>AvPág</kbd>; la ventana recuerda la última que usaste.</li>
-      <li><strong>🤖 Agente</strong>: el agente de Copilot que responde (los que tengas fijados en su barra lateral). El botón <code>↻</code> actualiza la lista; recuerda el último elegido.</li>
-      <li><strong>⭐ Prompt</strong>: instrucción <em>prioritaria</em> del usuario (qué hacer). Se toma de tus plantillas con asunto <code>Prompt - …</code></li>
-      <li><strong>📄 Formato</strong>: estructura y formato de referencia de la respuesta. De tus plantillas <code>Formato - …</code> (o sin prefijo).</li>
-      <li><strong>🎭 Tono</strong> y <strong>📏 Longitud</strong>: ajustan el estilo y la extensión de la respuesta.</li>
-      <li><strong>✍️ Prompt a enviar</strong>: editable; la barra de botones inserta Markdown (negrita, cursiva, encabezado, listas, cita, código, enlace). Un contador avisa si el prompt es tan largo que Copilot podría cortarlo.</li>
-      <li><strong>Empezar chat nuevo</strong>: parte de una conversación limpia en Copilot.</li>
-      <li><strong>Incluir mi firma</strong> / <strong>Incluir el correo citado</strong>: qué añadir a la respuesta.</li>
-      <li><strong>Incluir el hilo</strong>: añade los mensajes anteriores de la conversación como contexto (se reconstruye por las cabeceras del correo).</li>
-      <li><strong>Enviar</strong> / <strong>Regenerar</strong>: envía (también con <kbd>Ctrl</kbd>+<kbd>Enter</kbd>); «Regenerar» pide otra versión (chat nuevo). Si hay direcciones no válidas o el prompt es demasiado largo, el primer clic avisa y el segundo envía igualmente. La ventana recuerda su tamaño y posición.</li>
-      <li><strong>Editor Markdown</strong> (redacción): atajos <kbd>Ctrl</kbd>+<kbd>B</kbd>/<kbd>I</kbd>/<kbd>K</kbd>/<kbd>E</kbd> (negrita, cursiva, enlace, código) y <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>6</kbd> (títulos). La firma y el correo citado se conservan con su formato original. <strong>⇥ Ordenar</strong> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>) alinea tablas, tabula listas y separa bloques. El menú <strong>📄</strong> inserta tus plantillas de formato (<code>Formato - …</code> y las que no llevan prefijo).</li>
-    </ul>
-
-    <p><strong>Prompts y Formatos</strong></p>
-    <ul>
-      <li>Son <strong>plantillas de Thunderbird</strong>. Créalas con <em>Guardar como plantilla</em> y nómbralas por el asunto:
-        <ul>
-          <li><code>Prompt - Título</code> → instrucción (aparece en el desplegable Prompt).</li>
-          <li><code>Formato - Título</code> → estructura/formato; usa marcadores <code>[elemento]</code> (aparece en Formato).</li>
-        </ul>
-      </li>
-      <li>Al instalar el complemento se crea una <strong>biblioteca de ejemplo</strong> de prompts y formatos.</li>
-    </ul>
-
-    <p class="muted">Requisitos: sesión iniciada en Microsoft 365 Copilot (la primera vez, entra en la ventana que se abre). El Markdown de la respuesta se ve maquetado con el editor propio de CoThunder (botón «Editor Markdown» en la redacción). Sin API ni claves: el correo solo viaja a Copilot.</p>
+    <p>La guía completa explica todas las funciones: responder, crear, acciones de un clic, resúmenes, versiones, editor Markdown, «Mejorar con Copilot», plantillas, temas, atajos y solución de problemas.</p>
+    <p>
+      <button id="openHelp" type="button">Abrir la ayuda</button>
+      <button id="openWelcome" type="button">Asistente de bienvenida</button>
+    </p>
+    <p class="muted">Requisitos: sesión iniciada en Microsoft 365 Copilot. Sin API ni claves: el correo solo viaja a Copilot.</p>
   </div>
 
   <script src="../common.js"></script>

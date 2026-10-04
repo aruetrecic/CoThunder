@@ -43,3 +43,19 @@ Todo lo de las versiones 2.7–2.12 se ha probado en Edge headless, no dentro de
 1. Lista de comprobación en Thunderbird (punto 1) y corregir lo que salga.
 2. Menús accesibles con el teclado y barra en tema oscuro (punto 2).
 3. Paquete rápido de mantenimiento (punto 5).
+
+## 6. Propuestas del 5 de octubre (hechas en la v2.15.0)
+
+- [x] «Mejorar con Copilot» en el editor.
+- [x] Acciones de un clic (menú contextual).
+- [x] Varias versiones para elegir.
+- [x] Responder en el idioma del remitente.
+- [x] Resumen de varios correos.
+- [ ] **Texto de los adjuntos** (`.txt`, `.md`, `.csv`) tras una casilla desactivada por defecto. Pendiente de decisión: cambia lo que viaja a Copilot (RGPD). **A**
+- [x] Progreso por pasos con «Cancelar».
+- [x] Iconos SVG en la barra del editor.
+- [x] Asistente de primera vez.
+- [x] Ventana más compacta («Más opciones»).
+- [x] Aviso de sesión caducada.
+- [x] Diagnóstico exportable.
+- [x] Ayuda integrada con todas las funciones.

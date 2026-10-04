@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoThunder</title>
+<link rel="stylesheet" href="pages.css">
+<style>
+  body { padding: 14px 16px; }
+  .top { margin-bottom: 8px; }
+  .top img { width: 26px; height: 26px; }
+  h1 { font-size: 17px; }
+  [role="tablist"] { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 6px 0 0; }
+  [role="tab"] { border-radius: 8px 8px 0 0; border-bottom: 0; background: transparent; font-weight: 600; opacity: .8; }
+  [role="tab"][aria-selected="true"] { opacity: 1; background: var(--soft); box-shadow: inset 0 3px 0 var(--accent); }
+  /* El texto se ve como el correo: sobre blanco, igual que la vista previa del editor. */
+  .paper { background: #fff; color: #1f2328; border: 1px solid var(--border); border-radius: 0 0 10px 10px;
+    padding: 14px 18px; margin: 0 0 12px; font: 14px/1.55 -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    overflow-wrap: anywhere; }
+  .paper.single { border-radius: 10px; margin-top: 8px; }
+  .paper img { max-width: 100%; height: auto; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; position: sticky; bottom: 0; padding: 10px 0 0; background: Canvas; }
+  #msg { align-self: center; }
+</style>
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <img src="../icon.svg" alt="">
+    <h1 id="title" class="grow">CoThunder</h1>
+  </header>
+  <div id="tabs" role="tablist" aria-label="Versiones" hidden></div>
+  <div id="paper" class="paper single" tabindex="0" aria-live="polite"></div>
+  <div class="actions">
+    <button type="button" id="use" class="primary" hidden>Usar esta versión</button>
+    <button type="button" id="reply" hidden>Responder…</button>
+    <button type="button" id="copy">Copiar</button>
+    <button type="button" id="close">Cerrar</button>
+    <span id="msg" class="muted" role="status"></span>
+  </div>
+</div>
+<script src="../markdown.js"></script>
+<script src="result.js"></script>
+</body></html>

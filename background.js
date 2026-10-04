@@ -143,8 +143,7 @@ messenger.messageDisplayAction.onClicked.addListener(async (tab) => {
     const messages = Array.isArray(displayed) ? displayed : (displayed && displayed.messages) || [];
     if (messages[0]) messageId = messages[0].id;
   } catch (_) {}
-  const url = messenger.runtime.getURL("popup/popup.html") + (messageId != null ? "?messageId=" + messageId : "");
-  await messenger.windows.create({ url, type: "popup", width: 600, height: halfScreenHeight(), allowScriptsToClose: true });
+  await openReplyWindow(messageId);
 });
 
 // El botón de la barra principal abre la UI en modo creación (correo nuevo, sin messageId).
@@ -172,15 +171,60 @@ async function ensureCopilotTab() {
   return tabId;
 }
 
+// --- Diagnóstico técnico local ---------------------------------------------------
+// Qué paso o selector falló y cuándo, para arreglar rápido cuando Microsoft cambie la interfaz
+// de Copilot. NUNCA guarda asuntos, direcciones ni texto de correos o respuestas. Se copia desde
+// Opciones › Diagnóstico. Solo en storage.local (no sale del equipo).
+const DIAG_MAX = 200;
+let diagQueue = Promise.resolve();
+function diag(ev, detail) {
+  diagQueue = diagQueue.then(async () => {
+    const { diagLog } = await messenger.storage.local.get({ diagLog: [] });
+    const log = Array.isArray(diagLog) ? diagLog : [];
+    log.push({ ts: new Date().toISOString(), v: messenger.runtime.getManifest().version, ev, detail: String(detail || "").slice(0, 120) });
+    if (log.length > DIAG_MAX) log.splice(0, log.length - DIAG_MAX);
+    await messenger.storage.local.set({ diagLog: log });
+  }).catch(() => {});
+}
+
+function notify(message) {
+  messenger.notifications.create({
+    type: "basic", iconUrl: messenger.runtime.getURL("icon.svg"), title: "CoThunder", message
+  }).catch(() => {});
+}
+
+// Progreso de una petición hacia las páginas de CoThunder (la ventana muestra los pasos).
+function broadcastProgress(token, stage, extra) {
+  messenger.runtime.sendMessage(Object.assign({ type: "copilotProgress", token, stage }, extra || {})).catch(() => {});
+}
+
+const isCancelled = async (token) =>
+  !!(await messenger.storage.session.get({ ["cancel_" + token]: false }))["cancel_" + token];
+
 // Entrega el payload al content script reintentando hasta que responda (la SPA tarda en cargar).
-async function deliverWithRetry(tabId, payload, timeoutMs = 30000) {
+// Si la pestaña acaba en un dominio que no es el de Copilot (su URL deja de ser legible para la
+// extensión, que solo tiene permiso sobre Copilot), es la página de inicio de sesión de Microsoft.
+async function deliverWithRetry(tabId, payload, token, timeoutMs = 30000) {
   const start = Date.now();
+  let foreignSince = 0;
   while (Date.now() - start < timeoutMs) {
+    if (token != null && await isCancelled(token)) return { ok: false, reason: "cancelled" };
     try {
       const res = await messenger.tabs.sendMessage(tabId, payload);
       if (res) return res;
     } catch (_) {
       // content script aún no inyectado; reintentar
+    }
+    try {
+      const t = await messenger.tabs.get(tabId);
+      if (t.status === "complete" && !t.url) {
+        foreignSince = foreignSince || Date.now();
+        if (Date.now() - foreignSince > 3000) return { ok: false, reason: "login" };
+      } else {
+        foreignSince = 0;
+      }
+    } catch (_) {
+      return { ok: false, reason: "closed" };
     }
     await new Promise((r) => setTimeout(r, 500));
   }
@@ -219,133 +263,317 @@ async function logActivity(entry) {
   } catch (_) {}
 }
 
-// Un único listener con ramas para no competir por la respuesta al popup.
-messenger.runtime.onMessage.addListener(async (msg) => {
-  if (!msg) return;
-  if (msg.type === "sendToCopilot") {
-    try {
-      // Token de correlación genérico: el messageId (respuesta) o el requestId (creación).
-      const token = msg.messageId != null ? String(msg.messageId) : msg.requestId;
-      // Guarda las opciones de composición asociadas a este token, para usarlas al llegar la respuesta.
-      await messenger.storage.session.set({
-        ["opts_" + token]: {
-          mode: msg.mode || "reply",
-          includeSignature: msg.includeSignature !== false,
-          includeQuote: !!msg.includeQuote,
-          to: (msg.to || "").trim(),
-          cc: (msg.cc || "").trim(),
-          bcc: (msg.bcc || "").trim()
+// Arranca una petición a Copilot: guarda las opciones del token (para cuando llegue la respuesta),
+// abre o enfoca Copilot y le entrega el prompt. Lo usan la ventana, el menú contextual y el editor.
+// req: { token, prompt, newChat, agentId, agentLabel, opts }.
+async function startCopilotRequest(req) {
+  const token = String(req.token);
+  await messenger.storage.session.set({ ["opts_" + token]: req.opts });
+  await messenger.storage.session.remove("cancel_" + token);
+  broadcastProgress(token, "opening");
+  let res;
+  try {
+    const tabId = await ensureCopilotTab();
+    res = await deliverWithRetry(tabId, {
+      type: "sendPrompt", prompt: req.prompt, newChat: req.newChat,
+      agentId: req.agentId, agentLabel: req.agentLabel, messageId: token
+    }, token);
+    if (res && res.reason === "login") {
+      // Deja la ventana de Copilot delante para que el usuario inicie sesión.
+      messenger.tabs.get(tabId).then((t) => messenger.windows.update(t.windowId, { focused: true })).catch(() => {});
+    }
+  } catch (e) {
+    console.error("[CoThunder] startCopilotRequest:", e);
+    res = { ok: false, reason: e && e.message ? e.message : String(e) };
+  }
+  if (!res || !res.ok) {
+    const reason = (res && res.reason) || "desconocido";
+    if (reason !== "cancelled") diag("envio-fallido", reason);
+    messenger.storage.session.remove("opts_" + token).catch(() => {});
+    broadcastProgress(token, reason === "cancelled" ? "cancelled" : "error", { reason });
+  }
+  return res || { ok: false };
+}
+
+// Cancela una petición: marca el token (corta la entrega o la espera) y avisa a Copilot.
+async function cancelCopilotRequest(token) {
+  token = String(token);
+  await messenger.storage.session.set({ ["cancel_" + token]: true });
+  for (const id of await findCopilotTabIds()) {
+    messenger.tabs.sendMessage(id, { type: "cancelPrompt", token }).catch(() => {});
+  }
+  messenger.storage.session.remove("opts_" + token).catch(() => {});
+  broadcastProgress(token, "cancelled");
+}
+
+// Firma de la identidad de una redacción, como HTML, si se pidió incluirla.
+async function signatureHtml(details, include) {
+  if (!include) return "";
+  try {
+    const identity = details.identityId ? await messenger.identities.get(details.identityId) : null;
+    if (identity && identity.signature) {
+      return "<br><br>" + (identity.signatureIsPlainText ? escapeHtmlWithBreaks(identity.signature) : identity.signature);
+    }
+  } catch (_) {}
+  return "";
+}
+
+// Abre la respuesta al correo original con el texto de Copilot (beginReply necesita el id numérico).
+async function openReplyWithText(messageId, opts, text) {
+  try {
+    const tab = await messenger.compose.beginReply(Number(messageId), "replyToSender");
+    const details = await messenger.compose.getComposeDetails(tab.id);
+    const signature = await signatureHtml(details, opts.includeSignature);
+    // Cita del original (el cuerpo por defecto de la respuesta, sin la firma que Thunderbird pudiera añadir).
+    let quote = "";
+    if (opts.includeQuote && details.body) {
+      try {
+        const doc = new DOMParser().parseFromString(details.body, "text/html");
+        doc.querySelectorAll(".moz-signature").forEach((n) => n.remove());
+        quote = "<br><br>" + (doc.body ? doc.body.innerHTML : "");
+      } catch (_) {
+        quote = "<br><br>" + details.body;
+      }
+    }
+    await messenger.compose.setComposeDetails(tab.id, { body: escapeHtmlWithBreaks(text) + signature + quote });
+    logActivity({ ts: new Date().toISOString(), mode: "reply", result: "ok" });
+  } catch (e) {
+    console.error("[CoThunder] beginReply falló:", e);
+    logActivity({ ts: new Date().toISOString(), mode: "reply", result: "error" });
+    notify("No se pudo abrir la ventana de respuesta con el texto de Copilot.");
+  }
+}
+
+// Modo creación: abre un correo nuevo (beginNew) separando Asunto + cuerpo.
+async function openNewWithText(opts, text) {
+  try {
+    const { subject, body } = parseCreateReply(text);
+    // Destinatarios Para/CC/CCO: cada campo admite varias direcciones (por líneas o comas); se filtran las válidas.
+    const to = parseRecipients(opts.to), cc = parseRecipients(opts.cc), bcc = parseRecipients(opts.bcc);
+    // Los destinatarios y el asunto se fijan en beginNew: setComposeDetails no los aplica de forma fiable.
+    const initial = { isPlainText: false };
+    if (subject) initial.subject = subject;
+    if (to.length) initial.to = to;
+    if (cc.length) initial.cc = cc;
+    if (bcc.length) initial.bcc = bcc;
+    const tab = await messenger.compose.beginNew(initial);
+    const details = await messenger.compose.getComposeDetails(tab.id);
+    const signature = await signatureHtml(details, opts.includeSignature);
+    await messenger.compose.setComposeDetails(tab.id, { body: escapeHtmlWithBreaks(body) + signature });
+    logActivity({ ts: new Date().toISOString(), mode: "create", to: to.length, cc: cc.length, bcc: bcc.length, result: "ok" });
+  } catch (e) {
+    console.error("[CoThunder] beginNew falló:", e);
+    logActivity({ ts: new Date().toISOString(), mode: "create", result: "error" });
+    notify("No se pudo abrir el correo nuevo con el texto de Copilot.");
+  }
+}
+
+// Ventana de resultados (resumen o elección entre versiones). Los datos viajan por storage.session.
+async function openResultWindow(data) {
+  const id = "r" + Date.now() + Math.floor(Math.random() * 1e6);
+  await messenger.storage.session.set({ ["result_" + id]: data });
+  const height = (() => { try { return Math.round(screen.availHeight * 0.7); } catch (_) { return 700; } })();
+  await messenger.windows.create({
+    url: messenger.runtime.getURL("pages/result.html") + "?id=" + id,
+    type: "popup", width: 680, height, allowScriptsToClose: true
+  });
+}
+
+// Llega la respuesta capturada: según el modo del token, abre respuesta, correo nuevo, la
+// ventana de resultados o devuelve el texto al editor.
+async function handleCopilotReply(msg) {
+  const token = String(msg.messageId);
+  const optsKey = "opts_" + token;
+  const store = await messenger.storage.session.get({ [optsKey]: null });
+  // Sin opciones guardadas (p. ej. se perdió storage.session): si el token es un id de correo,
+  // se responde con los valores por defecto, como antes; si no, no hay a dónde llevar la respuesta.
+  const opts = store[optsKey] || (/^\d+$/.test(token) ? { mode: "reply", includeSignature: true, includeQuote: false } : null);
+  messenger.storage.session.remove(optsKey).catch(() => {});
+  if (await isCancelled(token)) return;
+  if (!opts) return;
+  if (!msg.text) {
+    diag("captura-vacia", opts.mode || "reply");
+    if (opts.mode === "improve") {
+      messenger.tabs.sendMessage(opts.tabId, { type: "cothunder-improved", token, text: "" }).catch(() => {});
+    } else {
+      notify(copilotErrorText("capture"));
+    }
+    return;
+  }
+  switch (opts.mode) {
+    case "create":
+      return openNewWithText(opts, msg.text);
+    case "improve":
+      try {
+        await messenger.tabs.sendMessage(opts.tabId, { type: "cothunder-improved", token, text: stripCodeFences(msg.text) });
+        logActivity({ ts: new Date().toISOString(), mode: "improve", result: "ok" });
+      } catch (_) {
+        notify("No se pudo devolver el texto al correo (¿se cerró la redacción?). Lo tienes en la ventana de Copilot.");
+      }
+      return;
+    case "summary":
+      logActivity({ ts: new Date().toISOString(), mode: "summary", result: "ok" });
+      return openResultWindow({ kind: "summary", title: opts.title, text: stripCodeFences(msg.text), messageIds: opts.messageIds || [] });
+    default: {
+      if (opts.versions > 1) {
+        const versions = splitVersions(msg.text);
+        if (versions.length > 1) {
+          return openResultWindow({ kind: "versions", title: opts.title, versions, messageId: token, opts });
         }
-      });
-      const tabId = await ensureCopilotTab();
-      // El token viaja con el prompt y vuelve con la respuesta, así cada respuesta va a su destino.
-      return await deliverWithRetry(tabId, {
-        type: "sendPrompt", prompt: msg.prompt, newChat: msg.newChat,
-        agentId: msg.agentId, agentLabel: msg.agentLabel, messageId: token
-      });
-    } catch (e) {
-      console.error("[CoThunder] sendToCopilot:", e);
-      return { ok: false, reason: e && e.message ? e.message : String(e) };
+        diag("versiones-sin-separar", "llegó 1 de " + opts.versions);
+      }
+      return openReplyWithText(token, opts, msg.text);
     }
   }
+}
+
+// Abre la ventana de CoThunder para un correo (botón del visor o menú contextual).
+async function openReplyWindow(messageId) {
+  const url = messenger.runtime.getURL("popup/popup.html") + (messageId != null ? "?messageId=" + messageId : "");
+  await messenger.windows.create({ url, type: "popup", width: 600, height: halfScreenHeight(), allowScriptsToClose: true });
+}
+
+function openHelp(anchor) {
+  return messenger.tabs.create({ url: messenger.runtime.getURL("pages/help.html") + (anchor ? "#" + anchor : "") });
+}
+
+// Estado de Copilot para el asistente de bienvenida: cerrado, sin sesión, cargando o listo.
+async function checkCopilot() {
+  const ids = await findCopilotTabIds();
+  if (!ids.length) {
+    const { copilotTabId } = await messenger.storage.session.get({ copilotTabId: null });
+    if (copilotTabId == null) return { state: "closed" };
+    try {
+      const t = await messenger.tabs.get(copilotTabId);
+      return { state: t.status === "complete" && !t.url ? "login" : "loading" };
+    } catch (_) {
+      return { state: "closed" };
+    }
+  }
+  for (const id of ids) {
+    try {
+      const res = await messenger.tabs.sendMessage(id, { type: "checkSession" });
+      if (!res) continue;
+      if (res.editor) {
+        const ag = await messenger.tabs.sendMessage(id, { type: "getAgents" }).catch(() => null);
+        return { state: "ok", agents: (ag && ag.agents) || [] };
+      }
+      return { state: res.signIn ? "login" : "loading" };
+    } catch (_) {}
+  }
+  return { state: "loading" };
+}
+
+// Petición desde la ventana de CoThunder (respuesta o creación).
+async function sendFromWindow(msg) {
+  // Token de correlación genérico: el messageId (respuesta) o el requestId (creación).
+  const token = msg.messageId != null ? String(msg.messageId) : msg.requestId;
+  return startCopilotRequest({
+    token, prompt: msg.prompt, newChat: msg.newChat, agentId: msg.agentId, agentLabel: msg.agentLabel,
+    opts: {
+      mode: msg.mode || "reply",
+      includeSignature: msg.includeSignature !== false,
+      includeQuote: !!msg.includeQuote,
+      versions: Number(msg.versions) || 1,
+      title: msg.title || "",
+      to: (msg.to || "").trim(),
+      cc: (msg.cc || "").trim(),
+      bcc: (msg.bcc || "").trim()
+    }
+  });
+}
+
+// «Mejorar con Copilot» desde el editor: el fragmento seleccionado vuelve a la misma redacción.
+async function improveFromEditor(msg, sender) {
+  const tabId = sender && sender.tab ? sender.tab.id : null;
+  if (tabId == null) return { ok: false, reason: "sin-pestaña" };
+  const text = String(msg.text || "");
+  if (!text.trim()) return { ok: false, reason: "sin-texto" };
+  const cfg = await getConfig();
+  const token = "i" + Date.now() + Math.floor(Math.random() * 1e6);
+  const label = (IMPROVE_ACTIONS[msg.action] || {}).label || "Mejorar";
+  const res = await startCopilotRequest({
+    token, newChat: cfg.newChatByDefault,
+    prompt: chatTitle("Mejorar", label) + "\n\n" + buildImprovePrompt(text, msg.action),
+    opts: { mode: "improve", tabId }
+  });
+  return Object.assign({ token }, res);
+}
+
+// --- Acciones de un clic: menú contextual de la lista de mensajes y del botón del visor ---
+// Usa los ajustes guardados (agente, tono, longitud, firma, cita) sin abrir la ventana. Las
+// respuestas se escriben en el idioma detectado del correo.
+async function quickAction(kind, messageIds, templateId) {
+  const ids = (messageIds || []).filter((id) => id != null);
+  if (!ids.length) { notify("Selecciona un correo primero."); return; }
+  const cfg = await getConfig();
+  const prefs = await messenger.storage.local.get({
+    lastAgentId: "", agents: [], prefTone: "", prefLength: "", prefSignature: true, prefQuote: false
+  });
+  const agent = (prefs.agents || []).find((a) => a.id === prefs.lastAgentId);
+  const userContext = buildUserContext(cfg.userProfile);
+  let token, prompt, opts;
+  try {
+    if (kind === "summary") {
+      const list = [];
+      for (const id of ids.slice(0, SUMMARY_MAX_MESSAGES)) {
+        const m = await messenger.messages.get(id);
+        list.push({ author: m.author, subject: m.subject, date: m.date ? new Date(m.date).toLocaleString() : "", body: await extractBody(id) });
+      }
+      const title = list.length > 1 ? "Resumen de " + list.length + " correos" : "Resumen: " + (list[0].subject || "");
+      token = "s" + Date.now() + Math.floor(Math.random() * 1e6);
+      prompt = chatTitle("Resumen", list.length > 1 ? list.length + " correos" : list[0].subject) + "\n\n" +
+        buildSummaryPrompt(list, { userContext });
+      opts = { mode: "summary", title, messageIds: list.length === 1 ? [ids[0]] : [] };
+    } else {
+      const message = await messenger.messages.get(ids[0]);
+      const body = await extractBody(message.id);
+      const promptBody = templateId != null ? await extractTemplateBody(templateId) : (QUICK_ACTIONS[kind] || {}).instruction;
+      token = String(message.id);
+      prompt = chatTitle("Preguntar", message.subject) + "\n\n" + buildComposedPrompt(message, body, {
+        userContext, template: cfg.promptTemplate, promptBody,
+        tone: prefs.prefTone, length: prefs.prefLength, language: detectLanguage(body)
+      });
+      opts = { mode: "reply", includeSignature: prefs.prefSignature, includeQuote: prefs.prefQuote, versions: 1 };
+    }
+  } catch (e) {
+    console.error("[CoThunder] quickAction:", e);
+    notify("No se pudo leer el correo seleccionado.");
+    return;
+  }
+  notify(kind === "summary" ? "Pidiendo el resumen a Copilot…" : "Preguntando a Copilot; se abrirá la respuesta.");
+  const res = await startCopilotRequest({
+    token, prompt, newChat: cfg.newChatByDefault,
+    agentId: agent ? agent.id : "", agentLabel: agent ? agent.label : "", opts
+  });
+  if (!res.ok && res.reason !== "cancelled") notify(copilotErrorText(res.reason));
+}
+
+// Un único listener con ramas para no competir por la respuesta al popup.
+messenger.runtime.onMessage.addListener(async (msg, sender) => {
+  if (!msg) return;
+  if (msg.type === "sendToCopilot") return sendFromWindow(msg);
+  if (msg.type === "cancelCopilot") { await cancelCopilotRequest(msg.token); return { ok: true }; }
   if (msg.type === "copilotReply") {
     if (msg.messageId == null) return;
-    if (!msg.text) {
-      // La captura falló (timeout o interfaz cambiada): avisar, ya que el popup se cerró tras "Enviado".
-      messenger.notifications.create({
-        type: "basic",
-        iconUrl: messenger.runtime.getURL("icon.svg"),
-        title: "CoThunder",
-        message: "No se pudo capturar la respuesta de Copilot. Revísala en la ventana de Copilot."
-      }).catch(() => {});
-      // Evita dejar la clave de opciones de este token huérfana en storage.session.
-      messenger.storage.session.remove("opts_" + msg.messageId).catch(() => {});
-      return;
-    }
-    // Composición HTML (mantiene barra de formato y complementos); texto tal cual, con saltos preservados.
-    const html = escapeHtmlWithBreaks(msg.text);
-    // Recupera las opciones de composición (firma/cita) guardadas al enviar.
-    const optsKey = "opts_" + msg.messageId;
-    const store = await messenger.storage.session.get({ [optsKey]: { includeSignature: true, includeQuote: false } });
-    const opts = store[optsKey] || { includeSignature: true, includeQuote: false };
-    messenger.storage.session.remove(optsKey).catch(() => {});
-    // Modo creación: abre un correo nuevo (beginNew) separando Asunto + cuerpo.
-    if (opts.mode === "create") {
-      try {
-        const { subject, body } = parseCreateReply(msg.text);
-        const bodyHtml = escapeHtmlWithBreaks(body);
-        // Destinatarios Para/CC/CCO: cada campo admite varias direcciones (por líneas o comas); se filtran las válidas.
-        const to = parseRecipients(opts.to), cc = parseRecipients(opts.cc), bcc = parseRecipients(opts.bcc);
-        // Los destinatarios y el asunto se fijan en beginNew: setComposeDetails no los aplica de forma fiable.
-        const initial = { isPlainText: false };
-        if (subject) initial.subject = subject;
-        if (to.length) initial.to = to;
-        if (cc.length) initial.cc = cc;
-        if (bcc.length) initial.bcc = bcc;
-        const tab = await messenger.compose.beginNew(initial);
-        const details = await messenger.compose.getComposeDetails(tab.id);
-        let signature = "";
-        if (opts.includeSignature) {
-          try {
-            const identity = details.identityId ? await messenger.identities.get(details.identityId) : null;
-            if (identity && identity.signature) {
-              signature = "<br><br>" + (identity.signatureIsPlainText
-                ? escapeHtmlWithBreaks(identity.signature)
-                : identity.signature);
-            }
-          } catch (_) {}
-        }
-        await messenger.compose.setComposeDetails(tab.id, { body: bodyHtml + signature });
-        logActivity({ ts: new Date().toISOString(), mode: "create", to: to.length, cc: cc.length, bcc: bcc.length, result: "ok" });
-      } catch (e) {
-        console.error("[CoThunder] beginNew falló:", e);
-        logActivity({ ts: new Date().toISOString(), mode: "create", result: "error" });
-        messenger.notifications.create({
-          type: "basic", iconUrl: messenger.runtime.getURL("icon.svg"), title: "CoThunder",
-          message: "No se pudo abrir el correo nuevo con el texto de Copilot."
-        }).catch(() => {});
-      }
-      return { ok: true };
-    }
-    // Modo respuesta: abre una respuesta al correo original (beginReply necesita el id numérico).
-    try {
-      const tab = await messenger.compose.beginReply(Number(msg.messageId), "replyToSender");
-      const details = await messenger.compose.getComposeDetails(tab.id);
-      // Firma configurada del usuario (leída de la identidad de la respuesta), si se pidió incluirla.
-      let signature = "";
-      if (opts.includeSignature) {
-        try {
-          const identity = details.identityId ? await messenger.identities.get(details.identityId) : null;
-          if (identity && identity.signature) {
-            signature = "<br><br>" + (identity.signatureIsPlainText
-              ? escapeHtmlWithBreaks(identity.signature)
-              : identity.signature);
-          }
-        } catch (_) {}
-      }
-      // Cita del original (el cuerpo por defecto de la respuesta, sin la firma que Thunderbird pudiera añadir).
-      let quote = "";
-      if (opts.includeQuote && details.body) {
-        try {
-          const doc = new DOMParser().parseFromString(details.body, "text/html");
-          doc.querySelectorAll(".moz-signature").forEach((n) => n.remove());
-          quote = "<br><br>" + (doc.body ? doc.body.innerHTML : "");
-        } catch (_) {
-          quote = "<br><br>" + details.body;
-        }
-      }
-      await messenger.compose.setComposeDetails(tab.id, { body: html + signature + quote });
-      logActivity({ ts: new Date().toISOString(), mode: "reply", result: "ok" });
-    } catch (e) {
-      console.error("[CoThunder] beginReply falló:", e);
-      logActivity({ ts: new Date().toISOString(), mode: "reply", result: "error" });
-      messenger.notifications.create({
-        type: "basic",
-        iconUrl: messenger.runtime.getURL("icon.svg"),
-        title: "CoThunder",
-        message: "No se pudo abrir la ventana de respuesta con el texto de Copilot."
-      }).catch(() => {});
-    }
+    await handleCopilotReply(msg);
+    return { ok: true };
+  }
+  if (msg.type === "diag") { diag(msg.ev, msg.detail); return; }
+  if (msg.type === "improveText") return improveFromEditor(msg, sender);
+  if (msg.type === "listImproveActions") {
+    return { actions: Object.entries(IMPROVE_ACTIONS).map(([id, a]) => ({ id, label: a.label })) };
+  }
+  if (msg.type === "openHelp") { await openHelp(msg.anchor); return { ok: true }; }
+  if (msg.type === "openCopilot") { await ensureCopilotTab(); return { ok: true }; }
+  if (msg.type === "checkCopilot") return checkCopilot();
+  if (msg.type === "openReplyWindow") { await openReplyWindow(msg.messageId); return { ok: true }; }
+  // Ventana de resultados: usar una de las versiones como respuesta.
+  if (msg.type === "useVersion") {
+    const key = "result_" + msg.id;
+    const data = (await messenger.storage.session.get({ [key]: null }))[key];
+    if (!data || data.kind !== "versions" || !data.versions[msg.index]) return { ok: false };
+    await openReplyWithText(data.messageId, data.opts, data.versions[msg.index]);
     return { ok: true };
   }
   // Plantillas de Formato para el menú 📄 del editor Markdown (el compose script no tiene acceso
@@ -379,6 +607,91 @@ messenger.runtime.onMessage.addListener(async (msg) => {
     // Respondió pero sin agentes -> lista vacía (no error); nadie respondió -> Copilot no está cargado.
     return responded ? { ok: true, agents: [] } : { ok: false, reason: "no-copilot" };
   }
+});
+
+// Menú contextual «CoThunder» en la lista de mensajes y en el botón del visor. Se rehace en cada
+// arranque del event page (removeAll + create: ids fijos, sin duplicados) y el submenú de
+// plantillas se rellena al mostrarse.
+const MENU_CONTEXTS = ["message_list", "message_display_action"];
+const MENU_PARENT = "cothunder";
+let menuTemplateIds = [];
+async function buildMenus() {
+  try {
+    await messenger.menus.removeAll();
+    const add = (props) => messenger.menus.create(Object.assign({ contexts: MENU_CONTEXTS }, props));
+    add({ id: MENU_PARENT, title: "CoThunder" });
+    add({ id: "qa-summary", parentId: MENU_PARENT, title: "Resumir con Copilot" });
+    add({ id: "qa-sep1", parentId: MENU_PARENT, type: "separator" });
+    for (const [k, a] of Object.entries(QUICK_ACTIONS)) add({ id: "qa-" + k, parentId: MENU_PARENT, title: a.label });
+    add({ id: "qa-tpl", parentId: MENU_PARENT, title: "Responder con mi prompt" });
+    add({ id: "qa-tpl-none", parentId: "qa-tpl", title: "(cargando…)", enabled: false });
+    add({ id: "qa-sep2", parentId: MENU_PARENT, type: "separator" });
+    add({ id: "qa-window", parentId: MENU_PARENT, title: "Abrir la ventana de CoThunder…" });
+    add({ id: "qa-help", parentId: MENU_PARENT, title: "Ayuda de CoThunder" });
+    menuTemplateIds = [];
+  } catch (e) {
+    console.error("[CoThunder] menús:", e);
+  }
+}
+const menusReady = buildMenus();
+
+// Mensajes a los que se refiere un clic de menú: la selección de la lista o el correo del visor.
+async function menuMessageIds(info, tab) {
+  const sel = info && info.selectedMessages;
+  if (sel && sel.messages && sel.messages.length) {
+    const ids = sel.messages.map((m) => m.id);
+    let page = sel;
+    while (page.id && ids.length < SUMMARY_MAX_MESSAGES) {
+      page = await messenger.messages.continueList(page.id).catch(() => null);
+      if (!page) break;
+      ids.push(...(page.messages || []).map((m) => m.id));
+    }
+    return ids;
+  }
+  try {
+    const displayed = await messenger.messageDisplay.getDisplayedMessages(tab.id);
+    const messages = Array.isArray(displayed) ? displayed : (displayed && displayed.messages) || [];
+    return messages.map((m) => m.id);
+  } catch (_) {
+    return [];
+  }
+}
+
+messenger.menus.onShown.addListener(async (info, tab) => {
+  if (!info.menuIds || !info.menuIds.includes(MENU_PARENT)) return;
+  await menusReady;
+  const n = (info.selectedMessages && info.selectedMessages.messages || []).length;
+  const many = n > 1;
+  messenger.menus.update("qa-summary", { title: many ? "Resumir los " + n + " correos con Copilot" : "Resumir con Copilot" }).catch(() => {});
+  for (const k of [...Object.keys(QUICK_ACTIONS), "tpl"]) messenger.menus.update("qa-" + k, { enabled: !many }).catch(() => {});
+  // Plantillas «Prompt - …» del usuario como submenú.
+  try {
+    const list = promptTemplates(await listTemplates(), "reply");
+    for (const id of menuTemplateIds) await messenger.menus.remove(id).catch(() => {});
+    await messenger.menus.remove("qa-tpl-none").catch(() => {});
+    menuTemplateIds = [];
+    if (!list.length) {
+      messenger.menus.create({ id: "qa-tpl-none", parentId: "qa-tpl", contexts: MENU_CONTEXTS, title: "(no hay plantillas «Prompt - …»)", enabled: false });
+    }
+    for (const t of list.slice(0, 30)) {
+      const id = "qa-tpl-" + t.id;
+      messenger.menus.create({ id, parentId: "qa-tpl", contexts: MENU_CONTEXTS, title: t.label });
+      menuTemplateIds.push(id);
+    }
+  } catch (_) {}
+  messenger.menus.refresh().catch(() => {});
+});
+
+messenger.menus.onClicked.addListener(async (info, tab) => {
+  const id = String(info.menuItemId || "");
+  if (!id.startsWith("qa-")) return;
+  if (id === "qa-help") { openHelp("menu"); return; }
+  const ids = await menuMessageIds(info, tab);
+  if (id === "qa-window") { openReplyWindow(ids[0]); return; }
+  if (id === "qa-summary") { quickAction("summary", ids); return; }
+  if (id.startsWith("qa-tpl-")) { quickAction("template", ids, Number(id.slice("qa-tpl-".length))); return; }
+  const kind = id.slice(3);
+  if (QUICK_ACTIONS[kind]) quickAction(kind, ids);
 });
 
 // --- Biblioteca inicial de Prompts y Formatos, sembrada en la carpeta Plantillas al instalar ---
@@ -506,4 +819,8 @@ cleanProfileSignature();
 
 messenger.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install" || details.reason === "update") seedTemplates();
+  // Primera instalación: asistente de bienvenida (sesión de Copilot, tema y agente).
+  if (details.reason === "install") {
+    messenger.tabs.create({ url: messenger.runtime.getURL("pages/welcome.html") }).catch(() => {});
+  }
 });

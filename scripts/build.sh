@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.."
 
 # Si se añade un fichero de runtime, va aquí y en ningún otro sitio.
 FILES=(manifest.json common.js background.js content-copilot.js content-compose.js markdown.js
-       themes.js compose.css icon.svg popup options)
+       themes.js compose.css icon.svg popup options pages)
 
 for f in "${FILES[@]}"; do
   [ -e "$f" ] || { echo "build: falta $f" >&2; exit 1; }

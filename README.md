@@ -42,7 +42,8 @@ Sin API, sin claves y sin telemetría.
 |---|---|---|
 | **Preguntar a Copilot** | Barra del visor de un mensaje | Lee el correo abierto, monta un prompt editable y trae la respuesta de Copilot a una **respuesta** lista para revisar. |
 | **Crear desde Copilot** | Barra principal | Redacta un **correo nuevo desde cero** (asunto y cuerpo) a partir de tus indicaciones. |
-| **Editor Markdown** | Ventana de redacción | Escribes en Markdown a la izquierda y ves el correo maquetado a la derecha; sale con formato en un clic. |
+| **Editor Markdown** | Ventana de redacción | Escribes en Markdown a la izquierda y ves el correo maquetado a la derecha; sale con formato en un clic. Con **✨ Mejorar con Copilot** reescribes lo que selecciones. |
+| **Menú CoThunder** | Clic derecho sobre un correo de la lista | **Resumir** (uno o varios), **responder aceptando**, **declinando**, **acusar recibo** o con tu prompt, en un clic. |
 
 La extensión no llama a ninguna API: pilota la web de Copilot en una ventana propia, con la sesión que ya tienes iniciada.
 
@@ -59,7 +60,9 @@ Para **actualizar**, repite los pasos 1 y 2 con la versión nueva: se conservan 
 - **Responder:** abre el correo › **Preguntar a Copilot** › ajusta las opciones › **Enviar a Copilot** (o **Ctrl+Enter**). Al terminar se abre la respuesta lista para revisar.
 - **Crear:** **Crear desde Copilot** › describe qué quieres crear (y, si quieres, contexto, idioma y destinatarios) › **Enviar a Copilot**. Se abre un correo nuevo con el asunto y el cuerpo generados.
 
-Paso a paso completo, con todos los campos: **[manual de uso](docs/MANUAL.md)**.
+- **En un clic:** clic derecho sobre un correo › **CoThunder** › *Resumir*, *Responder aceptando*…
+
+Paso a paso completo, con todos los campos: **[manual de uso](docs/MANUAL.md)**. Dentro de Thunderbird, el botón **?** (o **F1**) abre la **ayuda integrada**.
 
 ## Características
 
@@ -73,6 +76,10 @@ Paso a paso completo, con todos los campos: **[manual de uso](docs/MANUAL.md)**.
 - **Contexto «Sobre ti»** (en Opciones): nombre, cargo, organización y cómo escribes, para que Copilot adapte el tono. La firma con tus datos la pone Thunderbird: Copilot termina en la despedida.
 - Ventana en **pestañas** que cabe en pantallas pequeñas o con escalado del 125-150 %; **Ctrl+Enter** para enviar.
 - **Degradación segura**: si falla la escritura en Copilot, el prompt se copia al portapapeles; si no llega la respuesta, se avisa con una notificación.
+- **Progreso paso a paso** (abriendo Copilot, escribiendo, esperando con los segundos, recibida) y **Cancelar**.
+- **Aviso de sesión caducada**: si no has iniciado sesión en Copilot, te lo dice y deja su ventana delante.
+- **Diagnóstico** en Opciones: qué paso técnico falló, sin texto de correos, para arreglar rápido si Microsoft cambia Copilot.
+- **Ayuda integrada** y **asistente de bienvenida** la primera vez.
 
 </details>
 
@@ -82,6 +89,9 @@ Paso a paso completo, con todos los campos: **[manual de uso](docs/MANUAL.md)**.
 - Prompt con remitente, asunto y cuerpo, limpio de CSS, espacios y caracteres invisibles.
 - **Incluir el correo citado** e **Incluir el hilo** (mensajes anteriores, por `References`/`In-Reply-To`).
 - **Blindaje anti-inyección** en el prompt y **detección local** de intentos de manipulación, con aviso.
+- **Responde en el idioma del correo** (detectado: español, inglés, francés, alemán, portugués, italiano) o en el que elijas.
+- **Varias versiones** (2 o 3) para comparar y elegir antes de abrir la respuesta.
+- **Resúmenes** de uno o varios correos en una ventana, con *Copiar*.
 
 </details>
 
@@ -102,13 +112,15 @@ Sustituye a Markdown Here, que dejó de funcionar en las versiones nuevas de Thu
 
 | En la barra | Qué hace |
 |---|---|
-| **B I S 🖍 `</>` 🔗 ❝ • 1. ☑** | Formato básico, enlace, cita, listas y tareas. |
+| **B I S**, resaltado, `</>`, enlace, cita, listas y tarea | Formato básico, enlace, cita, listas y tareas (iconos propios, también en tema oscuro). |
 | **H ▾** · **Aa ▾** | Títulos 1 a 6 · negrita+cursiva, subíndice, superíndice. |
-| **▦ ▾** | Imagen, emoji, tabla, bloque de código, regla, lista de definición, nota al pie. |
-| **ℹ ▾** | Avisos: nota, consejo, importante, advertencia, precaución. |
-| **⇥ Ordenar** | Alinea tablas, tabula listas y separa bloques en el código fuente, sin cambiar el resultado (**Ctrl+Shift+F**). |
-| **📄 ▾** | Inserta tus **plantillas de formato** en el cursor. |
-| **🎨 ▾** | Cambia el **estilo** de ese correo al momento. |
+| **Insertar ▾** | Imagen, emoji, tabla, bloque de código, regla, lista de definición, nota al pie. |
+| **Avisos ▾** | Avisos: nota, consejo, importante, advertencia, precaución. |
+| **Ordenar** | Alinea tablas, tabula listas y separa bloques en el código fuente, sin cambiar el resultado (**Ctrl+Shift+F**). |
+| **✨ Mejorar con Copilot ▾** | Reescribe el texto seleccionado: más formal, más cercano, más corto, desarrollar, corregir o traducir (Ctrl+Z lo deshace). |
+| **Plantillas ▾** | Inserta tus **plantillas de formato** en el cursor. |
+| **Estilo ▾** | Cambia el **estilo** de ese correo al momento. |
+| **?** | Abre la ayuda del editor. |
 
 - **Atajos:** Ctrl+B, Ctrl+I, Ctrl+K (enlace), Ctrl+E (código) y Ctrl+1…6 (títulos). **Alt+F10** lleva a la barra, que se maneja con las flechas y Escape.
 - **Firma y cita intactas:** tu firma y el correo citado se conservan con su formato original.
@@ -123,7 +135,7 @@ Al instalar se siembra una biblioteca de ejemplo en tu carpeta *Plantillas*. El 
 |---|---|
 | `Prompt - Título` | Instrucción para Copilot al **responder**. |
 | `Prompt crear - Título` | Instrucción para Copilot al **crear** un correo. |
-| `Formato - Título` (o sin prefijo) | Estructura del correo: se usa como referencia en Copilot y se inserta desde el menú **📄** del editor. |
+| `Formato - Título` (o sin prefijo) | Estructura del correo: se usa como referencia en Copilot y se inserta desde el menú **Plantillas** del editor. |
 
 Las plantillas no llevan pie con datos personales: terminan en la despedida y tu firma la añade Thunderbird.
 
@@ -146,6 +158,7 @@ El contenido de los correos solo viaja a **Microsoft 365 Copilot**, el mismo des
 | El correo que respondes (remitente, asunto, cuerpo) y, si lo marcas, el hilo | **Tu firma** de Thunderbird: se añade en tu equipo después de la respuesta |
 | Tu perfil «Sobre ti» (nombre, cargo, organización, cómo escribes) | **Las firmas dentro del correo leído**: la tuya citada (aunque cambien los saltos de línea), las marcadas por Thunderbird y las de texto plano tras `-- ` |
 | Las plantillas de Prompt y Formato que elijas | Contraseñas ni claves: no hay API ni servidores propios, y nada sale hacia otro destino |
+| Con **Mejorar con Copilot**, solo el texto que seleccionas; con **Resumir**, los correos elegidos (recortados) | El **diagnóstico** y el **registro de actividad**: se quedan en tu equipo |
 
 Copilot tiene además la instrucción de **terminar en la despedida**, sin firma ni datos de contacto, para no duplicar tu firma.
 

@@ -4,7 +4,7 @@
   <div class="header">
     <img class="logo" src="../icon.svg" alt="">
     <span class="title" id="title">Preguntar a Copilot</span>
-    <button type="button" id="help" title="Ayuda y uso">?</button>
+    <button type="button" id="help" title="Ayuda (F1)" aria-label="Ayuda (F1)">?</button>
     <div id="status"><span id="dot"></span><span id="statusText">Preparando…</span></div>
   </div>
 
@@ -50,6 +50,8 @@
           <option value="en">Inglés</option>
           <option value="fr">Francés</option>
           <option value="de">Alemán</option>
+          <option value="pt">Portugués</option>
+          <option value="it">Italiano</option>
         </select>
       </div>
     </div>
@@ -82,7 +84,7 @@
       </div>
     </div>
 
-    <div class="grid4">
+    <div class="grid2 both">
       <div class="field">
         <label for="prompt-sel">⭐ Prompt</label>
         <select id="prompt-sel"><option value="">Ninguno</option></select>
@@ -91,6 +93,12 @@
         <label for="format-sel">📄 Formato</label>
         <select id="format-sel"><option value="">Ninguno</option></select>
       </div>
+    </div>
+
+    <!-- Lo que se toca menos, plegado (la ventana recuerda si lo dejaste abierto). -->
+    <details id="more" class="more">
+      <summary>Más opciones</summary>
+    <div class="grid4">
       <div class="field">
         <label for="tone">🎭 Tono</label>
         <select id="tone">
@@ -110,12 +118,33 @@
           <option value="detallada">Detallada</option>
         </select>
       </div>
+      <div class="field reply-only">
+        <label for="reply-language">🌐 Responder en</label>
+        <select id="reply-language">
+          <option value="auto">Como el correo</option>
+          <option value="es">Español</option>
+          <option value="en">Inglés</option>
+          <option value="fr">Francés</option>
+          <option value="de">Alemán</option>
+          <option value="pt">Portugués</option>
+          <option value="it">Italiano</option>
+        </select>
+      </div>
+      <div class="field reply-only">
+        <label for="versions">🔢 Versiones</label>
+        <select id="versions">
+          <option value="1">Una</option>
+          <option value="2">Dos, para elegir</option>
+          <option value="3">Tres, para elegir</option>
+        </select>
+      </div>
     </div>
 
     <div class="field">
       <label for="chat-title">🏷️ Título del chat (opcional)</label>
       <input type="text" id="chat-title" placeholder="Si lo dejas vacío, se usa el asunto o el brief">
     </div>
+    </details>
 
     <div class="opts">
       <label><input type="checkbox" id="newChat"> Empezar chat nuevo</label>
@@ -140,6 +169,17 @@
       </div>
       <textarea id="prompt"></textarea>
     </div>
+  </div>
+
+  <!-- Progreso de la petición: pasos, tiempo de espera y Cancelar. -->
+  <div id="progress" class="progress" hidden>
+    <ol class="steps" aria-label="Progreso">
+      <li data-stage="opening">Abriendo Copilot</li>
+      <li data-stage="typing">Escribiendo el prompt</li>
+      <li data-stage="waiting">Esperando la respuesta <span id="elapsed"></span></li>
+      <li data-stage="done">Respuesta recibida</li>
+    </ol>
+    <button type="button" id="cancel">Cancelar</button>
   </div>
 
   <div class="actions">

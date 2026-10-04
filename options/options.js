@@ -132,6 +132,32 @@ mark { background-color: #FCC100; }
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 
+  // --- Ayuda y bienvenida ---
+  const openPage = (page) => messenger.tabs.create({ url: messenger.runtime.getURL("pages/" + page) }).catch(() => {});
+  $("openHelp").addEventListener("click", () => openPage("help.html"));
+  $("openWelcome").addEventListener("click", () => openPage("welcome.html"));
+
+  // --- Diagnóstico técnico (sin contenido de correos) ---
+  const renderDiag = async () => {
+    const { diagLog } = await messenger.storage.local.get({ diagLog: [] });
+    const n = Array.isArray(diagLog) ? diagLog.length : 0;
+    $("diagCount").textContent = n + (n === 1 ? " entrada" : " entradas");
+    return Array.isArray(diagLog) ? diagLog : [];
+  };
+  await renderDiag();
+  $("diagCopy").addEventListener("click", async () => {
+    const log = await renderDiag();
+    const head = "CoThunder " + messenger.runtime.getManifest().version + " · " + navigator.userAgent + "\n";
+    const text = head + log.map((e) => [e.ts, "v" + e.v, e.ev, e.detail].filter(Boolean).join("  ")).join("\n");
+    try { await navigator.clipboard.writeText(text); $("diagMsg").textContent = "Copiado."; }
+    catch (_) { $("diagMsg").textContent = "No se pudo copiar."; }
+    setTimeout(() => { $("diagMsg").textContent = ""; }, 4000);
+  });
+  $("diagClear").addEventListener("click", async () => {
+    await messenger.storage.local.set({ diagLog: [] });
+    await renderDiag();
+  });
+
   // --- Registro de actividad (auditoría local, opcional) ---
   const renderAuditCount = async () => {
     const { auditLog } = await messenger.storage.local.get({ auditLog: [] });
