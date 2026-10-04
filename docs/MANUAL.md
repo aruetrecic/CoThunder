@@ -37,7 +37,7 @@ Ambas ventanas necesitan que tengas **sesión iniciada en Copilot**. La primera 
    - **Incluir mi firma**, **Incluir el correo citado**, **Incluir el hilo** (mensajes anteriores).
    - **Empezar chat nuevo**: parte de una conversación limpia en Copilot.
    - Edita el **Prompt a enviar** a mano si quieres; la mini barra Markdown ayuda a dar formato.
-4. Pulsa **Enviar a Copilot**. Se abre Copilot, escribe el prompt y lo envía.
+4. Pulsa **Enviar a Copilot** (o **Ctrl+Enter**). Se abre Copilot, escribe el prompt y lo envía.
 5. Cuando Copilot termina, se abre una **ventana de composición** con la respuesta al remitente, lista para revisar y enviar.
 6. Si quieres otra versión, pulsa **Regenerar**: reenvía el prompt en un chat nuevo.
 
@@ -52,7 +52,7 @@ Si el correo contiene un intento de manipular a la IA (inyección), CoThunder lo
    - **Idioma** (opcional): fuerza el idioma del correo generado.
    - **Para**, **CC** y **CCO** (opcional): los destinatarios. Cada caja admite varias direcciones, una por línea o separadas por comas. Solo se usan las válidas. Admite el formato `Nombre <correo@dominio.com>`.
    - **Agente**, **Prompt**, **Formato**, **Tono**, **Longitud** e **Incluir mi firma**, igual que en el modo respuesta.
-3. Pulsa **Enviar a Copilot**.
+3. Pulsa **Enviar a Copilot** (o **Ctrl+Enter**). Si alguna dirección no es válida, se marca en rojo en **Destinatarios** y CoThunder te avisa antes de enviar.
 4. Cuando termina, se abre un **correo nuevo** con el **asunto** y el **cuerpo** generados, la firma (si la marcaste) y los destinatarios en Para, CC y CCO.
 5. **Regenerar** pide otra versión.
 
@@ -82,9 +82,14 @@ Al instalar CoThunder se crea una **biblioteca de ejemplo** con varios Prompts, 
 
 CoThunder recuerda tus preferencias.
 
-## 7. Ver el Markdown maquetado
+## 7. Editor Markdown en la redacción
 
-La respuesta llega en Markdown (con `#`, `**`, listas, tablas, citas). Para verla **renderizada**, instala el complemento gratuito **Markdown Here Revival** desde el gestor de complementos de Thunderbird y conviértela con un clic en la ventana de composición.
+La respuesta llega en Markdown (con `#`, `**`, listas, tablas, citas). CoThunder trae su **propio editor**: escribes a la izquierda y ves el correo maquetado a la derecha; al enviar sale ya con formato. Se enciende y apaga con el botón **Editor Markdown** o con **Ctrl+Alt+M**.
+
+- **Barra de herramientas:** negrita, cursiva, tachado, resaltado, código, enlace, imagen, emoji, cita y listas, más los menús **H ▾** (títulos 1 a 6), **Aa ▾** (negrita+cursiva, subíndice, superíndice), **▦ ▾** (tabla, bloque de código, regla, definición, nota al pie) y **ℹ ▾** (avisos).
+- **🎨 ▾ Estilo:** cambia el tema de ese correo al momento. El tema por defecto se elige en Opciones.
+- **Atajos:** Ctrl+B negrita, Ctrl+I cursiva, Ctrl+K enlace, Ctrl+E código, Ctrl+1 … Ctrl+6 títulos (si la línea ya era un título, cambia el nivel).
+- **Firma y cita intactas:** tu firma de Thunderbird y el correo citado se conservan tal cual, con su formato original; solo se convierte a Markdown lo que escribes tú.
 
 ## 8. Privacidad y registro de actividad
 

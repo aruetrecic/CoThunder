@@ -21,26 +21,26 @@
   // editor de Thunderbird un <select> nativo no se despliega.
   const TOOLBAR_ITEMS = [
     { menu: "H", title: "Títulos", items: [
-      { label: "H1", title: "Título 1", kind: "prefix", value: "# " },
-      { label: "H2", title: "Título 2", kind: "prefix", value: "## " },
-      { label: "H3", title: "Título 3", kind: "prefix", value: "### " },
-      { label: "H4", title: "Título 4", kind: "prefix", value: "#### " },
-      { label: "H5", title: "Título 5", kind: "prefix", value: "##### " },
-      { label: "H6", title: "Título 6", kind: "prefix", value: "###### " },
+      { label: "H1", title: "Título 1 (Ctrl+1)", kind: "prefix", value: "# " },
+      { label: "H2", title: "Título 2 (Ctrl+2)", kind: "prefix", value: "## " },
+      { label: "H3", title: "Título 3 (Ctrl+3)", kind: "prefix", value: "### " },
+      { label: "H4", title: "Título 4 (Ctrl+4)", kind: "prefix", value: "#### " },
+      { label: "H5", title: "Título 5 (Ctrl+5)", kind: "prefix", value: "##### " },
+      { label: "H6", title: "Título 6 (Ctrl+6)", kind: "prefix", value: "###### " },
     ] },
     // Énfasis
-    { label: "B", title: "Negrita", kind: "wrap", before: "**", after: "**" },
-    { label: "I", title: "Cursiva", kind: "wrap", before: "*", after: "*" },
+    { label: "B", title: "Negrita (Ctrl+B)", kind: "wrap", before: "**", after: "**" },
+    { label: "I", title: "Cursiva (Ctrl+I)", kind: "wrap", before: "*", after: "*" },
     { label: "S", title: "Tachado", kind: "wrap", before: "~~", after: "~~" },
     { label: "🖍", title: "Resaltado", kind: "wrap", before: "==", after: "==" },
-    { label: "</>", title: "Código en línea", kind: "wrap", before: "`", after: "`" },
+    { label: "</>", title: "Código en línea (Ctrl+E)", kind: "wrap", before: "`", after: "`" },
     { menu: "Aa", title: "Más formato", items: [
       { label: "B+I", title: "Negrita y cursiva", kind: "wrap", before: "***", after: "***" },
       { label: "x₂", title: "Subíndice", kind: "wrap", before: "~", after: "~" },
       { label: "x²", title: "Superíndice", kind: "wrap", before: "^", after: "^" },
     ] },
     // Enlaces y multimedia
-    { label: "🔗", title: "Enlace", kind: "link" },
+    { label: "🔗", title: "Enlace (Ctrl+K)", kind: "link" },
     { label: "🖼", title: "Imagen", kind: "image" },
     { label: "😀", title: "Emoji", kind: "insert", value: ":smile:" },
     // Listas y cita
@@ -96,10 +96,24 @@
     insertMd(before + selectedText() + after);
   }
 
-  // v1: aproximación — antepone al punto donde esté el cursor (funciona bien
-  // cuando el cursor está al inicio de la línea; no reindenta la línea entera).
+  // Antepone el prefijo al INICIO de la línea del cursor (Selection.modify, Gecko). Si es un
+  // título (#…) y la línea ya lo era, sustituye el nivel en vez de acumular almohadillas.
+  // Sin Selection.modify, cae a insertar en el cursor (comportamiento v1).
   function prefixLine(prefix) {
-    insertMd(prefix + selectedText());
+    bodyEl.focus();
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || typeof sel.modify !== "function") { insertMd(prefix + selectedText()); return; }
+    sel.collapseToStart();
+    sel.modify("move", "backward", "lineboundary");
+    let replaceLen = 0;
+    if (/^#{1,6} $/.test(prefix)) {
+      for (let i = 0; i < 7; i++) sel.modify("extend", "forward", "character");
+      const m = sel.toString().match(/^#{1,6} /);
+      sel.collapseToStart();
+      if (m) replaceLen = m[0].length;
+    }
+    for (let i = 0; i < replaceLen; i++) sel.modify("extend", "forward", "character");
+    insertMd(prefix);
   }
 
   function insertBlock(template) {
@@ -323,16 +337,17 @@
     })));
   }
 
-  // Fuente Markdown: clona el cuerpo editable (sin el preview), convierte las
-  // imágenes insertadas a sintaxis ![alt](src) —innerText las descartaría— y lee
-  // el texto. Trabaja sobre un clon oculto para no tocar el cursor del editor.
-  function markdownSource() {
-    if (!bodyEl) return "";
+  // Bloques que NO son Markdown del usuario y se conservan tal cual (HTML original): la firma
+  // de Thunderbird y la cita/reenvío del correo original. Si se pasaran por innerText perderían
+  // su formato (negritas, colores, tamaños de la firma corporativa).
+  const PRESERVED_SELECTOR = ".moz-signature, blockquote[type=cite], .moz-cite-prefix, .moz-forward-container";
+
+  // Texto Markdown de una serie de nodos: los clona en un contenedor oculto, convierte las
+  // imágenes insertadas a sintaxis ![alt](src) —innerText las descartaría— y lee el texto.
+  // Trabaja sobre un clon para no tocar el cursor del editor.
+  function nodesToMarkdown(nodes) {
     const holder = document.createElement("div");
-    for (const child of bodyEl.childNodes) {
-      if (child === previewEl || child === toolbarEl) continue;
-      holder.appendChild(child.cloneNode(true));
-    }
+    for (const n of nodes) holder.appendChild(n.cloneNode(true));
     holder.querySelectorAll("img").forEach((img) => {
       const src = img.getAttribute("src") || "";
       const alt = img.getAttribute("alt") || "";
@@ -343,6 +358,36 @@
     const text = holder.innerText || "";
     holder.remove();
     return text;
+  }
+
+  // Trocea el cuerpo en orden: tramos de Markdown ({ md }) y bloques conservados ({ html }).
+  function bodySegments() {
+    if (!bodyEl) return [];
+    const segs = [];
+    let run = [];
+    const flush = () => { if (run.length) { segs.push({ md: nodesToMarkdown(run) }); run = []; } };
+    for (const child of bodyEl.childNodes) {
+      if (child === previewEl || child === toolbarEl) continue;
+      if (child.nodeType === 1 && child.matches(PRESERVED_SELECTOR)) {
+        flush();
+        segs.push({ html: child.outerHTML });
+      } else {
+        run.push(child);
+      }
+    }
+    flush();
+    return segs;
+  }
+
+  // HTML del correo: cada tramo Markdown se renderiza (con tema si withTheme) y los bloques
+  // conservados se intercalan sin tocar.
+  function buildHtml(withTheme) {
+    return bodySegments().map((seg) => {
+      if (seg.html !== undefined) return seg.html;
+      if (!seg.md.trim()) return "";
+      const html = styleEmail(renderMarkdown(seg.md), { accent: emailAccent });
+      return withTheme ? inlineCss(html, activeThemeCss()) : html;
+    }).join("");
   }
 
   // --- Motor de temas CSS -------------------------------------------------
@@ -394,10 +439,10 @@
   function finalHtml() {
     if (!active) return null;
     try {
-      return inlineCss(styleEmail(renderMarkdown(markdownSource()), { accent: emailAccent }), activeThemeCss());
+      return buildHtml(true);
     } catch (e) {
       // Degrada con gracia: si el tema/inliner falla, envía al menos el HTML base.
-      try { return styleEmail(renderMarkdown(markdownSource()), { accent: emailAccent }); } catch (e2) { return null; }
+      try { return buildHtml(false); } catch (e2) { return null; }
     }
   }
 
@@ -405,7 +450,7 @@
     if (!previewEl) return;
     try {
       // DOMParser: convierte nuestra cadena segura en nodos sin ejecutar scripts.
-      const doc = new DOMParser().parseFromString(inlineCss(styleEmail(renderMarkdown(markdownSource()), { accent: emailAccent }), activeThemeCss()), "text/html");
+      const doc = new DOMParser().parseFromString(buildHtml(true), "text/html");
       previewEl.replaceChildren(...doc.body.childNodes);
     } catch (e) {
       previewEl.textContent = "[CoThunder preview] " + (e && e.message);
@@ -422,6 +467,25 @@
   function onOutsideMenu(e) {
     if (toolbarEl && !toolbarEl.contains(e.target)) closeMenus(null);
   }
+  // Atajos Markdown: sustituyen a los de formato de Thunderbird (cuya negrita/cursiva HTML se
+  // perdería al convertir el correo). Ctrl+B/I/K/E y Ctrl+1…6 para títulos.
+  const SHORTCUTS = {
+    b: () => wrap("**", "**"),
+    i: () => wrap("*", "*"),
+    k: () => insertMd("[" + selectedText() + "](url)"),
+    e: () => wrap("`", "`"),
+  };
+  function onShortcut(e) {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+    const key = e.key.toLowerCase();
+    let action = SHORTCUTS[key];
+    if (!action && /^[1-6]$/.test(key)) action = () => prefixLine("#".repeat(Number(key)) + " ");
+    if (!action) return;
+    e.preventDefault();
+    e.stopPropagation();
+    action();
+  }
+
   function onMenuKey(e) {
     if (e.key === "Escape") closeMenus(null);
   }
@@ -465,6 +529,7 @@
 
     bodyEl.addEventListener("input", scheduleRender);
     bodyEl.addEventListener("paste", onPaste);
+    bodyEl.addEventListener("keydown", onShortcut, true);
     active = true;
     renderPreview();
   }
@@ -480,6 +545,7 @@
     if (bodyEl) {
       bodyEl.removeEventListener("input", scheduleRender);
       bodyEl.removeEventListener("paste", onPaste);
+      bodyEl.removeEventListener("keydown", onShortcut, true);
     }
     if (toolbarObserver) { toolbarObserver.disconnect(); toolbarObserver = null; }
     document.removeEventListener("mousedown", onOutsideMenu, true);

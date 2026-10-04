@@ -1,0 +1,6 @@
+# Saltos de línea LF en todo el repo (también en Windows): evita los avisos LF/CRLF y los
+# diffs de solo finales de línea. Los binarios no se tocan.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.xpi binary

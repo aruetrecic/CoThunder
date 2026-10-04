@@ -4,7 +4,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const {
-  escapeHtml, escapeHtmlWithBreaks, parseRecipients, parseCreateReply,
+  escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply,
   buildPrompt, buildCreatePrompt, toneLengthInstruction, detectInjection, buildUserContext
 } = require("../common.js");
 
@@ -25,6 +25,12 @@ test("parseRecipients: comas, punto y coma y saltos", () => {
 
 test("parseRecipients: formato Nombre <correo>", () => {
   assert.deepEqual(parseRecipients("Juan Pérez <juan@ejemplo.com>"), ["juan@ejemplo.com"]);
+});
+
+test("invalidRecipients: lista lo que no es una dirección", () => {
+  assert.deepEqual(invalidRecipients("x@y.com, invalido; Ana <ana@b.es>\nfoo@bar"), ["invalido", "foo@bar"]);
+  assert.deepEqual(invalidRecipients(""), []);
+  assert.deepEqual(invalidRecipients("a@b.com"), []);
 });
 
 test("parseRecipients: descarta inválidos y deduplica", () => {

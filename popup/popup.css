@@ -158,3 +158,15 @@ body { overflow: hidden; }
   .grid2, body.mode-create .grid2.create-only { grid-template-columns: 1fr; }
   .tabs [role="tab"] { padding: 6px 8px; }
 }
+
+/* Avisos de validación: direcciones no válidas y contador del prompt. */
+.hint { font-size: 11px; }
+.hint.err { color: #c01c28; }
+.hint[hidden] { display: none; }
+textarea.invalid { border-color: #c01c28; }
+.count { font-weight: 400; opacity: .75; margin-left: 4px; }
+.count.over { color: #c01c28; font-weight: 700; opacity: 1; }
+@media (prefers-color-scheme: dark) {
+  .hint.err, .count.over { color: #ff7b72; }
+  textarea.invalid { border-color: #ff7b72; }
+}

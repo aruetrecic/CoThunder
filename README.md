@@ -71,6 +71,7 @@ CoThunder trae su **propio editor Markdown con vista previa en vivo** en la vent
 - **Admonitions** estilo GitHub (`> [!NOTE]`, `[!WARNING]`…), **resaltado de sintaxis** en bloques de código, **barra de herramientas** para insertar sintaxis, y **pegar contenido con formato** que se convierte a Markdown.
 - Menú **🎨 ▾** (estilo) en la barra del editor, que agrupa lo menos usado en menús (**H ▾** títulos, **Aa ▾**, **▦ ▾** bloques, **ℹ ▾** avisos): cambia el tema de ese correo al momento (vista previa y envío) sin tocar el tema por defecto de Opciones.
 - En Opciones puedes **descargar cualquier tema** (o la plantilla genérica) como `.css`, o pasarlo a «CSS personalizado» para retocarlo y crear el tuyo.
+- **Atajos** Ctrl+B/I/K/E y Ctrl+1…6, y la **firma y la cita** del correo original se conservan con su formato.
 - Renderizador **propio**, sin librerías; salida siempre escapada y con estilos **en línea** (para que se vea bien en cualquier cliente de correo).
 
 ## Privacidad y seguridad

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Pre-commit de CoThunder: no deja commitear con errores de sintaxis o tests rotos.
+# Se activa una vez por clon con: git config core.hooksPath .githooks
+exec bash scripts/check.sh

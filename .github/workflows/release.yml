@@ -21,11 +21,8 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Validar manifest y sintaxis JS
-        run: |
-          node -e "const m=JSON.parse(require('fs').readFileSync('manifest.json'));if(!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(m.version))throw new Error('version no SemVer: '+m.version);console.log('manifest OK, version '+m.version)"
-          for f in common.js background.js content-copilot.js content-compose.js markdown.js themes.js popup/popup.js options/options.js; do node --check "$f" && echo "$f OK"; done
-          node --test
+      - name: Validar (manifest, sintaxis JS, referencias y tests)
+        run: bash scripts/check.sh
 
       - name: Verificar que existen los ficheros de la extensión
         run: |

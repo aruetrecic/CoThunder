@@ -343,6 +343,19 @@ function parseRecipients(str) {
   return out;
 }
 
+// Partes de una lista de destinatarios que NO son una dirección válida (para avisar en la UI
+// en vez de descartarlas en silencio, como hace parseRecipients).
+function invalidRecipients(str) {
+  const out = [];
+  for (let part of String(str || "").split(/[,;\n]+/)) {
+    part = part.trim();
+    if (!part) continue;
+    const m = part.match(/<([^<>]+)>/);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((m ? m[1] : part).trim())) out.push(part);
+  }
+  return out;
+}
+
 // Separa el "Asunto:" del cuerpo Markdown de la respuesta de creación (tolerante a bloques ```markdown```).
 function parseCreateReply(text) {
   let t = (text || "").trim();
@@ -381,7 +394,7 @@ async function extractTemplateBody(messageId) {
 // Exporta las funciones puras para pruebas en Node. Inerte en Thunderbird, donde no existe `module`.
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    escapeHtml, escapeHtmlWithBreaks, parseRecipients, parseCreateReply,
+    escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply,
     buildPrompt, buildComposedPrompt, buildCreatePrompt, toneLengthInstruction,
     detectInjection, normalizeText, buildUserContext
   };

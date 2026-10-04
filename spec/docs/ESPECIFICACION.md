@@ -2,7 +2,7 @@
 
 Extensión MailExtension para Thunderbird 140 o superior. Lee el correo abierto, monta un prompt editable con su contenido y lo envía a la web de **Microsoft 365 Copilot** automatizando el chat con la sesión que el usuario ya tiene iniciada. No usa ninguna API ni clave: pilota la interfaz web de Copilot mediante un content script.
 
-Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24).
+Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25).
 
 Plataforma objetivo: Thunderbird ESR 140 (probado en 140.11.1), **Manifest V3**. Decisión explícita del proyecto; ver §2 y el riesgo asociado en §15.
 
@@ -393,5 +393,28 @@ En «Tema del correo», un desplegable **Plantilla de partida** ofrece la **plan
 ### 24.3 Editor: desplegable 🎨 Estilo
 
 La barra del editor Markdown (§22) añade a la derecha un menú **🎨 ▾** con todos los presets (y «Personalizado» si hay CSS propio; el actual lleva ✓). Cambia el tema **solo de ese correo**: vista previa al instante y HTML final del envío. **No modifica** el tema por defecto guardado en Opciones; parte de él al abrir la redacción y se resincroniza si se cambia en Opciones. **Menús propios, no `<select>`**: dentro del editor de Thunderbird un `<select>` nativo no se despliega, así que los menús son un botón «X ▾» que abre un panel de botones (se cierran al elegir, al pulsar fuera o con Escape; si el panel se sale por la derecha, se alinea a la derecha). Para que la barra quepa en una línea (v2.8.1), lo menos usado se agrupa en menús: **H ▾** (títulos 1-6), **Aa ▾** (negrita+cursiva, subíndice, superíndice), **▦ ▾** (tabla, bloque de código, regla, lista de definición, nota al pie) y **ℹ ▾** (avisos: nota, consejo, importante, advertencia, precaución). Si aun así la barra baja a dos líneas, el margen superior del texto y del preview se ajusta a su alto real (`ResizeObserver`), así que nunca tapa el texto. La barra es `contenteditable="false"` y `spellcheck=false`.
+
+Sin permisos nuevos ni cambios en el flujo de datos.
+
+## 25. Mejoras de uso y validación (v2.9)
+
+### 25.1 Firma y cita conservadas en el editor Markdown
+
+`content-compose.js` trocea el cuerpo (`bodySegments`) en tramos de Markdown y **bloques conservados** (`PRESERVED_SELECTOR`: `.moz-signature`, `blockquote[type=cite]`, `.moz-cite-prefix`, `.moz-forward-container`), en orden. Solo los tramos de Markdown pasan por `renderMarkdown` + `styleEmail` + tema; los bloques conservados se intercalan con su HTML original (`outerHTML`), tanto en el preview (vía `DOMParser`) como en el HTML final del envío. Así la firma corporativa mantiene negritas, colores y tamaños, y la cita no se reinterpreta como Markdown. No es contenido remoto nuevo: es el HTML que Thunderbird ya puso en la redacción.
+
+### 25.2 Atajos de teclado en el editor
+
+Con el editor activo, `keydown` (fase de captura) sobre el cuerpo intercepta **Ctrl+B** (`**…**`), **Ctrl+I** (`*…*`), **Ctrl+K** (enlace), **Ctrl+E** (código en línea) y **Ctrl+1…6** (títulos), sustituyendo a los de formato HTML de Thunderbird, que se perderían al convertir. `prefixLine` lleva el cursor al inicio de la línea (`Selection.modify("move","backward","lineboundary")`) y, en títulos, sustituye un `#…` existente en vez de acumularlo; sin `Selection.modify` cae al comportamiento anterior (insertar en el cursor). Los tooltips de la barra muestran el atajo.
+
+### 25.3 Ventana: Ctrl+Enter, destinatarios y longitud del prompt
+
+- **Ctrl+Enter** envía desde cualquier pestaña o campo.
+- **Destinatarios:** `invalidRecipients(str)` (en `common.js`, con test) lista las partes que no son una dirección válida. Cada caja las muestra en rojo bajo el campo y el contador de la pestaña cuenta solo las válidas (`parseRecipients`).
+- **Longitud del prompt:** contador `n / 16.000` junto a "Prompt a enviar" (límite aproximado del chat de M365 Copilot, constante `PROMPT_MAX` en `popup.js`), en rojo si se supera.
+- **Avisos previos al envío:** si hay direcciones no válidas o el prompt supera el límite, el primer clic en Enviar/Regenerar (o Ctrl+Enter) **avisa** en el estado y salta a la pestaña afectada; un segundo clic con el mismo aviso envía igualmente. No bloquea: el usuario decide.
+
+### 25.4 Validación unificada
+
+`scripts/check.sh` valida manifest (SemVer), sintaxis de **todos** los JS, que existan los ficheros referenciados (manifest, `COMPOSE_SCRIPT` y páginas HTML) y ejecuta los tests. Lo usan el hook `.githooks/pre-commit` (activar con `git config core.hooksPath .githooks`), el CI y la release; `npm run check` es un atajo (`package.json` solo de tooling, fuera del `.xpi`). En Windows sin Node se relanza en WSL. `test/themes.test.js` comprueba los presets (ids únicos y alineados con el selector de Opciones, CSS parseable, sin `url()`). `.gitattributes` fija LF en el repo.
 
 Sin permisos nuevos ni cambios en el flujo de datos.

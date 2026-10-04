@@ -23,50 +23,27 @@ Si el usuario no indica el tipo de cambio, deducirlo del diff y decir qué versi
 
 ## 3. Validación previa
 
-```bash
-node -e "const m = JSON.parse(require('fs').readFileSync('manifest.json'));
-if (!/^\d+\.\d+\.\d+$/.test(m.version)) throw new Error('version no SemVer: ' + m.version);
-console.log('manifest OK, version ' + m.version)"
-
-for f in common.js background.js content-copilot.js popup/popup.js options/options.js; do node --check "$f" && echo "$f OK"; done
-```
-
-Verificar que todo fichero referenciado en el manifest existe:
+Un único script valida todo (manifest SemVer, sintaxis de **todos** los JS, que existan los ficheros referenciados por el manifest, el compose script y las páginas HTML, y los tests). Es el mismo que ejecutan el hook de pre-commit, el CI y la release:
 
 ```bash
-node -e "
-const fs = require('fs');
-const m = JSON.parse(fs.readFileSync('manifest.json'));
-const refs = [
-  ...(m.background?.scripts || []),
-  m.message_display_action?.default_popup,
-  m.options_ui?.page,
-  ...Object.values(m.icons || {})
-].filter(Boolean);
-let ok = true;
-for (const r of refs) {
-  if (!fs.existsSync(r)) { console.error('FALTA: ' + r); ok = false; }
-}
-if (!ok) process.exit(1);
-console.log('Referencias del manifest OK (' + refs.length + ')');
-"
+bash scripts/check.sh      # o: npm run check
 ```
+
+En Windows sin Node en el PATH se relanza solo dentro de WSL. Si no termina en `check OK`, parar y corregir.
 
 ## 4. Empaquetar
 
-Solo entra en el paquete lo que Thunderbird necesita. Fuera documentación, tooling y ficheros ocultos:
+Solo entra en el paquete lo que Thunderbird necesita, con **lista blanca** (la misma que `.github/workflows/release.yml`): nada de `test/`, `scripts/`, `docs/`, `spec/`, `package.json` ni ficheros ocultos.
 
 ```bash
 VERSION=$(node -p "JSON.parse(require('fs').readFileSync('manifest.json')).version")
 rm -f cothunder-*.xpi
-zip -r "cothunder-${VERSION}.xpi" . \
-  -x '.*' -x '.*/**' \
-  -x 'docs/*' -x 'CLAUDE.md' -x '*.xpi' \
-  -x 'node_modules/*' -x '*.md' -q
+zip -r "cothunder-${VERSION}.xpi" manifest.json common.js background.js content-copilot.js \
+  content-compose.js markdown.js themes.js compose.css icon.svg popup options -x '*.md' -q
 unzip -l "cothunder-${VERSION}.xpi"
 ```
 
-Revisar el listado: debe contener manifest.json, los JS, popup/, options/ e icon.svg, y nada más. Un fichero inesperado dentro del xpi es motivo de rehacer el paquete.
+Revisar el listado: manifest.json, los JS de la raíz, compose.css, icon.svg, popup/ y options/, y nada más. Si se añade un fichero de runtime nuevo, incluirlo **aquí y en `release.yml`**; `scripts/check.sh` avisará si falta en disco pero no si falta en la lista del zip.
 
 ## 5. Verificación del paquete
 

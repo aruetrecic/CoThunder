@@ -3,6 +3,22 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.9.0] — 2026-10-04
+
+### Añadido
+- **Atajos en el editor Markdown:** Ctrl+B negrita, Ctrl+I cursiva, Ctrl+K enlace, Ctrl+E código y Ctrl+1…6 títulos. Los títulos se aplican al principio de la línea y, si ya era un título, cambian de nivel en vez de acumular `#`.
+- **Ctrl+Enter** envía a Copilot desde cualquier pestaña de la ventana.
+- **Aviso de direcciones no válidas** en Destinatarios: se marcan en rojo y el contador cuenta solo las válidas (antes se descartaban en silencio).
+- **Contador del prompt** con aviso si supera el límite aproximado de Copilot (16.000 caracteres).
+- Antes de enviar, si hay direcciones no válidas o el prompt es demasiado largo, el primer clic avisa y el segundo envía igualmente.
+- `scripts/check.sh` (`npm run check`): validación completa que usan el hook de pre-commit, el CI y la release. Tests nuevos de temas y de direcciones.
+
+### Corregido
+- **La firma perdía su formato** en el editor Markdown (negritas, colores, tamaños): la firma de Thunderbird y el correo citado se conservan ahora con su HTML original.
+- Los prefijos de la barra (títulos, listas, citas) se insertan al principio de la línea, no donde esté el cursor.
+- El CI no comprobaba la sintaxis de `themes.js`; ahora valida todos los JS.
+- El manual seguía recomendando Markdown Here; describe ya el editor propio.
+
 ## [2.8.1] — 2026-10-04
 
 ### Corregido

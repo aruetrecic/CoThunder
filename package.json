@@ -1,0 +1,9 @@
+{
+  "name": "cothunder",
+  "private": true,
+  "description": "Tooling de desarrollo de CoThunder (la extensión no usa dependencias npm en runtime).",
+  "scripts": {
+    "check": "bash scripts/check.sh",
+    "test": "node --test"
+  }
+}

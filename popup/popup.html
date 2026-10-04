@@ -59,14 +59,17 @@
     <div class="field create-only">
       <label for="recipient-to">✉️ Para (un email por línea o separados por comas)</label>
       <textarea id="recipient-to" class="emails" rows="2" placeholder="nombre@dominio.com&#10;otro@dominio.com"></textarea>
+      <div class="hint err" id="recipient-to-hint" hidden></div>
     </div>
     <div class="field create-only">
       <label for="recipient-cc">📋 CC (con copia; uno por línea o por comas)</label>
       <textarea id="recipient-cc" class="emails" rows="2" placeholder="copia@dominio.com&#10;otra.copia@dominio.com"></textarea>
+      <div class="hint err" id="recipient-cc-hint" hidden></div>
     </div>
     <div class="field create-only">
       <label for="recipient-bcc">🕶️ CCO (copia oculta; uno por línea o por comas)</label>
       <textarea id="recipient-bcc" class="emails" rows="2" placeholder="oculta@dominio.com&#10;otra.oculta@dominio.com"></textarea>
+      <div class="hint err" id="recipient-bcc-hint" hidden></div>
     </div>
   </div>
 
@@ -124,7 +127,7 @@
 
   <div class="tabpanel" role="tabpanel" id="panel-prompt" aria-labelledby="tab-prompt" data-modes="create reply">
     <div class="field grow">
-      <label for="prompt">✍️ Prompt a enviar</label>
+      <label for="prompt">✍️ Prompt a enviar <span class="count" id="prompt-count"></span></label>
       <div class="mdbar" id="prompt-mdbar">
         <button type="button" data-md="bold" title="Negrita"><b>B</b></button>
         <button type="button" data-md="italic" title="Cursiva"><i>I</i></button>
@@ -140,7 +143,7 @@
   </div>
 
   <div class="actions">
-    <button id="send" disabled>Enviar a Copilot</button>
+    <button id="send" disabled title="Enviar a Copilot (Ctrl+Enter)">Enviar a Copilot</button>
     <button id="regen" type="button" hidden>Regenerar (otra versión)</button>
   </div>
 

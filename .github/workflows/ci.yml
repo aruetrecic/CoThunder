@@ -1,6 +1,7 @@
 name: CI
 
-# Valida manifest y sintaxis JS en cada push y pull request.
+# Valida manifest, sintaxis JS, referencias y tests en cada push y pull request
+# (el mismo scripts/check.sh que el hook de pre-commit y la release).
 on:
   push:
     branches: ["**"]
@@ -16,12 +17,5 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Validar manifest
-        run: node -e "JSON.parse(require('fs').readFileSync('manifest.json')); console.log('manifest OK')"
-
-      - name: Comprobar sintaxis de los JS
-        run: |
-          for f in common.js background.js content-copilot.js content-compose.js markdown.js popup/popup.js options/options.js; do
-            node --check "$f" && echo "$f OK"
-          done
-          node --test
+      - name: Validar (manifest, sintaxis JS, referencias y tests)
+        run: bash scripts/check.sh

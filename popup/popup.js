@@ -49,18 +49,38 @@
   try { savedTab = localStorage.getItem(tabKey); } catch (_) {}
   selectTab(tabs.find((t) => t.id === savedTab) || tabs[0], false);
 
-  // Contador de destinatarios en la pestaña (solo creación): se ve sin abrirla.
+  // Destinatarios (solo creación): contador de direcciones válidas en la pestaña y aviso de las
+  // que no lo son bajo cada caja (antes se descartaban en silencio al crear el correo).
+  const RECIPIENT_IDS = ["recipient-to", "recipient-cc", "recipient-bcc"];
+  const invalidRecipientList = () => RECIPIENT_IDS.filter((id) => $(id))
+    .flatMap((id) => invalidRecipients($(id).value));
   const countEl = $("recipients-count");
   if (countEl) {
-    const updateCount = () => {
-      const n = ["recipient-to", "recipient-cc", "recipient-bcc"]
-        .map((id) => $(id).value.split(/[\n,;]+/).filter((v) => v.trim()).length)
-        .reduce((a, b) => a + b, 0);
+    const updateRecipients = () => {
+      let n = 0;
+      for (const id of RECIPIENT_IDS) {
+        n += parseRecipients($(id).value).length;
+        const bad = invalidRecipients($(id).value);
+        $(id).classList.toggle("invalid", bad.length > 0);
+        $(id + "-hint").textContent = bad.length ? "No válida" + (bad.length > 1 ? "s" : "") + ": " + bad.join(", ") : "";
+        $(id + "-hint").hidden = bad.length === 0;
+      }
       countEl.textContent = String(n);
       countEl.hidden = n === 0;
     };
-    ["recipient-to", "recipient-cc", "recipient-bcc"].forEach((id) => $(id).addEventListener("input", updateCount));
+    RECIPIENT_IDS.forEach((id) => $(id).addEventListener("input", updateRecipients));
   }
+
+  // Contador del prompt: Copilot corta (o rechaza) los mensajes muy largos, p. ej. con el hilo
+  // incluido. Límite aproximado del chat de M365 Copilot; se avisa, no se bloquea.
+  const PROMPT_MAX = 16000;
+  const updatePromptCount = () => {
+    const n = $("prompt").value.length;
+    $("prompt-count").textContent = "· " + n.toLocaleString("es-ES") + " / " + PROMPT_MAX.toLocaleString("es-ES") +
+      (n > PROMPT_MAX ? " — demasiado largo, Copilot podría cortarlo" : "");
+    $("prompt-count").classList.toggle("over", n > PROMPT_MAX);
+  };
+  $("prompt").addEventListener("input", updatePromptCount);
 
   // Aviso de tratamiento la primera vez (RGPD/ENS): el contenido del correo viaja a Copilot.
   messenger.storage.local.get({ privacyAck: false }).then(({ privacyAck }) => {
@@ -183,7 +203,7 @@
           tone: $("tone").value, length: $("length").value
         });
   };
-  const rebuildPrompt = () => { $("prompt").value = composePrompt(); };
+  const rebuildPrompt = () => { $("prompt").value = composePrompt(); updatePromptCount(); };
 
   try {
     cfg = await getConfig();
@@ -375,6 +395,35 @@
     $("regen").disabled = false;
   };
 
-  $("send").addEventListener("click", () => doSend(false));
-  $("regen").addEventListener("click", () => doSend(true));
+  // Avisos previos al envío (direcciones no válidas, prompt demasiado largo): el primer clic
+  // avisa y lleva a la pestaña afectada; un segundo clic con el mismo aviso envía igualmente.
+  let armedWarning = null;
+  const preflight = () => {
+    const bad = mode === "create" ? invalidRecipientList() : [];
+    if (bad.length) return { key: "rcpt:" + bad.join(), tab: "tab-recipients",
+      text: "Direcciones no válidas (se ignorarán): " + bad.join(", ") + ". Pulsa Enviar otra vez para continuar." };
+    const n = $("prompt").value.length;
+    if (n > PROMPT_MAX) return { key: "len:" + n, tab: "tab-prompt",
+      text: "El prompt es muy largo (" + n.toLocaleString("es-ES") + " caracteres) y Copilot podría cortarlo. Pulsa Enviar otra vez para continuar." };
+    return null;
+  };
+  const trySend = (forceNewChat) => {
+    if ($("send").disabled) return;
+    const w = preflight();
+    if (w && armedWarning !== w.key) {
+      armedWarning = w.key;
+      const tab = $(w.tab);
+      if (tab) selectTab(tab, false);
+      setStatus("err", w.text);
+      return;
+    }
+    armedWarning = null;
+    doSend(forceNewChat);
+  };
+  $("send").addEventListener("click", () => trySend(false));
+  $("regen").addEventListener("click", () => trySend(true));
+  // Ctrl+Enter envía desde cualquier pestaña o campo.
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); trySend(false); }
+  });
 })();

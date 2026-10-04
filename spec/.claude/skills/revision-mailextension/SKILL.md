@@ -9,6 +9,14 @@ Lista de comprobación que se aplica al código completo tras cualquier cambio. 
 
 ## 1. Sintaxis y manifest
 
+Primero, la comprobación automática (manifest, sintaxis de todos los JS, referencias y tests):
+
+```bash
+bash scripts/check.sh      # o: npm run check; en Windows sin Node se relanza en WSL
+```
+
+Comprobaciones equivalentes a mano:
+
 ```bash
 node -e "JSON.parse(require('fs').readFileSync('manifest.json')); console.log('manifest OK')"
 for f in $(find . -name '*.js' -not -path './node_modules/*' -not -path './.*'); do node --check "$f" && echo "$f OK"; done

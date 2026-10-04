@@ -44,13 +44,16 @@ Novedades v2.1 (ver §17 del spec): desplegable de **agentes** (barra lateral de
 ## Comandos
 
 ```bash
-# Validar sintaxis de todos los JS
-for f in $(find . -name '*.js' -not -path './node_modules/*' -not -path './.*'); do node --check "$f"; done
+# Validación completa: manifest, sintaxis de todos los JS, referencias y tests.
+# Es lo que ejecutan el hook de pre-commit, el CI y la release. En Windows sin Node
+# en el PATH se relanza solo dentro de WSL.
+bash scripts/check.sh            # o: npm run check
 
-# Validar manifest
-node -e "JSON.parse(require('fs').readFileSync('manifest.json')); console.log('manifest OK')"
+# Activar el hook de pre-commit (una vez por clon)
+git config core.hooksPath .githooks
 
-# Empaquetar (ver skill empaquetado-xpi para el proceso completo)
+# Empaquetar con lista blanca (ver skill empaquetado-xpi; misma lista que release.yml)
 VERSION=$(node -p "JSON.parse(require('fs').readFileSync('manifest.json')).version")
-zip -r "cothunder-${VERSION}.xpi" . -x '.*' -x '.*/**' -x 'docs/*' -x 'CLAUDE.md' -x '*.xpi' -x '*.md'
+zip -r "cothunder-${VERSION}.xpi" manifest.json common.js background.js content-copilot.js \
+  content-compose.js markdown.js themes.js compose.css icon.svg popup options -x '*.md' -q
 ```
