@@ -479,6 +479,31 @@ async function seedTemplates() {
 
 // Siembra al instalar y también al actualizar (idempotente por asunto: solo añade lo que falta,
 // para que las plantillas nuevas de una versión lleguen a quien ya tenía el complemento).
+// Migración de una sola vez (v2.14): quita del perfil «Sobre ti» la firma que copiaba el antiguo
+// «Tomar de mi identidad», para que no siga viajando a Copilot en cada prompt. Guarda el texto
+// quitado en `userProfileStyleBackup` por si hiciera falta recuperarlo.
+async function cleanProfileSignature() {
+  try {
+    const { profileSignatureCleaned, userProfile } = await messenger.storage.local.get({ profileSignatureCleaned: false, userProfile: null });
+    if (profileSignatureCleaned) return;
+    if (userProfile && userProfile.style) {
+      const ids = await messenger.identities.list().catch(() => []);
+      const sigs = (ids || []).map(signatureAsText).filter(Boolean);
+      const res = stripCopiedSignature(userProfile.style, sigs);
+      if (res.removed) {
+        await messenger.storage.local.set({
+          userProfile: Object.assign({}, userProfile, { style: res.style }),
+          userProfileStyleBackup: userProfile.style
+        });
+      }
+    }
+    await messenger.storage.local.set({ profileSignatureCleaned: true });
+  } catch (e) {
+    console.error("[CoThunder] limpieza de la firma del perfil:", e);
+  }
+}
+cleanProfileSignature();
+
 messenger.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install" || details.reason === "update") seedTemplates();
 });

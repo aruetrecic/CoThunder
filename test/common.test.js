@@ -4,7 +4,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const {
-  escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates,
+  escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates, stripCopiedSignature,
   buildPrompt, buildCreatePrompt, toneLengthInstruction, detectInjection, buildUserContext
 } = require("../common.js");
 
@@ -25,6 +25,21 @@ test("parseRecipients: comas, punto y coma y saltos", () => {
 
 test("parseRecipients: formato Nombre <correo>", () => {
   assert.deepEqual(parseRecipients("Juan Pérez <juan@ejemplo.com>"), ["juan@ejemplo.com"]);
+});
+
+test("stripCopiedSignature: quita solo el bloque copiado de la firma", () => {
+  const sig = "Antonio Rueda\nGestor de Sistemas\nTel: 600 000 000";
+  // Como lo dejaba el botón: el bloque como contenido completo.
+  assert.deepEqual(stripCopiedSignature("Firmo así:\n" + sig, [sig]), { style: "", removed: "Firmo así:\n" + sig });
+  // Con texto propio del usuario antes y después: se conserva.
+  const r = stripCopiedSignature("Trato de usted.\n\nFirmo así:\n" + sig + "\n\nEvito emojis.", [sig]);
+  assert.equal(r.style, "Trato de usted.\n\nEvito emojis.");
+  // La firma cambió después: se quita desde "Firmo así:" hasta el final, sin tocar lo anterior.
+  assert.deepEqual(stripCopiedSignature("Tono cordial.\nFirmo así:\nFirma vieja", ["Otra firma"]),
+    { style: "Tono cordial.", removed: "Firmo así:\nFirma vieja" });
+  // Sin bloque copiado: no cambia nada.
+  assert.deepEqual(stripCopiedSignature("Trato de usted.", [sig]), { style: "Trato de usted.", removed: "" });
+  assert.deepEqual(stripCopiedSignature("", [sig]), { style: "", removed: "" });
 });
 
 test("formatTemplates: solo formatos y sin prefijo, sin los Prompt", () => {

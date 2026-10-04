@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.13.1] — 2026-10-04
+
+### Corregido
+- **Limpieza automática del perfil:** si alguna vez usaste «Tomar de mi identidad de Thunderbird», tu firma completa quedó guardada en Opciones › Sobre ti › «Cómo escribo» como «Firmo así: …» y se seguía enviando a Copilot en cada prompt. Al actualizar, CoThunder quita ese bloque una sola vez y conserva lo que hayas escrito tú. El texto anterior queda guardado como copia por si hiciera falta.
+
 ## [2.13.0] — 2026-10-04
 
 ### Cambiado

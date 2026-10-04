@@ -218,6 +218,37 @@ async function listTemplates() {
   return out;
 }
 
+// Limpieza del perfil (v2.14): hasta la v2.12, «Tomar de mi identidad» copiaba la firma en
+// «Cómo escribo» como "Firmo así:\n<firma>". Quita ese bloque y conserva lo que haya escrito el
+// usuario. `signatures` son las firmas actuales de sus identidades, ya en texto: si una coincide,
+// se quita exactamente ese bloque; si no (la firma cambió después), se quita desde "Firmo así:"
+// hasta el final del campo, porque el botón lo ponía como contenido completo. Devuelve
+// { style, removed } (removed = texto quitado, o "" si no había nada que limpiar).
+function stripCopiedSignature(style, signatures) {
+  const s = String(style || "").replace(/\r/g, "");
+  const at = s.indexOf("Firmo así:");
+  if (at === -1) return { style: s, removed: "" };
+  for (const sig of signatures || []) {
+    const block = "Firmo así:\n" + String(sig || "").replace(/\r/g, "").trim();
+    if (sig && s.includes(block)) {
+      const out = s.replace(block, "").replace(/\n{3,}/g, "\n\n").trim();
+      return { style: out, removed: block };
+    }
+  }
+  return { style: s.slice(0, at).trim(), removed: s.slice(at) };
+}
+
+// Firma de una identidad como texto plano (la HTML se pasa por DOMParser), igual que la copiaba
+// el antiguo «Tomar de mi identidad».
+function signatureAsText(identity) {
+  let sig = (identity && identity.signature) || "";
+  if (sig && !identity.signatureIsPlainText && typeof DOMParser !== "undefined") {
+    const doc = new DOMParser().parseFromString(sig, "text/html");
+    sig = doc.body ? doc.body.textContent : sig;
+  }
+  return sig.replace(/\r/g, "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 // Plantillas de "Formato" (estructura para el cuerpo del correo): las "Formato - …" y las que no
 // llevan prefijo; quedan fuera las "Prompt - …" y "Prompt crear - …", que son instrucciones para
 // Copilot. Devuelve [{ id, label, source }] con el prefijo quitado, ordenadas por nombre.
@@ -409,7 +440,7 @@ async function extractTemplateBody(messageId) {
 // Exporta las funciones puras para pruebas en Node. Inerte en Thunderbird, donde no existe `module`.
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates,
+    escapeHtml, escapeHtmlWithBreaks, parseRecipients, invalidRecipients, parseCreateReply, formatTemplates, stripCopiedSignature,
     buildPrompt, buildComposedPrompt, buildCreatePrompt, toneLengthInstruction,
     detectInjection, normalizeText, buildUserContext
   };
