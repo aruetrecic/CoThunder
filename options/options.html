@@ -39,9 +39,17 @@
   </label></p>
   <p><label>Color de acento (encabezados, tablas y citas)<br><input id="emailAccent" type="color"></label></p>
   <p><label>CSS personalizado (para el tema «Personalizado»)<br><textarea id="emailCustomCss" rows="10"></textarea></label></p>
+  <p><label>Subir .css <input type="file" id="emailCssFile" accept=".css,text/css"></label></p>
+  <p class="muted">Parte de cualquier tema para hacer el tuyo: descárgalo como .css o pásalo a «CSS personalizado» y retócalo aquí.</p>
   <p>
-    <label>Subir .css <input type="file" id="emailCssFile" accept=".css,text/css"></label>
-    <button type="button" id="emailCssDownload">Descargar plantilla</button>
+    <label>Plantilla de partida<br>
+      <select id="emailCssBase">
+        <option value="">Plantilla genérica (comentada)</option>
+      </select>
+    </label>
+    <button type="button" id="emailCssDownload">Descargar .css</button>
+    <button type="button" id="emailCssEdit">Editar como personalizado</button>
+    <span id="cssHint" class="muted"></span>
   </p>
 
   <h2>Sobre ti (contexto para Copilot)</h2>
@@ -83,6 +91,7 @@
 
     <p><strong>Opciones de la ventana</strong></p>
     <ul>
+      <li><strong>Pestañas</strong>: los campos se reparten en pestañas para que la ventana quepa en pantallas pequeñas o con escalado del 125-150 %. Al crear: <strong>✍️ Redactar</strong>, <strong>✉️ Destinatarios</strong> (con un contador), <strong>⚙️ Opciones</strong> y <strong>📜 Prompt</strong>; al responder: <strong>⚙️ Opciones</strong> y <strong>📜 Prompt</strong>. El botón <strong>Enviar</strong> está siempre visible. Cambia de pestaña con <kbd>Ctrl</kbd>+<kbd>RePág</kbd>/<kbd>AvPág</kbd>; la ventana recuerda la última que usaste.</li>
       <li><strong>🤖 Agente</strong>: el agente de Copilot que responde (los que tengas fijados en su barra lateral). El botón <code>↻</code> actualiza la lista; recuerda el último elegido.</li>
       <li><strong>⭐ Prompt</strong>: instrucción <em>prioritaria</em> del usuario (qué hacer). Se toma de tus plantillas con asunto <code>Prompt - …</code></li>
       <li><strong>📄 Formato</strong>: estructura y formato de referencia de la respuesta. De tus plantillas <code>Formato - …</code> (o sin prefijo).</li>
@@ -109,5 +118,6 @@
   </div>
 
   <script src="../common.js"></script>
+  <script src="../themes.js"></script>
   <script src="options.js"></script>
 </body></html>

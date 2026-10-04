@@ -2,7 +2,7 @@
 
 Extensión MailExtension para Thunderbird 140 o superior. Lee el correo abierto, monta un prompt editable con su contenido y lo envía a la web de **Microsoft 365 Copilot** automatizando el chat con la sesión que el usuario ya tiene iniciada. No usa ninguna API ni clave: pilota la interfaz web de Copilot mediante un content script.
 
-Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21).
+Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24).
 
 Plataforma objetivo: Thunderbird ESR 140 (probado en 140.11.1), **Manifest V3**. Decisión explícita del proyecto; ver §2 y el riesgo asociado en §15.
 
@@ -357,3 +357,41 @@ Al enviar, `compose.onBeforeSend` pide el HTML final al compose script y devuelv
 ### 22.3 Motor propio, cobertura e imágenes
 
 Renderizador escrito a mano (sin marked/highlight.js), objetivo **cobertura completa** del Markdown Guide (básica + extendida). Enlaces solo `http`/`https`/`mailto`; imágenes `http`/`https`/`data`/`cid` (conserva las insertadas por TB). Restricción de correo: estilos **en línea** (los clientes ignoran CSS externo); iconos en el correo con **emoji** (el `<svg>` inline se elimina); imágenes preferentemente `cid`. Objetivo TB 150+ **retrocompatible con ESR 140**. Spike del panel: **RESUELTO** con Plan B (verificado por el usuario en TB). Sin destinos nuevos, sin permisos nuevos, sin `innerHTML` remoto.
+
+## 23. Ventana en pestañas (v2.7)
+
+La ventana del botón había crecido hasta no caber en resoluciones bajas ni con escalado del SO al 125-150 %. Se reorganiza en **pestañas** (patrón ARIA `tablist`/`tab`/`tabpanel`) sin cambiar campos, ids ni flujo:
+
+| Modo | Pestañas (en orden) |
+|---|---|
+| Creación | ✍️ **Redactar** (¿Qué quieres crear?, Contexto, Idioma) · ✉️ **Destinatarios** (Para, CC, CCO) · ⚙️ **Opciones** · 📜 **Prompt** |
+| Respuesta | ⚙️ **Opciones** · 📜 **Prompt** |
+
+- ⚙️ **Opciones** agrupa Agente, Prompt/Formato/Tono/Longitud, Título del chat y las casillas (chat nuevo, firma, cita, hilo). 📜 **Prompt** contiene el "Prompt a enviar" editable con su barra Markdown.
+- **Cabecera** (logo, título, estado), aviso de privacidad, barra de pestañas y botones **Enviar/Regenerar** son fijos; **solo hace scroll el panel activo**, de modo que el botón de envío está siempre visible.
+- Las pestañas y paneles llevan `data-modes`; `popup.js` elimina los que no corresponden al modo. La pestaña activa se recuerda por modo en `localStorage` (`lastTabCreate`/`lastTabReply`; preferencia de comodidad, con `try/catch`), y por defecto se abre la primera.
+- Teclado: flechas, Inicio y Fin dentro de la barra de pestañas; **Ctrl+RePág/AvPág** desde cualquier campo.
+- La pestaña ✉️ Destinatarios muestra un **contador** con el número de direcciones escritas en Para/CC/CCO.
+- **Alto por defecto: el 50 % del alto útil de la pantalla** (`screen.availHeight`) en ambos modos, tanto al crear la ventana en el background como al situarla el popup; el ancho no cambia (600/620 px). Con pestañas ya cabe todo, así que no hace falta abrirla más alta. El tamaño que elija el usuario se sigue recordando, ahora en `winBoundsV2`/`winBoundsCreateV2` (las claves anteriores se descartan una vez para que se aplique el nuevo alto). Sustituye a los altos fijos de §18.1 y §19.1.
+- Por debajo de 560 px de ancho, la rejilla de cuatro desplegables pasa a dos columnas y la de dos, a una.
+
+Sin cambios de permisos, de flujo de datos ni de `content-copilot.js`.
+
+## 24. Temas: descarga de cualquier tema y cambio rápido en el editor (v2.8)
+
+### 24.1 Fichero compartido `themes.js`
+
+El CSS de los temas (UPO corporativo y las paletas de `buildThemeCss`) sale de `content-compose.js` a **`themes.js`**, que expone `EMAIL_THEME_PRESETS` (`{ id, name, css }`). Lo cargan el compose script (`js: ["markdown.js", "themes.js", "content-compose.js"]`, mismo scope) y la página de Opciones (`<script src="../themes.js">`), para que cada tema exista **una sola vez**. El registro del compose script se rehace solo si la lista de ficheros registrada difiere (comparando nombres de fichero), sin volver a desregistrar en cada despertar (§22, v2.6.8). Si `themes.js` faltara, el editor sigue funcionando sin presets.
+
+### 24.2 Opciones: plantilla de partida
+
+En «Tema del correo», un desplegable **Plantilla de partida** ofrece la **plantilla genérica comentada** y **cualquier tema** con CSS (todos salvo «Por defecto»). Dos acciones:
+
+- **Descargar .css**: guarda `cothunder-tema-<id>.css` (o `cothunder-tema.css` para la genérica) con una cabecera que explica cómo usarlo.
+- **Editar como personalizado**: copia el CSS a «CSS personalizado» y selecciona el tema «Personalizado» (hay que pulsar Guardar). Si ya había CSS propio, pide un **segundo clic** para sustituirlo (sin `confirm()`).
+
+### 24.3 Editor: desplegable 🎨 Estilo
+
+La barra del editor Markdown (§22) añade a la derecha un desplegable **🎨 Estilo** con todos los presets (y «Personalizado» si hay CSS propio). Cambia el tema **solo de ese correo**: vista previa al instante y HTML final del envío. **No modifica** el tema por defecto guardado en Opciones; parte de él al abrir la redacción y se resincroniza si se cambia en Opciones. La barra se marca `contenteditable="false"` para que el desplegable funcione dentro del cuerpo editable.
+
+Sin permisos nuevos ni cambios en el flujo de datos.

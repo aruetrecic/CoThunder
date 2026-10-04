@@ -30,7 +30,7 @@ Ambas ventanas necesitan que tengas **sesión iniciada en Copilot**. La primera 
 
 1. Abre el correo que quieres responder.
 2. Pulsa **Preguntar a Copilot** en la barra del visor. Se abre la ventana de CoThunder con el prompt ya montado a partir del remitente, el asunto y el cuerpo.
-3. Ajusta lo que quieras:
+3. Ajusta lo que quieras. La ventana tiene dos pestañas, **⚙️ Opciones** y **📜 Prompt**; el botón **Enviar a Copilot** queda siempre visible abajo:
    - **Agente** (opcional): elige un agente de Copilot para que aporte su conocimiento.
    - **Prompt** y **Formato** (opcional): elige una de tus plantillas.
    - **Tono** y **Longitud** (opcional).
@@ -46,7 +46,7 @@ Si el correo contiene un intento de manipular a la IA (inyección), CoThunder lo
 ## 3. Crear un correo nuevo (Crear desde Copilot)
 
 1. Pulsa **Crear desde Copilot** en la barra principal. No necesitas tener ningún correo abierto.
-2. Rellena:
+2. Rellena las pestañas (**✍️ Redactar**, **✉️ Destinatarios**, **⚙️ Opciones** y **📜 Prompt**; cambia entre ellas con un clic o con Ctrl+RePág/AvPág):
    - **¿Qué quieres crear?**: describe el correo (por ejemplo, "convocar una reunión de coordinación para el jueves"). Este campo crece con la ventana y tiene su propia barra Markdown.
    - **Contexto / notas** (opcional): propósito, puntos a incluir o a quién va dirigido. Enriquece el prompt; no es el destinatario.
    - **Idioma** (opcional): fuerza el idioma del correo generado.

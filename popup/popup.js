@@ -12,6 +12,56 @@
     $("title").textContent = "Crear desde Copilot";
   }
 
+  // --- Pestañas: se quitan las que no son de este modo y se recuerda la última por modo ---
+  document.querySelectorAll("[data-modes]").forEach((el) => {
+    if (!el.dataset.modes.split(" ").includes(mode)) el.remove();
+  });
+  const tabs = [...document.querySelectorAll('.tabs [role="tab"]')];
+  const tabKey = mode === "create" ? "lastTabCreate" : "lastTabReply";
+  const selectTab = (tab, focus) => {
+    for (const t of tabs) {
+      const on = t === tab;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      $(t.getAttribute("aria-controls")).classList.toggle("active", on);
+    }
+    if (focus) tab.focus();
+    try { localStorage.setItem(tabKey, tab.id); } catch (_) {}
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener("click", () => selectTab(t, false));
+    // Navegación de teclado estándar de tablist: flechas, Inicio y Fin.
+    t.addEventListener("keydown", (e) => {
+      const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (next === undefined) return;
+      e.preventDefault();
+      selectTab(tabs[(next + tabs.length) % tabs.length], true);
+    });
+  });
+  // Ctrl+PgDn / Ctrl+PgUp cambian de pestaña desde cualquier campo.
+  document.addEventListener("keydown", (e) => {
+    if (!e.ctrlKey || (e.key !== "PageDown" && e.key !== "PageUp")) return;
+    e.preventDefault();
+    const cur = tabs.findIndex((t) => t.getAttribute("aria-selected") === "true");
+    selectTab(tabs[(cur + (e.key === "PageDown" ? 1 : -1) + tabs.length) % tabs.length], true);
+  });
+  let savedTab = null;
+  try { savedTab = localStorage.getItem(tabKey); } catch (_) {}
+  selectTab(tabs.find((t) => t.id === savedTab) || tabs[0], false);
+
+  // Contador de destinatarios en la pestaña (solo creación): se ve sin abrirla.
+  const countEl = $("recipients-count");
+  if (countEl) {
+    const updateCount = () => {
+      const n = ["recipient-to", "recipient-cc", "recipient-bcc"]
+        .map((id) => $(id).value.split(/[\n,;]+/).filter((v) => v.trim()).length)
+        .reduce((a, b) => a + b, 0);
+      countEl.textContent = String(n);
+      countEl.hidden = n === 0;
+    };
+    ["recipient-to", "recipient-cc", "recipient-bcc"].forEach((id) => $(id).addEventListener("input", updateCount));
+  }
+
   // Aviso de tratamiento la primera vez (RGPD/ENS): el contenido del correo viaja a Copilot.
   messenger.storage.local.get({ privacyAck: false }).then(({ privacyAck }) => {
     if (privacyAck || !$("privacy")) return;
@@ -22,11 +72,12 @@
     });
   }).catch(() => {});
 
-  // --- Ventana: recuerda tamaño/posición por modo; creación abre más alto (tiene más campos) ---
-  const boundsKey = mode === "create" ? "winBoundsCreate" : "winBounds";
+  // --- Ventana: recuerda tamaño/posición por modo; por defecto, el 50 % del alto de la pantalla
+  // (con pestañas cabe todo). Claves "V2": descartan los tamaños guardados antes de este cambio.
+  const boundsKey = mode === "create" ? "winBoundsCreateV2" : "winBoundsV2";
   try {
     const availW = screen.availWidth, availH = screen.availHeight;
-    const def = mode === "create" ? { width: 620, height: 820 } : { width: 600, height: 620 };
+    const def = { width: mode === "create" ? 620 : 600, height: Math.round(availH * 0.5) };
     const store = await messenger.storage.local.get({ [boundsKey]: null });
     const winBounds = store[boundsKey];
     let w, h, left, top;

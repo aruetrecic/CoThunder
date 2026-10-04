@@ -3,6 +3,30 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.8.0] — 2026-10-04
+
+### Añadido
+- **Desplegable 🎨 Estilo en la barra del editor Markdown**: cambia el tema del correo que estás escribiendo al momento (vista previa y envío), sin tocar el tema por defecto de Opciones.
+- **Descargar cualquier tema** como base para el tuyo: en Opciones › Tema del correo, elige la plantilla de partida (genérica o cualquiera de los temas) y pulsa **Descargar .css**, o **Editar como personalizado** para copiarla a «CSS personalizado» y retocarla allí.
+
+### Cambiado
+- El CSS de los temas vive ahora en un fichero compartido (`themes.js`) que usan el editor y Opciones, sin duplicarlo.
+
+## [2.7.1] — 2026-10-04
+
+### Cambiado
+- **La ventana de CoThunder abre con la mitad del alto de la pantalla** (antes 620-820 px fijos), en ambos modos. Se olvida una vez el tamaño guardado para que se note el cambio; después sigue recordando el tamaño que le des.
+
+## [2.7.0] — 2026-10-04
+
+### Cambiado
+- **La ventana de CoThunder se organiza en pestañas** para que quepa en pantallas pequeñas o con escalado del 125-150 %. Al crear un correo: **✍️ Redactar**, **✉️ Destinatarios** (con contador de direcciones), **⚙️ Opciones** y **📜 Prompt**; al responder: **⚙️ Opciones** y **📜 Prompt**. La cabecera y el botón **Enviar a Copilot** quedan siempre visibles y solo hace scroll la pestaña activa. Se recuerda la última pestaña usada en cada modo y se navega con el teclado (flechas, o Ctrl+RePág/AvPág desde cualquier campo). En ventanas estrechas los desplegables pasan a menos columnas.
+
+## [2.6.8] — 2026-10-02
+
+### Corregido
+- **El editor Markdown no aparecía en las ventanas de redacción** (correo nuevo, responder, responder a todos). El background desregistraba y volvía a registrar el script de redacción cada vez que se despertaba, y las redacciones abiertas en ese hueco se quedaban sin editor. Ahora solo se registra si falta y, como resguardo, se inyecta a mano en cualquier redacción que no lo haya recibido (también en las ya abiertas al arrancar). El botón «Editor Markdown» lo inyecta si hace falta antes de encenderlo.
+
 ## [2.6.7] — 2026-07-13
 
 ### Corregido

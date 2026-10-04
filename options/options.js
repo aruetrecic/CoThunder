@@ -92,12 +92,47 @@ mark { background-color: #FCC100; }
     };
     reader.readAsText(file);
   });
+  // Plantillas de partida: la genérica comentada y cualquier tema de themes.js (salvo
+  // "Por defecto", que no lleva CSS).
+  for (const p of EMAIL_THEME_PRESETS) {
+    if (!p.css) continue;
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.name;
+    $("emailCssBase").appendChild(opt);
+  }
+  const baseCss = () => {
+    const p = EMAIL_THEME_PRESETS.find((x) => x.id === $("emailCssBase").value);
+    if (!p) return { file: "cothunder-tema.css", css: EMAIL_THEME_TEMPLATE_CSS };
+    const header = "/* Tema «" + p.name + "» de CoThunder, como base para tu tema.\n" +
+      "   Edita los colores y pégalo en «CSS personalizado», o súbelo con «Subir .css».\n" +
+      "   Se aplica como estilos EN LÍNEA sobre el correo; url(...) se ignora. */\n\n";
+    return { file: "cothunder-tema-" + p.id + ".css", css: header + p.css + "\n" };
+  };
+  // Si ya hay CSS personalizado, pide un segundo clic antes de sustituirlo (sin confirm(),
+  // que la página de opciones embebida puede no mostrar).
+  let editArmed = null;
+  $("emailCssEdit").addEventListener("click", () => {
+    const btn = $("emailCssEdit");
+    if ($("emailCustomCss").value.trim() && !editArmed) {
+      btn.textContent = "Pulsa otra vez para sustituir tu CSS";
+      editArmed = setTimeout(() => { editArmed = null; btn.textContent = "Editar como personalizado"; }, 4000);
+      return;
+    }
+    clearTimeout(editArmed); editArmed = null;
+    btn.textContent = "Editar como personalizado";
+    $("emailCustomCss").value = baseCss().css;
+    $("emailTheme").value = "custom";
+    $("emailCustomCss").focus();
+    $("cssHint").textContent = "Copiada a «CSS personalizado»: retócala y pulsa Guardar.";
+  });
   $("emailCssDownload").addEventListener("click", () => {
-    const blob = new Blob([EMAIL_THEME_TEMPLATE_CSS], { type: "text/css" });
+    const { file, css } = baseCss();
+    const blob = new Blob([css], { type: "text/css" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "cothunder-tema.css";
+    a.download = file;
     document.body.appendChild(a);
     a.click();
     a.remove();

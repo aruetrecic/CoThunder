@@ -115,15 +115,46 @@ input[type="text"], input[type="email"] {
   width: 100%; padding: 5px 6px; font: inherit; color: inherit;
   background: transparent; border: 1px solid var(--border); border-radius: 6px;
 }
-/* En modo creación, "¿Qué quieres crear?" crece con la ventana y domina sobre el prompt compuesto. */
-body.mode-create .create-only.grow { flex: 2 0 auto; }
-body.mode-create .create-only.grow textarea { min-height: 60px; }
 /* Cajas de destinatarios (Para/CC/CCO): bajas y redimensionables solo en vertical. */
 textarea.emails { min-height: 2.4em; resize: vertical; }
 
-/* Evita solapamientos con ventanas pequeñas: los bloques de tamaño fijo no se comprimen
-   y, si no cabe todo, la ventana hace scroll vertical en vez de superponer elementos.
-   Los campos que crecen (.grow) se excluyen para que sigan flexando. */
-body { overflow-y: auto; }
-.header, .notice, .field:not(.grow), .grid2, .grid4, .opts, .actions { flex: none; }
+/* Pestañas: solo la activa se muestra y es la única zona con scroll; cabecera, barra de
+   pestañas y botón de envío quedan siempre visibles (resoluciones bajas, escalado 125-150 %). */
+body { overflow: hidden; }
+.header, .notice, .tabs, .actions { flex: none; }
+/* La línea base va como sombra interior (no borde) para que la pestaña activa la tape sin
+   margen negativo, que provocaba una barra de scroll vertical en la tira de pestañas. */
+.tabs { display: flex; gap: 2px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;
+  box-shadow: inset 0 -1px 0 var(--border); }
+.tabs [role="tab"] {
+  flex: none; display: flex; align-items: center; gap: 5px;
+  padding: 6px 12px;
+  font: inherit; font-weight: 600; color: inherit; opacity: .75;
+  background: transparent; border: 1px solid transparent; border-bottom: 0;
+  border-radius: 6px 6px 0 0; cursor: pointer; white-space: nowrap;
+}
+.tabs [role="tab"]:hover { opacity: 1; background: color-mix(in srgb, currentColor 8%, transparent); }
+.tabs [role="tab"][aria-selected="true"] {
+  opacity: 1; border-color: var(--border);
+  background: Canvas; box-shadow: inset 0 2px 0 var(--accent);
+}
+.tabs [role="tab"]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.badge { min-width: 18px; padding: 0 5px; font-size: 11px; line-height: 16px; text-align: center;
+  color: #fff; background: var(--accent); border-radius: 8px; }
+.badge[hidden] { display: none; }
+
+.tabpanel { display: none; flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  flex-direction: column; gap: 10px; padding: 2px 2px 4px; }
+.tabpanel.active { display: flex; }
+/* Dentro del panel, los bloques fijos no se comprimen; los .grow llenan el hueco y, si no cabe,
+   el panel hace scroll en vez de superponer elementos. */
+.tabpanel > .field:not(.grow), .tabpanel > .grid2, .tabpanel > .grid4, .tabpanel > .opts,
 .field > label, .mdbar { flex: none; }
+.tabpanel > .grow { flex: 1 0 auto; }
+
+/* Ventanas estrechas (o escalado alto): las rejillas pasan a menos columnas. */
+@media (max-width: 560px) {
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid2, body.mode-create .grid2.create-only { grid-template-columns: 1fr; }
+  .tabs [role="tab"] { padding: 6px 8px; }
+}

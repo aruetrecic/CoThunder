@@ -1,35 +1,89 @@
 "use strict";
 
 // --- Editor Markdown en la ventana de redacción -------------------------------
-// Registro idempotente (igual que registerCopilotScript): desregistra por id antes de
-// volver a registrar, para no acumular registros duplicados en cada despertar del event page.
+const COMPOSE_SCRIPT = { id: "cothunder-compose", js: ["markdown.js", "themes.js", "content-compose.js"], css: ["compose.css"] };
+
+// Registro idempotente: solo registra si falta. NO desregistra en cada despertar del
+// event page: ese hueco entre unregister y register dejaba sin editor a las redacciones
+// que se abrían justo entonces (el despertar lo provoca a menudo la propia redacción).
 async function registerComposeScript() {
   try {
-    await messenger.scripting.compose.unregisterScripts({ ids: ["cothunder-compose"] }).catch(() => {});
-    await messenger.scripting.compose.registerScripts([{
-      id: "cothunder-compose",
-      js: ["markdown.js", "content-compose.js"],
-      css: ["compose.css"]
-    }]);
+    const existing = await messenger.scripting.compose.getRegisteredScripts({ ids: [COMPOSE_SCRIPT.id] });
+    if (existing && existing.length) {
+      // Un registro de una versión anterior con otra lista de ficheros se rehace (solo entonces).
+      const files = (existing[0].js || []).map((f) => String(f).split("/").pop());
+      if (files.join() === COMPOSE_SCRIPT.js.join()) return;
+      await messenger.scripting.compose.unregisterScripts({ ids: [COMPOSE_SCRIPT.id] });
+    }
+    await messenger.scripting.compose.registerScripts([COMPOSE_SCRIPT]);
   } catch (e) {
     console.error("[CoThunder] registro compose script:", e);
   }
 }
-registerComposeScript();
 
-// Alterna el panel Markdown en la pestaña de redacción activa, desde el botón (composeAction)
-// o el atajo de teclado; refleja el estado en el título del botón.
-async function toggleMarkdownPanel() {
-  const [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
-  if (!tab) return;
+// ¿Tiene ya la pestaña de redacción el compose script cargado?
+async function composeScriptLoaded(tabId) {
+  try {
+    const res = await messenger.tabs.sendMessage(tabId, { type: "cothunder-ping" });
+    return !!(res && res.ok);
+  } catch (e) {
+    return false;
+  }
+}
+
+// Resguardo: el registro solo se aplica a redacciones abiertas DESPUÉS de registrar
+// (doc. de scripting.compose). Si a una redacción no le llegó, se inyecta a mano.
+// content-compose.js se protege contra la doble carga.
+async function ensureComposeScript(tabId) {
+  if (await composeScriptLoaded(tabId)) return true;
+  try {
+    await messenger.scripting.insertCSS({ target: { tabId }, files: COMPOSE_SCRIPT.css }).catch(() => {});
+    await messenger.scripting.executeScript({ target: { tabId }, files: COMPOSE_SCRIPT.js });
+    return true;
+  } catch (e) {
+    console.error("[CoThunder] inyección compose script:", e);
+    return false;
+  }
+}
+
+// Al arrancar: registra y cubre las redacciones que ya estuvieran abiertas.
+(async () => {
+  await registerComposeScript();
+  for (const t of await messenger.tabs.query({ type: "messageCompose" }).catch(() => [])) {
+    ensureComposeScript(t.id);
+  }
+})();
+
+// Cada redacción nueva (nuevo, responder, responder a todos, reenviar...) despierta el
+// event page; si el registro no llegó a aplicarse, se inyecta cuando el editor esté listo.
+messenger.tabs.onCreated.addListener((tab) => {
+  if (tab.type !== "messageCompose") return;
+  let tries = 0;
+  const check = async () => {
+    if (await composeScriptLoaded(tab.id)) return;
+    if (++tries < 5) { setTimeout(check, 1000); return; }
+    ensureComposeScript(tab.id);
+  };
+  setTimeout(check, 1000);
+});
+
+// Alterna el panel Markdown en la pestaña de redacción del botón (composeAction) o la
+// activa (atajo de teclado); refleja el estado en el título del botón.
+async function toggleMarkdownPanel(clickedTab) {
+  let tab = clickedTab && clickedTab.id != null ? clickedTab : null;
+  if (!tab) [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
+  if (!tab || tab.type !== "messageCompose") return;
+  if (!(await ensureComposeScript(tab.id))) return;
   try {
     const res = await messenger.tabs.sendMessage(tab.id, { type: "cothunder-toggle" });
     const on = !!(res && res.active);
     messenger.composeAction.setTitle({ tabId: tab.id, title: on ? "Editor Markdown (activo)" : "Editor Markdown" });
-  } catch (e) { /* la pestaña puede no tener el compose script */ }
+  } catch (e) {
+    console.error("[CoThunder] alternar editor Markdown:", e);
+  }
 }
-messenger.composeAction.onClicked.addListener(toggleMarkdownPanel);
-messenger.commands.onCommand.addListener((name) => { if (name === "toggle-markdown") toggleMarkdownPanel(); });
+messenger.composeAction.onClicked.addListener((tab) => toggleMarkdownPanel(tab));
+messenger.commands.onCommand.addListener((name) => { if (name === "toggle-markdown") toggleMarkdownPanel(null); });
 
 // Al enviar con el panel activo: pide el HTML final al compose script y lo pone
 // como cuerpo del correo. Opción 1 (un solo clic): sin cancel, el envío sale
@@ -74,6 +128,13 @@ messenger.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.copilotUrl) registerCopilotScript();
 });
 
+// Alto inicial de la ventana de UI: el 50 % del alto útil de la pantalla (el popup lo afina
+// y recuerda el tamaño que elija el usuario).
+const halfScreenHeight = () => {
+  try { if (screen && screen.availHeight) return Math.round(screen.availHeight * 0.5); } catch (_) {}
+  return 540;
+};
+
 // El botón del visor abre la UI en una ventana propia (redimensionable), pasándole el messageId.
 messenger.messageDisplayAction.onClicked.addListener(async (tab) => {
   let messageId = null;
@@ -83,14 +144,13 @@ messenger.messageDisplayAction.onClicked.addListener(async (tab) => {
     if (messages[0]) messageId = messages[0].id;
   } catch (_) {}
   const url = messenger.runtime.getURL("popup/popup.html") + (messageId != null ? "?messageId=" + messageId : "");
-  await messenger.windows.create({ url, type: "popup", width: 600, height: 620, allowScriptsToClose: true });
+  await messenger.windows.create({ url, type: "popup", width: 600, height: halfScreenHeight(), allowScriptsToClose: true });
 });
 
 // El botón de la barra principal abre la UI en modo creación (correo nuevo, sin messageId).
-// Abre más alto que el modo respuesta porque tiene más campos (el popup afina el tamaño por modo).
 messenger.action.onClicked.addListener(async () => {
   const url = messenger.runtime.getURL("popup/popup.html") + "?mode=create";
-  await messenger.windows.create({ url, type: "popup", width: 620, height: 820, allowScriptsToClose: true });
+  await messenger.windows.create({ url, type: "popup", width: 620, height: halfScreenHeight(), allowScriptsToClose: true });
 });
 
 // Mantiene una única ventana de Copilot: si existe la enfoca, si no la crea.
