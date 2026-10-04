@@ -3,7 +3,7 @@
 <!--
   Banco de pruebas de accesibilidad de los temas del correo (WCAG 2.1 AA, 1.4.3).
   Carga el editor real (markdown.js + themes.js + content-compose.js) con un `messenger`
-  simulado, aplica cada tema con el menú 🎨 y mide el contraste de CADA texto del preview
+  simulado, aplica cada tema con el menú Estilo y mide el contraste de CADA texto del preview
   contra su fondo efectivo (componiendo los fondos de los ancestros).
   Se mide dos veces: en el preview del editor (modo estándar) y como lo ve quien RECIBE el
   correo: el mismo HTML en un iframe SIN doctype (modo quirks, como Thunderbird y la mayoría
@@ -95,7 +95,7 @@ function audit(preview, where) {
 
 setTimeout(async () => {
   const toolbar = document.getElementById("cothunder-md-toolbar");
-  const themeBtn = [...toolbar.querySelectorAll(":scope > span > button")].find((b) => b.textContent.startsWith("🎨"));
+  const themeBtn = [...toolbar.querySelectorAll(":scope > span > button")].find((b) => (b.getAttribute("aria-label") || "").startsWith("Estilo de este correo"));
   const preview = document.getElementById("cothunder-md-preview");
   const results = [];
   for (const p of EMAIL_THEME_PRESETS) {
