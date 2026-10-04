@@ -129,7 +129,7 @@ function renderInline(text) {
 // con mdEscape (dentro y fuera de los spans): un lenguaje desconocido, o
 // código como `</script>` o `"><img>`, nunca produce HTML vivo.
 const MD_HL_COLORS = {
-  comment: "#6e7781",
+  comment: "#68717a",   // 4.6:1 sobre #f6f8fa (WCAG AA)
   string: "#0a3069",
   number: "#0550ae",
   keyword: "#cf222e",

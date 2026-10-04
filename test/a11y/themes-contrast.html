@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>CoThunder · contraste de temas</title></head>
+<!--
+  Banco de pruebas de accesibilidad de los temas del correo (WCAG 2.1 AA, 1.4.3).
+  Carga el editor real (markdown.js + themes.js + content-compose.js) con un `messenger`
+  simulado, aplica cada tema con el menú 🎨 y mide el contraste de CADA texto del preview
+  contra su fondo efectivo (componiendo los fondos de los ancestros).
+  Se mide dos veces: en el preview del editor (modo estándar) y como lo ve quien RECIBE el
+  correo: el mismo HTML en un iframe SIN doctype (modo quirks, como Thunderbird y la mayoría
+  de clientes muestran el correo HTML). En quirks las tablas no heredan el color de texto,
+  así que un tema oscuro que solo ponga el color en el contenedor deja celdas negro sobre negro.
+  Umbral: 4.5:1 texto normal; 3:1 texto grande (≥ 24 px, o ≥ 18.66 px en negrita).
+  Uso: bash scripts/a11y-themes.sh (Chrome/Edge headless) o abrir con
+  --allow-file-access-from-files. El resultado queda en document.title y en #report.
+-->
+<body contenteditable="true">
+<p># Título 1</p><p>## Título 2</p><p>### Título 3</p>
+<p>Párrafo con **negrita**, *cursiva*, ~~tachado~~, ==resaltado==, `código en línea` y un [enlace](https://www.upo.es).</p>
+<p>- Elemento de lista</p><p>- Otro elemento con `código`</p><p>&nbsp; &nbsp; - Sublista</p>
+<p>1. Paso uno</p><p>2. Paso dos</p>
+<p>| Concepto | Detalle | Importe |</p><p>|---|---|--:|</p>
+<p>| Fila impar | texto **negrita** | 1.200 € |</p><p>| Fila par | texto `código` | 300 € |</p>
+<p>| Fila impar | [enlace](https://example.org) | 50 € |</p><p>| Fila par | ==marca== | 7 € |</p>
+<p>&gt; Cita con texto normal y **negrita**</p>
+<p>&gt; [!NOTE]</p><p>&gt; Nota con texto</p>
+<p>&gt; [!TIP]</p><p>&gt; Consejo con texto</p>
+<p>&gt; [!IMPORTANT]</p><p>&gt; Importante con texto</p>
+<p>&gt; [!WARNING]</p><p>&gt; Advertencia con texto</p>
+<p>&gt; [!CAUTION]</p><p>&gt; Precaución con texto</p>
+<p>```js</p><p>// comentario del código</p><p>const nombre = "cadena"; let n = 42;</p><p>if (n &gt; 1) { return nombre; }</p><p>```</p>
+<p>término</p><p>: definición del término</p>
+<p>- [ ] tarea pendiente</p><p>- [x] tarea hecha</p>
+<p>Texto con nota al pie[^1].</p><p>[^1]: Texto de la nota.</p>
+<p>---</p><p>Fin.</p>
+<script>
+window.messenger = {
+  runtime: { onMessage: { addListener() {} }, sendMessage: () => Promise.resolve({ ok: true, templates: [] }) },
+  storage: { onChanged: { addListener() {} }, local: { get: (d) => Promise.resolve(Object.assign({}, d, { emailCustomCss: "" })) } }
+};
+</script>
+<script src="../../markdown.js"></script>
+<script src="../../themes.js"></script>
+<script src="../../content-compose.js"></script>
+<script>
+"use strict";
+const parse = (c) => { const m = c.match(/rgba?\(([^)]+)\)/); if (!m) return [0, 0, 0, 1]; const p = m[1].split(",").map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
+const over = (top, under) => { const a = top[3]; return [0, 1, 2].map((i) => top[i] * a + under[i] * (1 - a)).concat(1); };
+const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+const hex = (c) => "#" + c.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+
+function effectiveBg(el, stop) {
+  const layers = [];
+  const view = el.ownerDocument.defaultView;
+  for (let n = el; n; n = n.parentElement) {
+    layers.push(parse(view.getComputedStyle(n).backgroundColor));
+    if (n === stop) break;
+  }
+  let bg = [255, 255, 255, 1];   // lo que haya detrás del correo: blanco
+  for (let i = layers.length - 1; i >= 0; i--) bg = over(layers[i], bg);
+  return bg;
+}
+
+function describe(el) {
+  const t = el.nodeName.toLowerCase();
+  const cls = el.className && typeof el.className === "string" ? "." + el.className.split(" ")[0] : "";
+  const parent = el.parentElement ? el.parentElement.nodeName.toLowerCase() : "";
+  return parent + ">" + t + cls;
+}
+
+function audit(preview, where) {
+  const fails = [], seen = new Set();
+  let checked = 0;
+  const view = preview.ownerDocument.defaultView;
+  const getComputedStyle = (e) => view.getComputedStyle(e);
+  preview.querySelectorAll("*").forEach((el) => {
+    const own = Array.from(el.childNodes).filter((n) => n.nodeType === 3 && n.textContent.trim()).map((n) => n.textContent.trim()).join(" ");
+    if (!own) return;
+    const cs = getComputedStyle(el);
+    const fg = over(parse(cs.color), effectiveBg(el, preview));
+    const bg = effectiveBg(el, preview);
+    const size = parseFloat(cs.fontSize), bold = Number(cs.fontWeight) >= 700;
+    const large = size >= 24 || (bold && size >= 18.66);
+    const r = ratio(fg, bg), min = large ? 3 : 4.5;
+    checked++;
+    if (r < min) {
+      const key = describe(el) + hex(fg) + hex(bg);
+      if (seen.has(key)) return;
+      seen.add(key);
+      fails.push({ where, el: describe(el), text: own.slice(0, 30), fg: hex(fg), bg: hex(bg), ratio: Math.round(r * 100) / 100, min });
+    }
+  });
+  return { checked, fails };
+}
+
+setTimeout(async () => {
+  const toolbar = document.getElementById("cothunder-md-toolbar");
+  const themeBtn = [...toolbar.querySelectorAll(":scope > span > button")].find((b) => b.textContent.startsWith("🎨"));
+  const preview = document.getElementById("cothunder-md-preview");
+  const results = [];
+  for (const p of EMAIL_THEME_PRESETS) {
+    themeBtn.click();
+    const item = [...themeBtn.nextElementSibling.children].find((b) => b.textContent.trim().endsWith(p.name));
+    item.click();
+    await new Promise((r) => setTimeout(r, 30));
+    const inEditor = audit(preview, "editor");
+    // Como lo recibe el destinatario: el HTML final en un documento SIN doctype (quirks).
+    const frame = document.createElement("iframe");
+    frame.style.cssText = "width:900px;height:600px";
+    document.body.appendChild(frame);
+    frame.contentDocument.open();
+    frame.contentDocument.write("<html><head><meta charset='utf-8'></head><body>" + preview.innerHTML + "</body></html>");
+    frame.contentDocument.close();
+    const received = audit(frame.contentDocument.body, "recibido");
+    frame.remove();
+    results.push({ id: p.id, checked: inEditor.checked + received.checked, fails: inEditor.fails.concat(received.fails) });
+  }
+  const bad = results.filter((r) => r.fails.length);
+  const lines = results.map((r) => r.id + ": " + r.checked + " textos, " + r.fails.length + " fallos" +
+    r.fails.map((f) => "\n    [" + f.where + "] " + f.el + " «" + f.text + "» " + f.fg + " sobre " + f.bg + " = " + f.ratio + " (mín. " + f.min + ")").join(""));
+  const pre = document.createElement("pre");
+  pre.id = "report";
+  pre.textContent = lines.join("\n");
+  document.body.appendChild(pre);
+  document.title = (bad.length ? "A11Y FALLA" : "A11Y OK") + "\n" + lines.join("\n");
+}, 500);
+</script>
+</body></html>

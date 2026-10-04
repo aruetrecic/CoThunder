@@ -19,3 +19,6 @@ jobs:
 
       - name: Validar (manifest, sintaxis JS, referencias y tests)
         run: bash scripts/check.sh
+
+      - name: Contraste de los temas del correo (WCAG AA, editor y modo quirks)
+        run: bash scripts/a11y-themes.sh

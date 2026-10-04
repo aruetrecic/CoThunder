@@ -343,19 +343,19 @@ test("highlightCode: sin lenguaje solo escapa", () => {
   assert.equal(highlightCode("x = 1", ""), "x = 1");
 });
 test("highlightCode: comentario js", () => {
-  assert.equal(highlightCode("// hola", "js"), '<span class="cthl-comment" style="color:#6e7781;">// hola</span>');
+  assert.equal(highlightCode("// hola", "js"), '<span class="cthl-comment" style="color:#68717a;">// hola</span>');
 });
 test("highlightCode: string js escapa su contenido", () => {
   assert.equal(highlightCode('a = "x<y"', "js"), 'a = <span class="cthl-string" style="color:#0a3069;">&quot;x&lt;y&quot;</span>');
 });
 test("highlightCode: comentario python con #", () => {
-  assert.equal(highlightCode("# nota", "python"), '<span class="cthl-comment" style="color:#6e7781;"># nota</span>');
+  assert.equal(highlightCode("# nota", "python"), '<span class="cthl-comment" style="color:#68717a;"># nota</span>');
 });
 test("renderMarkdown: bloque de código sin lenguaje no cambia (regresión)", () => {
   assert.equal(renderMarkdown("```\na < b\n```"), "<pre><code>a &lt; b</code></pre>");
 });
 test("renderMarkdown: bloque de código con lenguaje resalta", () => {
-  assert.equal(renderMarkdown("```js\n// hi\n```"), '<pre><code><span class="cthl-comment" style="color:#6e7781;">// hi</span></code></pre>');
+  assert.equal(renderMarkdown("```js\n// hi\n```"), '<pre><code><span class="cthl-comment" style="color:#68717a;">// hi</span></code></pre>');
 });
 test("highlightCode: palabra clave js const", () => {
   assert.equal(

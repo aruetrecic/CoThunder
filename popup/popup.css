@@ -5,7 +5,11 @@
   --accent-2: #1a9c7a;
 }
 * { box-sizing: border-box; }
+/* Texto de ejemplo de los campos con contraste suficiente también en oscuro (WCAG ≥ 4.5:1). */
+::placeholder { color: color-mix(in srgb, currentColor 72%, transparent); opacity: 1; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 html, body { height: 100%; }
+body { background: Canvas; color: CanvasText; }
 body {
   margin: 0;
   padding: 12px;

@@ -2,7 +2,7 @@
 
 Extensión MailExtension para Thunderbird 140 o superior. Lee el correo abierto, monta un prompt editable con su contenido y lo envía a la web de **Microsoft 365 Copilot** automatizando el chat con la sesión que el usuario ya tiene iniciada. No usa ninguna API ni clave: pilota la interfaz web de Copilot mediante un content script.
 
-Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25). La 2.10 añade al editor un menú para insertar plantillas de formato (ver §26). La 2.11 lee el código fuente por bloques y añade «Ordenar» (ver §27).
+Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25). La 2.10 añade al editor un menú para insertar plantillas de formato (ver §26). La 2.11 lee el código fuente por bloques y añade «Ordenar» (ver §27). La 2.12 garantiza contraste WCAG AA en temas e interfaz (ver §28).
 
 Plataforma objetivo: Thunderbird ESR 140 (probado en 140.11.1), **Manifest V3**. Decisión explícita del proyecto; ver §2 y el riesgo asociado en §15.
 
@@ -445,3 +445,23 @@ El botón de la barra (y el atajo) reescribe cada tramo Markdown (no la firma ni
 ### 27.3 Presentación
 
 Con el editor activo, la zona de escritura usa letra **monoespaciada** (para ver la alineación) y el preview, letra proporcional. Para hacer sitio en la barra, **Imagen** y **Emoji** pasan al menú **▦ ▾ Insertar**.
+
+## 28. Accesibilidad: contraste WCAG 2.1 AA (v2.12)
+
+### 28.1 Temas del correo
+
+**Requisito:** todo texto del correo renderizado con cualquier tema cumple **4.5:1** (3:1 en texto grande: ≥ 24 px, o ≥ 18.66 px en negrita) contra su fondo efectivo, **tanto en el preview del editor como en el correo recibido**.
+
+- **Modo quirks.** Los correos HTML se muestran sin doctype (modo quirks), donde las **tablas no heredan el color de texto**. Los temas ponían el color solo en el contenedor, así que en los 8 temas oscuros las celdas salían en negro sobre fondo oscuro (1.1–2.3:1). `buildThemeCss` fija ahora `color` en `table` y `color` + `background` en `td` (las filas pares siguen con `evenRow`), de modo que la tabla es autosuficiente.
+- **Colores ajustados** (mínimo cambio de luminosidad HSL que conserva tono y saturación hasta ≥ 4.6:1): enlaces de Solarized claro/oscuro y colores de resaltado de código de Solarized, Monokai, Dracula, Nord y One Dark; gris de comentarios del tema por defecto, GitHub claro y UPO claro (`#6e7781` → `#68717a`). **No cambia ningún color corporativo UPO** (#003772, #FCC100).
+- **Pruebas.** `test/themes.test.js` comprueba, sin navegador, cada pareja texto/fondo de las paletas y que `td` lleve color y fondo propios. `scripts/a11y-themes.sh` abre `test/a11y/themes-contrast.html` en Chrome/Edge headless: renderiza un correo con todos los elementos con cada tema y mide el contraste de **cada texto** en el editor y en un iframe sin doctype (como lo ve el destinatario). Se ejecuta en el CI.
+
+### 28.2 Interfaz (ventana y Opciones)
+
+- `:root { color-scheme: light dark }` y `body { background: Canvas; color: CanvasText }` en Opciones (antes solo el `body` declaraba el esquema y el texto podía quedar negro sobre fondo oscuro) y en la ventana.
+- `::placeholder` con `color-mix(currentColor 72%)` y opacidad 1 (el gris por defecto daba 2.4–3.6:1 en oscuro) y foco visible (`:focus-visible`).
+- `scripts/a11y-ui-audit.js` audita una página (contraste de textos y placeholders, campos sin etiqueta, botones sin nombre, imágenes sin alt); pasa en ventana (crear/responder) y Opciones, en claro y oscuro.
+
+### 28.3 Descarga con nombre fijo
+
+La release adjunta, además de `cothunder-X.Y.Z.xpi`, una copia `cothunder.xpi`, de modo que `releases/latest/download/cothunder.xpi` (botón de descarga del README) apunta siempre a la última versión.

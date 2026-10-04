@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8">
 <style>
-  body { font: 13px/1.5 system-ui, sans-serif; max-width: 640px; padding: 14px; color-scheme: light dark; }
+  /* Tema claro/oscuro en la RAÍZ y colores del sistema explícitos: si solo lo declara el body,
+     el texto puede quedar negro sobre el fondo oscuro de la ventana (WCAG 1.4.3). */
+  :root { color-scheme: light dark; }
+  body { font: 13px/1.5 system-ui, sans-serif; max-width: 640px; padding: 14px; background: Canvas; color: CanvasText; }
+  /* Texto de ejemplo de los campos con contraste suficiente también en oscuro (≥ 4.5:1). */
+  ::placeholder { color: color-mix(in srgb, currentColor 72%, transparent); opacity: 1; }
+  :focus-visible { outline: 2px solid #1a5fb4; outline-offset: 2px; }
   h2 { font-size: 15px; margin: 18px 0 6px; }
   input, textarea { width: 100%; box-sizing: border-box; }
   .help { border: 1px solid color-mix(in srgb, currentColor 22%, transparent); border-radius: 8px; padding: 10px 12px; }
@@ -115,7 +121,7 @@
       <li>Al instalar el complemento se crea una <strong>biblioteca de ejemplo</strong> de prompts y formatos.</li>
     </ul>
 
-    <p class="muted">Requisitos: sesión iniciada en Microsoft 365 Copilot (la primera vez, entra en la ventana que se abre). Para ver el Markdown renderizado en la respuesta, instala el complemento <em>Markdown Here Revival</em>. Sin API ni claves: el correo solo viaja a Copilot.</p>
+    <p class="muted">Requisitos: sesión iniciada en Microsoft 365 Copilot (la primera vez, entra en la ventana que se abre). El Markdown de la respuesta se ve maquetado con el editor propio de CoThunder (botón «Editor Markdown» en la redacción). Sin API ni claves: el correo solo viaja a Copilot.</p>
   </div>
 
   <script src="../common.js"></script>

@@ -39,6 +39,9 @@ jobs:
           VERSION=$(node -p "JSON.parse(require('fs').readFileSync('manifest.json')).version")
           XPI="cothunder-${VERSION}.xpi"
           zip -r "$XPI" manifest.json common.js background.js content-copilot.js content-compose.js markdown.js themes.js compose.css icon.svg popup options -x '*.md'
+          # Copia con nombre fijo: el README enlaza a releases/latest/download/cothunder.xpi,
+          # que así siempre descarga la última versión.
+          cp "$XPI" cothunder.xpi
           echo "Contenido del paquete:"
           unzip -l "$XPI"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -66,12 +69,12 @@ jobs:
             echo ""
             echo "---"
             echo ""
-            echo "Requiere **Thunderbird 140 o superior**. Instalación: descarga \`$XPI\` de más abajo y, en Thunderbird, ve a Herramientas › Complementos y temas › engranaje › Instalar complemento desde archivo."
+            echo "Requiere **Thunderbird 140 o superior**. Instalación: descarga \`$XPI\` (o \`cothunder.xpi\`, el mismo fichero) de más abajo y, en Thunderbird, ve a Herramientas › Complementos y temas › engranaje › Instalar complemento desde archivo."
           } > RELEASE_NOTES.md
           if [ ! -s RELEASE_NOTES.md ]; then echo "CoThunder ${VERSION} para Thunderbird 140 o superior." > RELEASE_NOTES.md; fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --title "$TITLE" --notes-file RELEASE_NOTES.md
-            gh release upload "$TAG" "$XPI" --clobber
+            gh release upload "$TAG" "$XPI" cothunder.xpi --clobber
           else
-            gh release create "$TAG" "$XPI" --title "$TITLE" --notes-file RELEASE_NOTES.md
+            gh release create "$TAG" "$XPI" cothunder.xpi --title "$TITLE" --notes-file RELEASE_NOTES.md
           fi

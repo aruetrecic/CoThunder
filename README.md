@@ -1,113 +1,169 @@
+<div align="center">
+
+<img src="icon.svg" alt="" width="72" height="72">
+
 # CoThunder
 
-Extensión MailExtension para **Thunderbird 140+** que integra **Microsoft 365 Copilot** en el correo, usando tu sesión ya iniciada en la web de Copilot. **Sin API ni claves, sin telemetría.** Tiene dos funciones:
+**Microsoft 365 Copilot dentro de Thunderbird**, con tu sesión de siempre.<br>
+Sin API, sin claves y sin telemetría.
 
-- **Preguntar a Copilot** (botón en el visor de un mensaje): lee el correo abierto, monta un prompt editable con su contenido y trae la respuesta de Copilot a una ventana de composición, maquetada en Markdown.
-- **Crear desde Copilot** (botón en la barra principal): redacta un **correo nuevo desde cero** (asunto y cuerpo) a partir de tus indicaciones, sin necesidad de tener un correo abierto.
+[![Última versión](https://img.shields.io/github/v/release/aruetrecic/CoThunder?label=%C3%BAltima%20versi%C3%B3n&color=1a5fb4)](https://github.com/aruetrecic/CoThunder/releases/latest)
+[![CI](https://github.com/aruetrecic/CoThunder/actions/workflows/ci.yml/badge.svg)](https://github.com/aruetrecic/CoThunder/actions/workflows/ci.yml)
+[![Thunderbird 140+](https://img.shields.io/badge/Thunderbird-140%2B-0a84ff)](https://www.thunderbird.net/)
+[![Licencia GPL-3.0](https://img.shields.io/badge/licencia-GPL--3.0-555)](LICENSE)
 
-Manual de uso paso a paso: [docs/MANUAL.md](docs/MANUAL.md). Historial de cambios: [CHANGELOG.md](CHANGELOG.md). Seguridad: [informe de seguridad](docs/SEGURIDAD.md).
+</div>
 
-## Características
+> [!TIP]
+> ## ⬇️ Descargar
+>
+> **[Descargar la última versión (`cothunder.xpi`)](https://github.com/aruetrecic/CoThunder/releases/latest/download/cothunder.xpi)**
+>
+> Todas las versiones y sus notas: **[página de Releases](https://github.com/aruetrecic/CoThunder/releases)** · Qué cambia en cada una: **[CHANGELOG](CHANGELOG.md)**
 
-### Comunes a los dos modos
+---
 
-- **Selector de agente**: *Copilot por defecto* o cualquiera de tus **agentes fijados en la barra lateral** de Copilot (por ejemplo un GPT especializado). Recuerda el último y tiene un botón **↻** para refrescar.
-- **Selectores de Prompt y Formato** basados en tus **plantillas de Thunderbird** (carpeta *Plantillas*, de cualquier cuenta).
-- **Tono** (formal, cercano, directo, negativa cordial) y **Longitud** (breve, normal, detallada).
-- **Incluir mi firma** de la identidad de Thunderbird.
-- **Respuesta maquetada en Markdown** siempre (saludo como encabezado, despedida en negrita, lo importante en cita, listas y tablas donde aportan).
-- **Mini barra Markdown** sobre los editores de texto.
-- **Regenerar**: pide otra versión en un chat nuevo.
-- **Degradación segura**: si falla la escritura en Copilot, el prompt se copia al portapapeles; si no se captura la respuesta, salta una notificación.
-- **Ventana redimensionable** que recuerda su tamaño por modo.
-- **Aviso de tratamiento** la primera vez y **registro de actividad local opcional** (auditoría de metadatos, sin contenido).
-- **Contexto «Sobre ti»** (en Opciones): nombre, puesto o cargo, organización, qué haces y **cómo escribes** (tratamiento, tono, firma); se añade al prompt para que Copilot sepa quién eres y adapte el tono, el rol y la firma. Un botón **«Tomar de mi identidad de Thunderbird»** rellena nombre, organización y firma con un clic.
+## Índice
 
-### Preguntar a Copilot (respuesta)
+- [Qué hace](#qué-hace)
+- [Instalar y actualizar](#instalar-y-actualizar)
+- [Uso rápido](#uso-rápido)
+- [Características](#características)
+- [Editor Markdown en la redacción](#editor-markdown-en-la-redacción)
+- [Plantillas](#plantillas)
+- [Accesibilidad](#accesibilidad)
+- [Privacidad y seguridad](#privacidad-y-seguridad)
+- [Publicar una versión (mantenimiento)](#publicar-una-versión-mantenimiento)
+- [Desarrollo](#desarrollo)
 
-- Prompt montado con remitente, asunto y cuerpo, limpio de CSS, espacios y caracteres invisibles.
-- **Incluir el correo citado** y **Incluir el hilo** (mensajes anteriores, reconstruidos por las cabeceras `References`/`In-Reply-To`).
-- Blindaje **anti-inyección** en el prompt y **detección local** de patrones sospechosos en el correo, con aviso.
+## Qué hace
 
-### Crear desde Copilot (correo nuevo)
+| Botón | Dónde está | Para qué |
+|---|---|---|
+| **Preguntar a Copilot** | Barra del visor de un mensaje | Lee el correo abierto, monta un prompt editable y trae la respuesta de Copilot a una **respuesta** lista para revisar. |
+| **Crear desde Copilot** | Barra principal | Redacta un **correo nuevo desde cero** (asunto y cuerpo) a partir de tus indicaciones. |
+| **Editor Markdown** | Ventana de redacción | Escribes en Markdown a la izquierda y ves el correo maquetado a la derecha; sale con formato en un clic. |
 
-- Campo **¿Qué quieres crear?** (instrucción base), **Contexto / notas** e **Idioma** de salida.
-- Destinatarios en tres cajas: **Para**, **CC** y **CCO**; cada una admite **varias direcciones**, una por línea o separadas por comas.
-- Copilot genera **asunto y cuerpo**; se abre un correo nuevo con ambos, la firma y los destinatarios.
-- **Prompts propios de creación** (plantillas con asunto `Prompt crear - ...`), que solo aparecen en este modo.
+La extensión no llama a ninguna API: pilota la web de Copilot en una ventana propia, con la sesión que ya tienes iniciada.
 
-## Biblioteca de plantillas
+## Instalar y actualizar
 
-Al instalar se siembra una colección de **Prompts** y **Formatos** de ejemplo en tu carpeta *Plantillas*, listos para usar. Distingues su tipo por el asunto:
+1. **[Descarga `cothunder.xpi`](https://github.com/aruetrecic/CoThunder/releases/latest/download/cothunder.xpi)** (siempre es la última versión).
+2. En Thunderbird: **Herramientas › Complementos y temas › ⚙ › Instalar complemento desde archivo…** y elige el fichero.
+3. Pulsa cualquier botón de CoThunder. La primera vez, inicia sesión en Copilot en la ventana que se abre.
 
-- `Prompt - Título`: instrucción de respuesta (aparece en el selector *Prompt* del modo respuesta).
-- `Prompt crear - Título`: instrucción de creación (aparece en el selector *Prompt* del modo creación).
-- `Formato - Título`: estructura y formato de referencia (se comparte entre los dos modos).
-
-Puedes crear las tuyas: redacta un mensaje (en Markdown si quieres), nómbralo con ese prefijo en el asunto y haz **Archivo → Guardar como plantilla**.
-
-## Instalación
-
-1. Descarga el `.xpi` más reciente desde la [página de Releases](../../releases).
-2. En Thunderbird: **Herramientas → Complementos y temas → engranaje ⚙ → Instalar complemento desde archivo…** y elige el `.xpi`.
-3. Pulsa un botón de CoThunder. La primera vez, inicia sesión en Copilot en la ventana que se abre.
-
-Requiere **Thunderbird ESR 140 o superior**.
+Para **actualizar**, repite los pasos 1 y 2 con la versión nueva: se conservan tus ajustes y plantillas. Requiere **Thunderbird ESR 140 o superior**.
 
 ## Uso rápido
 
-**Responder a un correo:** ábrelo, pulsa **Preguntar a Copilot** en la barra del visor, ajusta las opciones si quieres, y pulsa **Enviar a Copilot**. Cuando termine, se abre la respuesta lista para revisar y enviar.
+- **Responder:** abre el correo › **Preguntar a Copilot** › ajusta las opciones › **Enviar a Copilot** (o **Ctrl+Enter**). Al terminar se abre la respuesta lista para revisar.
+- **Crear:** **Crear desde Copilot** › describe qué quieres crear (y, si quieres, contexto, idioma y destinatarios) › **Enviar a Copilot**. Se abre un correo nuevo con el asunto y el cuerpo generados.
 
-**Crear un correo nuevo:** pulsa **Crear desde Copilot** en la barra principal, escribe qué quieres crear (y opcionalmente contexto, idioma y destinatarios), y pulsa **Enviar a Copilot**. Se abre un correo nuevo con el asunto y el cuerpo generados.
+Paso a paso completo, con todos los campos: **[manual de uso](docs/MANUAL.md)**.
 
-El paso a paso completo, con todos los campos, está en el [manual de uso](docs/MANUAL.md).
+## Características
 
-## Editor Markdown en la redacción (v2.5)
+<details open>
+<summary><strong>Comunes a los dos modos</strong></summary>
 
-CoThunder trae su **propio editor Markdown con vista previa en vivo** en la ventana de redacción, así que **ya no necesitas Markdown Here** (que dejó de funcionar en las versiones nuevas de Thunderbird). Escribes en Markdown en el editor de siempre (izquierda) y ves la vista **renderizada a la derecha** mientras escribes; al **enviar**, el correo sale maquetado en un clic.
+- **Agente**: *Copilot por defecto* o cualquiera de tus **agentes fijados** en la barra lateral de Copilot (↻ para refrescar).
+- **Prompt** y **Formato** desde tus **plantillas de Thunderbird**; **Tono** (formal, cercano, directo, negativa cordial) y **Longitud**.
+- **Incluir mi firma**, respuesta **siempre maquetada en Markdown** y **Regenerar** para pedir otra versión.
+- **Contexto «Sobre ti»** (en Opciones): nombre, cargo, organización y cómo escribes, para que Copilot adapte el tono y la firma.
+- Ventana en **pestañas** que cabe en pantallas pequeñas o con escalado del 125-150 %; **Ctrl+Enter** para enviar.
+- **Degradación segura**: si falla la escritura en Copilot, el prompt se copia al portapapeles; si no llega la respuesta, se avisa con una notificación.
 
-- Se enciende/apaga con el botón **«Editor Markdown»** de la redacción o con **Ctrl+Alt+M** (y un ajuste en Opciones para tenerlo por defecto).
-- Cobertura **completa** de Markdown (básico y extendido): encabezados, énfasis, listas y citas anidadas, listas de tareas, tablas, código, enlaces e imágenes, notas al pie, IDs de encabezado, listas de definición, resaltado `==...==`, subíndice/superíndice y emoji `:código:`.
-- **Admonitions** estilo GitHub (`> [!NOTE]`, `[!WARNING]`…), **resaltado de sintaxis** en bloques de código, **barra de herramientas** para insertar sintaxis, y **pegar contenido con formato** que se convierte a Markdown.
-- Menú **🎨 ▾** (estilo) en la barra del editor, que agrupa lo menos usado en menús (**H ▾** títulos, **Aa ▾**, **▦ ▾** bloques, **ℹ ▾** avisos): cambia el tema de ese correo al momento (vista previa y envío) sin tocar el tema por defecto de Opciones.
-- En Opciones puedes **descargar cualquier tema** (o la plantilla genérica) como `.css`, o pasarlo a «CSS personalizado» para retocarlo y crear el tuyo.
-- Botón **⇥ Ordenar** (Ctrl+Shift+F): alinea tablas, tabula listas y separa bloques en el código fuente, sin cambiar el resultado.
-- Menú **📄 ▾** para insertar las **plantillas de formato** (las que siembra CoThunder y las tuyas) directamente en el correo.
-- **Atajos** Ctrl+B/I/K/E y Ctrl+1…6, y la **firma y la cita** del correo original se conservan con su formato.
-- Renderizador **propio**, sin librerías; salida siempre escapada y con estilos **en línea** (para que se vea bien en cualquier cliente de correo).
+</details>
+
+<details>
+<summary><strong>Preguntar a Copilot (respuesta)</strong></summary>
+
+- Prompt con remitente, asunto y cuerpo, limpio de CSS, espacios y caracteres invisibles.
+- **Incluir el correo citado** e **Incluir el hilo** (mensajes anteriores, por `References`/`In-Reply-To`).
+- **Blindaje anti-inyección** en el prompt y **detección local** de intentos de manipulación, con aviso.
+
+</details>
+
+<details>
+<summary><strong>Crear desde Copilot (correo nuevo)</strong></summary>
+
+- **¿Qué quieres crear?**, **Contexto / notas** e **Idioma** de salida.
+- **Para**, **CC** y **CCO** con varias direcciones; las no válidas se marcan en rojo antes de enviar.
+- Copilot genera **asunto y cuerpo**; el correo nuevo lleva también la firma y los destinatarios.
+- Prompts propios de creación (`Prompt crear - …`).
+- Un contador avisa si el prompt es tan largo que Copilot podría cortarlo.
+
+</details>
+
+## Editor Markdown en la redacción
+
+Sustituye a Markdown Here, que dejó de funcionar en las versiones nuevas de Thunderbird. Se enciende con el botón **Editor Markdown** o **Ctrl+Alt+M** (y puede venir activado por defecto desde Opciones).
+
+| En la barra | Qué hace |
+|---|---|
+| **B I S 🖍 `</>` 🔗 ❝ • 1. ☑** | Formato básico, enlace, cita, listas y tareas. |
+| **H ▾** · **Aa ▾** | Títulos 1 a 6 · negrita+cursiva, subíndice, superíndice. |
+| **▦ ▾** | Imagen, emoji, tabla, bloque de código, regla, lista de definición, nota al pie. |
+| **ℹ ▾** | Avisos: nota, consejo, importante, advertencia, precaución. |
+| **⇥ Ordenar** | Alinea tablas, tabula listas y separa bloques en el código fuente, sin cambiar el resultado (**Ctrl+Shift+F**). |
+| **📄 ▾** | Inserta tus **plantillas de formato** en el cursor. |
+| **🎨 ▾** | Cambia el **estilo** de ese correo al momento. |
+
+- **Atajos:** Ctrl+B, Ctrl+I, Ctrl+K (enlace), Ctrl+E (código) y Ctrl+1…6 (títulos).
+- **Firma y cita intactas:** tu firma y el correo citado se conservan con su formato original.
+- **13 temas** (UPO corporativo, claro, oscuro y mixto; GitHub; Solarized; Monokai; Dracula; Nord; One Dark) más uno **personalizado**. En Opciones puedes **descargar cualquier tema** como `.css` o editarlo como base del tuyo.
+- Cobertura completa de Markdown (básico y extendido), resaltado de sintaxis y estilos **en línea** para que el correo se vea igual en cualquier cliente.
+
+## Plantillas
+
+Al instalar se siembra una biblioteca de ejemplo en tu carpeta *Plantillas*. El tipo se distingue por el asunto:
+
+| Asunto | Uso |
+|---|---|
+| `Prompt - Título` | Instrucción para Copilot al **responder**. |
+| `Prompt crear - Título` | Instrucción para Copilot al **crear** un correo. |
+| `Formato - Título` (o sin prefijo) | Estructura del correo: se usa como referencia en Copilot y se inserta desde el menú **📄** del editor. |
+
+Para crear las tuyas, redacta un mensaje (en Markdown si quieres), ponle el prefijo en el asunto y usa **Archivo › Guardar como plantilla**.
+
+## Accesibilidad
+
+- Los **13 temas** cumplen el contraste **WCAG 2.1 AA** (4,5:1 en texto) en todos sus elementos: texto, tablas, enlaces, código resaltado, citas y avisos. Se comprueban también **como los ve quien recibe el correo** (modo *quirks*, en el que las tablas no heredan el color), sin tocar los colores corporativos de la UPO.
+- La ventana y Opciones cumplen AA en **tema claro y oscuro**, con etiquetas en todos los campos y foco visible.
+- Las pruebas se ejecutan en cada push: `bash scripts/a11y-themes.sh`.
 
 ## Privacidad y seguridad
 
-El contenido de los correos solo viaja a **Microsoft 365 Copilot**, el mismo destino al que ya envías datos al usar Copilot. Sin telemetría, sin terceros, sin claves. La ventana te muestra siempre el prompt antes de enviarlo, y la primera vez avisa del tratamiento. Puedes activar un **registro de actividad local** (solo metadatos) desde Opciones.
+El contenido de los correos solo viaja a **Microsoft 365 Copilot**, el mismo destino al que ya envías datos al usar Copilot. Sin telemetría, sin terceros, sin claves. La ventana muestra siempre el prompt antes de enviarlo y la primera vez avisa del tratamiento. Opcionalmente, un **registro de actividad local** (solo metadatos).
 
-Análisis detallado (uso en la UPO y usuario general, cumplimiento ENS y riesgos): [informe de seguridad](docs/SEGURIDAD.md).
+Análisis detallado (uso en la UPO y usuario general, ENS y riesgos): **[informe de seguridad](docs/SEGURIDAD.md)**.
 
-## Releases automáticas
+## Publicar una versión (mantenimiento)
 
-El `.xpi` se compila y publica con GitHub Actions (`.github/workflows/release.yml`):
+> [!IMPORTANT]
+> Las versiones se publican **solas** al empujar una etiqueta `vX.Y.Z`. El workflow **[Release XPI](https://github.com/aruetrecic/CoThunder/actions/workflows/release.yml)** valida, empaqueta y crea la Release con el `.xpi` y las notas del CHANGELOG.
 
-- **Publicar una versión:** sube la versión en `manifest.json` (SemVer) y empuja una etiqueta `vX.Y.Z`. La acción valida, empaqueta `cothunder-<version>.xpi` y crea la Release con el `.xpi` adjunto.
+1. Sube la versión en `manifest.json` (SemVer) y añade su entrada en `CHANGELOG.md`.
+2. Comprueba que todo pasa: `bash scripts/check.sh`.
+3. Haz commit, crea la etiqueta y empújala:
 
-  ```bash
-  git tag v2.3.0
-  git push origin v2.3.0
-  ```
+   ```bash
+   git tag v$(node -p "require('./manifest.json').version")
+   git push origin main --tags
+   ```
 
-- **Compilar sin publicar:** lanza el workflow *Release XPI* a mano desde la pestaña **Actions** (`workflow_dispatch`).
+4. En unos segundos aparece en **[Releases](https://github.com/aruetrecic/CoThunder/releases)** con dos ficheros iguales: `cothunder-X.Y.Z.xpi` y `cothunder.xpi` (nombre fijo, el que enlaza el botón de descarga).
 
-Cada push y pull request pasa además por el workflow `CI`, que valida el manifest y la sintaxis de los JS.
+Para **compilar sin publicar**, lanza *Release XPI* a mano desde **Actions** (`workflow_dispatch`): el `.xpi` queda como artefacto del workflow.
 
 ## Desarrollo
 
-Extensión Manifest V3, JavaScript vanilla, sin dependencias en runtime (Node solo para validar y probar). La especificación completa está en [`spec/docs/ESPECIFICACION.md`](spec/docs/ESPECIFICACION.md).
+Manifest V3, JavaScript vanilla y sin dependencias en runtime (Node solo para validar y probar). Fuente de verdad: **[especificación](spec/docs/ESPECIFICACION.md)**.
 
 ```bash
-# Validar sintaxis y manifest
-for f in common.js background.js content-copilot.js popup/popup.js options/options.js; do node --check "$f"; done
-node -e "JSON.parse(require('fs').readFileSync('manifest.json')); console.log('manifest OK')"
-
-# Pruebas de la lógica pura
-node --test
+bash scripts/check.sh               # manifest, sintaxis de todos los JS, referencias y tests (o: npm run check)
+bash scripts/a11y-themes.sh         # contraste WCAG AA de los 13 temas (necesita Chrome/Edge)
+git config core.hooksPath .githooks # activa el pre-commit que ejecuta check.sh
 ```
 
-Cargar sin empaquetar: `about:debugging` → Este Thunderbird → Cargar complemento temporal → `manifest.json`.
+En Windows sin Node en el `PATH`, `check.sh` se relanza solo dentro de WSL. Para cargar sin empaquetar: `about:debugging` › Este Thunderbird › Cargar complemento temporal › `manifest.json`.

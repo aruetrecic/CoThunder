@@ -3,6 +3,18 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.12.0] — 2026-10-04
+
+### Corregido
+- **Tablas ilegibles en los temas oscuros:** al recibir el correo, las celdas salían en **negro sobre fondo oscuro** (GitHub oscuro, Solarized oscuro, Monokai, Dracula, Nord, One Dark y UPO oscuro). Los clientes de correo muestran el HTML en un modo en el que las tablas no heredan el color; ahora cada celda lleva su propio color y fondo.
+- **Contraste WCAG AA (4,5:1) en todos los temas:** se ajustan, con el mínimo cambio y sin alterar el tono, los enlaces de Solarized y los colores del código resaltado de Solarized, Monokai, Dracula, Nord y One Dark, y el gris de los comentarios de código. **Los colores corporativos de la UPO no cambian.**
+- **Opciones en tema oscuro:** el texto podía salir negro sobre fondo oscuro. Los textos de ejemplo de los campos tenían poco contraste en la ventana y en Opciones; ahora también hay foco visible.
+- Opciones aún recomendaba Markdown Here; ya menciona el editor propio.
+
+### Añadido
+- **Pruebas de accesibilidad automáticas** en el CI: contraste de cada texto de cada tema, en el editor y como lo ve quien recibe el correo (`scripts/a11y-themes.sh`), y test de las paletas sin navegador.
+- **README rediseñado** con un botón **⬇️ Descargar** destacado arriba (siempre la última versión), índice y una sección clara para publicar versiones. Las releases incluyen ahora también `cothunder.xpi` con nombre fijo.
+
 ## [2.11.0] — 2026-10-04
 
 ### Añadido

@@ -49,6 +49,9 @@ Novedades v2.1 (ver §17 del spec): desplegable de **agentes** (barra lateral de
 # en el PATH se relanza solo dentro de WSL.
 bash scripts/check.sh            # o: npm run check
 
+# Contraste WCAG AA de los 13 temas, en el editor y como lo recibe el destinatario (Chrome/Edge)
+bash scripts/a11y-themes.sh
+
 # Activar el hook de pre-commit (una vez por clon)
 git config core.hooksPath .githooks
 
