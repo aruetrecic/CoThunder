@@ -3,6 +3,18 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.11.0] — 2026-10-04
+
+### Añadido
+- **Botón ⇥ Ordenar (Ctrl+Shift+F) en el editor Markdown:** deja el código fuente limpio sin cambiar el resultado: alinea las columnas de las tablas, tabula las listas anidadas (4 espacios por nivel), deja una línea en blanco entre bloques y quita espacios sobrantes. No toca la firma, la cita ni el interior de los bloques de código. Se deshace con Ctrl+Z.
+- La zona de escritura usa **letra monoespaciada** para que la alineación se vea; la vista previa mantiene la letra normal.
+
+### Corregido
+- **Las listas escritas con Enter se partían:** cada elemento salía como una lista aparte y no se podían anidar. Ahora las líneas seguidas de una lista, tabla, cita o bloque de código se leen como una sola construcción.
+
+### Cambiado
+- Imagen y Emoji pasan al menú **▦ ▾ Insertar** para dejar sitio al botón Ordenar.
+
 ## [2.10.0] — 2026-10-04
 
 ### Añadido

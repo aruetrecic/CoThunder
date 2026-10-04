@@ -8,6 +8,7 @@ const { renderMarkdown } = require("../markdown.js");
 const { styleEmail } = require("../markdown.js");
 const { highlightCode } = require("../markdown.js");
 const { parseCss } = require("../markdown.js");
+const { formatMarkdown, joinSourceBlocks } = require("../markdown.js");
 
 test("renderInline escapa HTML", () => {
   assert.equal(renderInline("a < b & c"), "a &lt; b &amp; c");
@@ -423,3 +424,49 @@ test("renderMarkdown: nota al pie dentro de un bloque de código no lo altera", 
 test("renderInline: negrita alrededor de una URL suelta se conserva", () => {
   assert.equal(renderInline("**https://x.io**"), '<strong><a href="https://x.io">https://x.io</a></strong>');
 });
+
+// --- Código fuente: unión de bloques y ordenado ---
+
+test("joinSourceBlocks: une elementos de lista, filas de tabla y citas; separa párrafos", () => {
+  assert.equal(joinSourceBlocks(["- uno", "- dos", "  - dos.a", "Texto"]), "- uno\n- dos\n  - dos.a\n\nTexto");
+  assert.equal(joinSourceBlocks(["| a | b |", "|---|---|", "| 1 | 2 |"]), "| a | b |\n|---|---|\n| 1 | 2 |");
+  assert.equal(joinSourceBlocks(["> uno", "> dos"]), "> uno\n> dos");
+  assert.equal(joinSourceBlocks(["Hola", "Adiós"]), "Hola\n\nAdiós");
+  assert.equal(joinSourceBlocks(["```js", "const a = 1;", "", "a++;", "```", "Fin"]), "```js\nconst a = 1;\n\na++;\n```\n\nFin");
+  assert.equal(joinSourceBlocks(["a\u00a0\u00a0b"]), "a  b");
+});
+
+test("joinSourceBlocks: la lista unida se renderiza como UNA lista anidada", () => {
+  const html = renderMarkdown(joinSourceBlocks(["- uno", "- dos", "  - dos.a"]));
+  assert.equal((html.match(/<ul>/g) || []).length, 2);
+  assert.ok(/<li>dos<ul><li>dos\.a<\/li><\/ul><\/li>/.test(html), html);
+});
+
+test("formatMarkdown: alinea columnas de tabla y respeta la alineación", () => {
+  const out = formatMarkdown("|Nombre|Edad|\n|:--|--:|\n|Ana|7|\n\n|Bartolomé|42|");
+  assert.equal(out, "| Nombre    | Edad |\n| :-------- | ---: |\n| Ana       |    7 |\n| Bartolomé |   42 |");
+});
+
+test("formatMarkdown: listas anidadas a 4 espacios, viñeta '-', sin blancos entre elementos", () => {
+  assert.equal(formatMarkdown("* uno\n\n* dos\n  + dos.a\n  + dos.b\n* tres"),
+    "- uno\n- dos\n    - dos.a\n    - dos.b\n- tres");
+  // Sangría mayor que la del nivel anterior = un nivel más (igual que el renderizador).
+  assert.equal(formatMarkdown("- a\n  - b\n   - c"), "- a\n    - b\n        - c");
+  assert.equal(formatMarkdown("1. a\n2. b\n   - b.1"), "1. a\n2. b\n    - b.1");
+});
+
+test("formatMarkdown: una línea en blanco entre bloques y nada sobrante", () => {
+  assert.equal(formatMarkdown("#  Título\nTexto   \n- a\n- b\n\n\n\n---\nFin\n\n"),
+    "# Título\n\nTexto\n\n- a\n- b\n\n---\n\nFin");
+});
+
+test("formatMarkdown: no toca el interior de los bloques de código", () => {
+  const src = "Antes\n```js\nif (a) {\n\n\n    b();   \n}\n```\nDespués";
+  assert.equal(formatMarkdown(src), "Antes\n\n```js\nif (a) {\n\n\n    b();   \n}\n```\n\nDespués");
+});
+
+test("formatMarkdown: no cambia lo que se renderiza", () => {
+  const src = "# Hola\nTexto con **negrita**\n* uno\n  * uno.a\n\n|a|b|\n|---|---|\n|1|2|\n> [!TIP]\n> Consejo\n```\nx\n```";
+  assert.equal(renderMarkdown(formatMarkdown(src)), renderMarkdown(src));
+});
+

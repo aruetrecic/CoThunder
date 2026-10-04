@@ -552,6 +552,171 @@ function renderMarkdown(src) {
   return result;
 }
 
+// --- Código fuente: unión de bloques y ordenado ---------------------------
+// Thunderbird crea un párrafo (<p>) por cada Enter. Leído con innerText, cada párrafo queda
+// separado por una línea en blanco, lo que parte las listas (y separa las filas de las tablas,
+// las líneas de una cita o las de un bloque de código). joinSourceBlocks une los bloques del
+// editor: sin línea en blanco cuando el bloque siguiente continúa la misma construcción, con
+// línea en blanco (párrafo nuevo) en el resto de casos.
+function mdLineKind(line) {
+  if (/^\s*$/.test(line)) return "blank";
+  if (/^```/.test(line)) return "fence";
+  if (MD_HR_RE.test(line)) return "hr";
+  if (/^#{1,6}\s/.test(line)) return "heading";
+  if (/^\s*>/.test(line)) return "quote";
+  if (isListMarkerLine(line)) return "list";
+  if (line.includes("|")) return "table";
+  return "text";
+}
+
+function joinSourceBlocks(blocks) {
+  let out = "";
+  let inFence = false;
+  blocks.forEach((raw, idx) => {
+    const text = String(raw == null ? "" : raw).replace(/\u00a0/g, " ").replace(/\n+$/, "");
+    if (idx > 0) {
+      const prevLines = out.split("\n");
+      const prevLast = prevLines[prevLines.length - 1];
+      const nextFirst = text.split("\n")[0];
+      const a = mdLineKind(prevLast), b = mdLineKind(nextFirst);
+      // Dentro de un bloque de código, o mientras sigue la misma lista/tabla/cita, línea simple.
+      // Una sangría tras un elemento de lista es su continuación (sublista o texto del elemento).
+      const tight = inFence ||
+        (a === "list" && (b === "list" || (/^\s+\S/.test(nextFirst) && b !== "blank"))) ||
+        (a === "table" && b === "table") ||
+        (a === "quote" && b === "quote");
+      out += tight ? "\n" : "\n\n";
+    }
+    out += text;
+    for (const l of text.split("\n")) if (/^```/.test(l)) inFence = !inFence;
+  });
+  return out;
+}
+
+// Ordena el código fuente Markdown sin cambiar lo que se renderiza: alinea las columnas de las
+// tablas, indenta las listas anidadas con 4 espacios por nivel ("-" como viñeta), deja una
+// línea en blanco entre bloques (y ninguna dentro de una lista o tabla), quita espacios al final
+// de línea y líneas en blanco repetidas. Los bloques de código ``` no se tocan.
+const MD_FORMAT_INDENT = 4;
+
+function mdTextWidth(s) { return Array.from(s).length; }
+
+function formatTableBlock(rows) {
+  const sepIdx = rows.findIndex((r) => isTableSep(r));
+  const cells = rows.map((r) => tableCells(r));
+  const cols = Math.max(...cells.map((c) => c.length));
+  const align = (cells[sepIdx] || []).map((c) => {
+    const l = c.startsWith(":"), r = c.endsWith(":");
+    return l && r ? "center" : r ? "right" : l ? "left" : "";
+  });
+  const widths = [];
+  for (let c = 0; c < cols; c++) {
+    let w = 3;
+    cells.forEach((row, i) => { if (i !== sepIdx) w = Math.max(w, mdTextWidth(row[c] || "")); });
+    widths.push(w);
+  }
+  return cells.map((row, i) => {
+    const parts = [];
+    for (let c = 0; c < cols; c++) {
+      const w = widths[c];
+      if (i === sepIdx) {
+        const a = align[c] || "";
+        const dashes = "-".repeat(Math.max(1, w - (a === "center" ? 2 : a ? 1 : 0)));
+        parts.push(a === "center" ? ":" + dashes + ":" : a === "right" ? dashes + ":" : a === "left" ? ":" + dashes : dashes);
+      } else {
+        const v = row[c] || "";
+        const pad = " ".repeat(w - mdTextWidth(v));
+        parts.push(align[c] === "right" ? pad + v : align[c] === "center"
+          ? " ".repeat(Math.floor((w - mdTextWidth(v)) / 2)) + v + " ".repeat(Math.ceil((w - mdTextWidth(v)) / 2))
+          : v + pad);
+      }
+    }
+    return "| " + parts.join(" | ") + " |";
+  });
+}
+
+function formatListBlock(lines) {
+  // Niveles por pila de sangrías: cada sangría mayor que la del nivel actual abre un nivel.
+  const stack = [];
+  return lines.map((line) => {
+    if (!isListMarkerLine(line)) {
+      // Texto de continuación de un elemento: sangría del nivel actual + 1.
+      return " ".repeat(MD_FORMAT_INDENT * stack.length) + line.trim();
+    }
+    const info = listMarkerInfo(line);
+    while (stack.length && info.indent < stack[stack.length - 1]) stack.pop();
+    if (!stack.length || info.indent > stack[stack.length - 1]) stack.push(info.indent);
+    const level = stack.length - 1;
+    const marker = info.ordered ? line.trim().match(/^\d+\./)[0] : "-";
+    return " ".repeat(MD_FORMAT_INDENT * level) + marker + " " + info.text.trim();
+  });
+}
+
+function formatMarkdownBlocks(src) {
+  const lines = String(src == null ? "" : src).replace(/\r\n?/g, "\n").replace(/\u00a0/g, " ")
+    .replace(/\t/g, " ".repeat(MD_FORMAT_INDENT)).split("\n");
+  const blocks = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^\s*$/.test(line)) { i++; continue; }
+    if (/^```/.test(line)) {                                   // código: tal cual
+      const buf = [line.replace(/\s+$/, "")];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
+      if (i < lines.length) { buf.push(lines[i].replace(/\s+$/, "")); i++; }
+      blocks.push(buf.join("\n"));
+      continue;
+    }
+    if (MD_HR_RE.test(line)) { blocks.push("---"); i++; continue; }
+    if (/^#{1,6}\s/.test(line)) { blocks.push(line.replace(/^(#{1,6})\s+/, "$1 ").trim()); i++; continue; }
+    if (/^\s*>/.test(line)) {                                  // cita / aviso
+      const buf = [];
+      while (i < lines.length && /^\s*>/.test(lines[i])) { buf.push(lines[i].trim().replace(/^>\s?/, "> ").replace(/\s+$/, "")); i++; }
+      blocks.push(buf.join("\n"));
+      continue;
+    }
+    if (tableStartsAt(lines, i)) {                             // tabla (sin blancos entre filas)
+      const buf = [line];
+      i++;
+      while (i < lines.length) {
+        if (/^\s*$/.test(lines[i])) {
+          const k = nextNonBlank(lines, i);
+          if (k < lines.length && lines[k].includes("|")) { i = k; continue; }
+          break;
+        }
+        if (!lines[i].includes("|")) break;
+        buf.push(lines[i]); i++;
+      }
+      blocks.push(formatTableBlock(buf).join("\n"));
+      continue;
+    }
+    if (isListMarkerLine(line)) {                              // lista (sin blancos entre elementos)
+      const buf = [];
+      while (i < lines.length) {
+        if (/^\s*$/.test(lines[i])) {
+          const k = nextNonBlank(lines, i);
+          if (k < lines.length && isListMarkerLine(lines[k])) { i = k; continue; }
+          break;
+        }
+        if (!isListMarkerLine(lines[i]) && !/^\s+\S/.test(lines[i])) break;
+        buf.push(lines[i]); i++;
+      }
+      blocks.push(formatListBlock(buf).join("\n"));
+      continue;
+    }
+    const buf = [];                                            // párrafo (sus líneas, juntas)
+    while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^(#{1,6}\s|```|\s*>)/.test(lines[i]) &&
+           !isListMarkerLine(lines[i]) && !MD_HR_RE.test(lines[i]) && !tableStartsAt(lines, i)) {
+      buf.push(lines[i].replace(/\s+$/, "")); i++;
+    }
+    blocks.push(buf.join("\n"));
+  }
+  return blocks;
+}
+
+function formatMarkdown(src) { return formatMarkdownBlocks(src).join("\n\n"); }
+
 // --- Estilos de correo -------------------------------------------------
 // Los clientes de correo eliminan el CSS externo (y muchos también las
 // etiquetas <style>), así que el HTML final necesita estilos EN LÍNEA en
@@ -637,5 +802,5 @@ function parseCss(css) {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { mdEscape, renderInline, renderMarkdown, styleEmail, highlightCode, parseCss };
+  module.exports = { mdEscape, renderInline, renderMarkdown, styleEmail, highlightCode, parseCss, formatMarkdown, formatMarkdownBlocks, joinSourceBlocks };
 }

@@ -41,14 +41,14 @@
     ] },
     // Enlaces y multimedia
     { label: "🔗", title: "Enlace (Ctrl+K)", kind: "link" },
-    { label: "🖼", title: "Imagen", kind: "image" },
-    { label: "😀", title: "Emoji", kind: "insert", value: ":smile:" },
     // Listas y cita
     { label: "❝", title: "Cita", kind: "prefix", value: "> " },
     { label: "•", title: "Lista", kind: "prefix", value: "- " },
     { label: "1.", title: "Lista numerada", kind: "prefix", value: "1. " },
     { label: "☑", title: "Tarea", kind: "prefix", value: "- [ ] " },
-    { menu: "▦", title: "Insertar bloque", items: [
+    { menu: "▦", title: "Insertar", items: [
+      { label: "🖼", title: "Imagen", kind: "image" },
+      { label: "😀", title: "Emoji", kind: "insert", value: ":smile:" },
       { label: "▦", title: "Tabla", kind: "block", template: "| Col 1 | Col 2 |\n| --- | --- |\n|  |  |" },
       { label: "{}", title: "Bloque de código", kind: "block", template: "```\n\n```" },
       { label: "―", title: "Regla horizontal", kind: "block", template: "---" },
@@ -62,6 +62,7 @@
       { label: "⚠", title: "Advertencia", kind: "block", template: "> [!WARNING]\n> " },
       { label: "🛑", title: "Precaución", kind: "block", template: "> [!CAUTION]\n> " },
     ] },
+    { label: "⇥", title: "Ordenar el Markdown: alinea tablas, tabula listas y separa bloques (Ctrl+Shift+F)", kind: "format" },
   ];
 
   let active = false;
@@ -235,6 +236,7 @@
       case "image": insertMd("![" + selectedText() + "](url)"); break;
       case "block": insertBlock(spec.template); break;
       case "insert": insertMd(spec.value); break;
+      case "format": formatSource(); break;
     }
   }
 
@@ -378,10 +380,10 @@
   // su formato (negritas, colores, tamaños de la firma corporativa).
   const PRESERVED_SELECTOR = ".moz-signature, blockquote[type=cite], .moz-cite-prefix, .moz-forward-container";
 
-  // Texto Markdown de una serie de nodos: los clona en un contenedor oculto, convierte las
-  // imágenes insertadas a sintaxis ![alt](src) —innerText las descartaría— y lee el texto.
-  // Trabaja sobre un clon para no tocar el cursor del editor.
-  function nodesToMarkdown(nodes) {
+  // Texto de un grupo de nodos: los clona en un contenedor oculto, convierte las imágenes
+  // insertadas a sintaxis ![alt](src) —innerText las descartaría— y lee el texto. Trabaja
+  // sobre un clon para no tocar el cursor del editor.
+  function chunkText(nodes) {
     const holder = document.createElement("div");
     for (const n of nodes) holder.appendChild(n.cloneNode(true));
     holder.querySelectorAll("img").forEach((img) => {
@@ -389,11 +391,121 @@
       const alt = img.getAttribute("alt") || "";
       img.replaceWith(document.createTextNode("![" + alt + "](" + src + ")"));
     });
+    // Un <p> anidado no debe aportar línea en blanco extra: se lee como bloque simple.
+    holder.querySelectorAll("p").forEach((pEl) => {
+      const d = document.createElement("div");
+      while (pEl.firstChild) d.appendChild(pEl.firstChild);
+      pEl.replaceWith(d);
+    });
     holder.style.cssText = "position:absolute;left:-99999px;top:0;";
     document.body.appendChild(holder);   // innerText necesita estar en el documento
     const text = holder.innerText || "";
     holder.remove();
     return text;
+  }
+
+  const BLOCK_TAGS = /^(P|DIV|H[1-6]|PRE|UL|OL|LI|TABLE|BLOCKQUOTE|HR|SECTION|ARTICLE)$/;
+
+  // Markdown de un tramo del cuerpo. Cada bloque del editor (un <p> por cada Enter en
+  // Thunderbird) es un bloque; los nodos en línea seguidos (texto, <br>…) forman otro. Se unen
+  // con joinSourceBlocks: las líneas seguidas de una lista, tabla, cita o bloque de código no
+  // llevan línea en blanco entre ellas; el resto son párrafos (markdown.js, mismo scope).
+  function nodesToMarkdown(nodes) {
+    const chunks = [];
+    let inline = [];
+    const flushInline = () => {
+      if (!inline.length) return;
+      const hasBr = inline.some((n) => n.nodeName === "BR" || (n.querySelector && n.querySelector("br")));
+      const text = chunkText(inline);
+      if (text.trim() || hasBr) chunks.push(text);
+      inline = [];
+    };
+    for (const n of nodes) {
+      if (n.nodeType === 1 && BLOCK_TAGS.test(n.nodeName)) {
+        flushInline();
+        chunks.push(chunkText([n]));
+      } else {
+        inline.push(n);
+      }
+    }
+    flushInline();
+    return joinSourceBlocks(chunks);
+  }
+
+  // "⇥ Ordenar": reescribe cada tramo Markdown ya ordenado (formatMarkdownBlocks), un <p> por
+  // bloque y <br> entre sus líneas; las sangrías y espacios dobles van como &nbsp; para que el
+  // editor no los colapse. Con execCommand("insertHTML") para que Ctrl+Z lo deshaga. Los tramos
+  // con imágenes insertadas no se tocan (se perderían como imagen).
+  function sourceBlocksHtml(blocks) {
+    const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const keepSpaces = (line) => esc(line)
+      .replace(/^ +/, (m) => "\u00a0".repeat(m.length))
+      .replace(/ {2,}/g, (m) => " " + "\u00a0".repeat(m.length - 1));
+    return blocks.map((b) => "<p>" + b.split("\n").map((l) => keepSpaces(l) || "").join("<br>") + "</p>").join("");
+  }
+
+  function markdownRuns() {
+    const runs = [];
+    let run = [];
+    for (const child of Array.from(bodyEl.childNodes)) {
+      if (child === previewEl || child === toolbarEl) continue;
+      if (child.nodeType === 1 && child.matches(PRESERVED_SELECTOR)) {
+        if (run.length) runs.push(run);
+        run = [];
+      } else {
+        run.push(child);
+      }
+    }
+    if (run.length) runs.push(run);
+    return runs;
+  }
+
+  // Firma y cita tal cual, para comprobar que una reescritura no las ha tocado.
+  function preservedSnapshot() {
+    return Array.from(bodyEl.children).filter((n) => n.matches(PRESERVED_SELECTOR)).map((n) => n.outerHTML).join("\u0000");
+  }
+
+  // Sustitución directa de un tramo por el HTML ordenado (no se puede deshacer con Ctrl+Z).
+  function replaceRun(run, html) {
+    const tpl = new DOMParser().parseFromString(html, "text/html");
+    const anchor = run[0];
+    for (const n of Array.from(tpl.body.childNodes)) bodyEl.insertBefore(n, anchor);
+    for (const n of run) n.remove();
+  }
+
+  function formatSource() {
+    if (!bodyEl) return;
+    bodyEl.focus();
+    let changed = false;
+    // De abajo arriba: reescribir un tramo no desplaza los nodos de los anteriores.
+    for (const run of markdownRuns().reverse()) {
+      if (run.some((n) => n.nodeName === "IMG" || (n.querySelector && n.querySelector("img")))) continue;
+      const before = nodesToMarkdown(run);
+      if (!before.trim()) continue;
+      const blocks = formatMarkdownBlocks(before);
+      if (blocks.join("\n\n") === before) continue;
+      const html = sourceBlocksHtml(blocks);
+      // Selección DENTRO del tramo (del inicio del primer nodo al final del último), sin tocar el
+      // borde con la firma o la cita: así el editor no fusiona el último párrafo con ellas.
+      const first = run[0], last = run[run.length - 1];
+      const range = document.createRange();
+      range.setStart(first, 0);
+      range.setEnd(last, last.nodeType === 3 ? last.length : last.childNodes.length);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      const preservedBefore = preservedSnapshot();
+      let ok = false;
+      try { ok = document.execCommand("insertHTML", false, html); } catch (e) { ok = false; }
+      if (ok && preservedSnapshot() !== preservedBefore) {
+        // El editor tocó la firma o la cita: se deshace y se usa la sustitución directa.
+        try { document.execCommand("undo"); } catch (e) { /* sin deshacer */ }
+        ok = false;
+      }
+      if (!ok) replaceRun(markdownRuns().find((r) => r.includes(first)) || run, html);
+      changed = true;
+    }
+    if (changed) scheduleRender();
   }
 
   // Trocea el cuerpo en orden: tramos de Markdown ({ md }) y bloques conservados ({ html }).
@@ -512,6 +624,12 @@
     e: () => wrap("`", "`"),
   };
   function onShortcut(e) {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && e.key.toLowerCase() === "f") {
+      e.preventDefault();
+      e.stopPropagation();
+      formatSource();
+      return;
+    }
     if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
     const key = e.key.toLowerCase();
     let action = SHORTCUTS[key];
@@ -536,10 +654,13 @@
     const style = document.createElement("style");
     style.id = IDS.style;
     const layout = (h) =>
-      "body{margin-right:50% !important;margin-top:" + h + "px !important;}" +
+      "body{margin-right:50% !important;margin-top:" + h + "px !important;" +
+      "font-family:Consolas,Menlo,'DejaVu Sans Mono',monospace !important;}" +
       "#" + IDS.preview + "{position:fixed;top:" + h + "px;right:0;width:50%;height:calc(100% - " + h + "px);" +
       "overflow:auto;box-sizing:border-box;border-left:1px solid #bbb;" +
-      "background:#fff;color:#111;padding:10px;}" +
+      "background:#fff;color:#111;padding:10px;" +
+      // El preview no hereda la letra monoespaciada de la zona de escritura: es el correo final.
+      "font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;}" +
       "#" + IDS.preview + " img{max-width:100%;height:auto;}";
     style.textContent = layout(40);
     (document.head || document.documentElement).appendChild(style);

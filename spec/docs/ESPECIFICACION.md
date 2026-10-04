@@ -2,7 +2,7 @@
 
 Extensión MailExtension para Thunderbird 140 o superior. Lee el correo abierto, monta un prompt editable con su contenido y lo envía a la web de **Microsoft 365 Copilot** automatizando el chat con la sesión que el usuario ya tiene iniciada. No usa ninguna API ni clave: pilota la interfaz web de Copilot mediante un content script.
 
-Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25). La 2.10 añade al editor un menú para insertar plantillas de formato (ver §26).
+Versión de esta especificación: 2.4.0. Corresponde a la versión 2.4.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25). La 2.10 añade al editor un menú para insertar plantillas de formato (ver §26). La 2.11 lee el código fuente por bloques y añade «Ordenar» (ver §27).
 
 Plataforma objetivo: Thunderbird ESR 140 (probado en 140.11.1), **Manifest V3**. Decisión explícita del proyecto; ver §2 y el riesgo asociado en §15.
 
@@ -429,3 +429,19 @@ El compose script no tiene acceso a carpetas ni mensajes, así que lo pide al ba
 - `getFormatTemplate { id }` → `{ ok, body }` con `extractTemplateBody(id)`. **Solo** responde si el id es una plantilla de Formato de una carpeta de Plantillas: el editor no puede leer otros correos por id.
 
 La lista se carga al activar el editor; el cuerpo se inserta con `insertBlock` (bloque propio) y el preview lo renderiza al momento. Sin permisos nuevos ni cambios en el flujo de datos (las plantillas son locales).
+
+## 27. Código fuente Markdown: lectura por bloques y «Ordenar» (v2.11)
+
+### 27.1 Lectura por bloques
+
+Thunderbird crea un `<p>` por cada Enter; leído con `innerText`, cada párrafo quedaba separado por una línea en blanco, lo que **partía las listas** (cada elemento, una lista distinta; sin anidamiento) y separaba filas de tabla, líneas de cita y de bloques de código. `nodesToMarkdown` lee ahora cada bloque del editor (`p`, `div`, `h1-6`, …) por separado (y los nodos en línea seguidos como otro bloque) y los une con `joinSourceBlocks` (`markdown.js`, con tests): **sin** línea en blanco si el bloque siguiente continúa la misma lista (incluida una sangría tras un elemento), tabla o cita, o si se está dentro de un bloque ```` ``` ````; **con** línea en blanco (párrafo nuevo) en los demás casos. Los `&nbsp;` se leen como espacios. Los párrafos normales se siguen tratando como párrafos.
+
+### 27.2 «⇥ Ordenar» (Ctrl+Shift+F)
+
+`formatMarkdown` / `formatMarkdownBlocks` (`markdown.js`, con tests, incluido uno que verifica que **el HTML renderizado no cambia**) ordena el fuente: alinea las columnas de las tablas (respetando `:--`, `:-:`, `--:`), indenta las listas anidadas con **4 espacios** por nivel y viñeta `-` (los niveles se deducen por pila de sangrías, igual que el renderizador), deja **una** línea en blanco entre bloques y ninguna dentro de listas o tablas, quita espacios finales y blancos repetidos; el interior de los bloques de código no se toca. Es idempotente.
+
+El botón de la barra (y el atajo) reescribe cada tramo Markdown (no la firma ni la cita, §25.1) como un `<p>` por bloque con `<br>` entre líneas y `&nbsp;` en sangrías y espacios dobles. Usa `execCommand("insertHTML")` con la selección **dentro** del tramo (para que Ctrl+Z lo deshaga y el editor no fusione el último párrafo con la firma); si aun así la firma o la cita cambian, deshace y sustituye los nodos directamente. Los tramos con imágenes insertadas no se reescriben.
+
+### 27.3 Presentación
+
+Con el editor activo, la zona de escritura usa letra **monoespaciada** (para ver la alineación) y el preview, letra proporcional. Para hacer sitio en la barra, **Imagen** y **Emoji** pasan al menú **▦ ▾ Insertar**.
