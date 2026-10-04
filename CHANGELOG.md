@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.8.1] — 2026-10-04
+
+### Corregido
+- **El desplegable 🎨 Estilo no se abría** en la redacción de Thunderbird (los desplegables nativos no funcionan dentro del editor) y **la barra se partía en dos líneas** tapando el texto. Ahora los menús son propios (botón «▾» con panel) y la barra cabe en una línea: los títulos van en **H ▾** (ahora del 1 al 6, antes solo 1-3), el formato extra en **Aa ▾**, los bloques en **▦ ▾** y los avisos en **ℹ ▾**. Si la ventana es estrecha y la barra baja de línea, el texto se desplaza para no quedar tapado.
+
 ## [2.8.0] — 2026-10-04
 
 ### Añadido

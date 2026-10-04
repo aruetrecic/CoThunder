@@ -14,23 +14,31 @@
   const SELECTORS = { body: "body" };
   const IDS = { preview: "cothunder-md-preview", style: "cothunder-md-style", toolbar: "cothunder-md-toolbar" };
 
-  // Botones de la barra Markdown: etiqueta, título (tooltip) y acción.
+  // Barra Markdown: botones { label, title, kind... } y menús { menu, title, items }.
   // "wrap" rodea la selección, "prefix" antepone al inicio de línea (v1: caret al inicio de línea)
-  // y "block" inserta una plantilla en su propio bloque.
-  const TOOLBAR_BUTTONS = [
-    // Encabezados
-    { label: "H1", title: "Título 1", kind: "prefix", value: "# " },
-    { label: "H2", title: "Título 2", kind: "prefix", value: "## " },
-    { label: "H3", title: "Título 3", kind: "prefix", value: "### " },
+  // y "block" inserta una plantilla en su propio bloque. Lo menos usado va en menús para que
+  // la barra quepa en una línea. Los menús son botones propios, no <select>: dentro del
+  // editor de Thunderbird un <select> nativo no se despliega.
+  const TOOLBAR_ITEMS = [
+    { menu: "H", title: "Títulos", items: [
+      { label: "H1", title: "Título 1", kind: "prefix", value: "# " },
+      { label: "H2", title: "Título 2", kind: "prefix", value: "## " },
+      { label: "H3", title: "Título 3", kind: "prefix", value: "### " },
+      { label: "H4", title: "Título 4", kind: "prefix", value: "#### " },
+      { label: "H5", title: "Título 5", kind: "prefix", value: "##### " },
+      { label: "H6", title: "Título 6", kind: "prefix", value: "###### " },
+    ] },
     // Énfasis
     { label: "B", title: "Negrita", kind: "wrap", before: "**", after: "**" },
     { label: "I", title: "Cursiva", kind: "wrap", before: "*", after: "*" },
-    { label: "B+I", title: "Negrita y cursiva", kind: "wrap", before: "***", after: "***" },
     { label: "S", title: "Tachado", kind: "wrap", before: "~~", after: "~~" },
     { label: "🖍", title: "Resaltado", kind: "wrap", before: "==", after: "==" },
-    { label: "x₂", title: "Subíndice", kind: "wrap", before: "~", after: "~" },
-    { label: "x²", title: "Superíndice", kind: "wrap", before: "^", after: "^" },
     { label: "</>", title: "Código en línea", kind: "wrap", before: "`", after: "`" },
+    { menu: "Aa", title: "Más formato", items: [
+      { label: "B+I", title: "Negrita y cursiva", kind: "wrap", before: "***", after: "***" },
+      { label: "x₂", title: "Subíndice", kind: "wrap", before: "~", after: "~" },
+      { label: "x²", title: "Superíndice", kind: "wrap", before: "^", after: "^" },
+    ] },
     // Enlaces y multimedia
     { label: "🔗", title: "Enlace", kind: "link" },
     { label: "🖼", title: "Imagen", kind: "image" },
@@ -40,18 +48,20 @@
     { label: "•", title: "Lista", kind: "prefix", value: "- " },
     { label: "1.", title: "Lista numerada", kind: "prefix", value: "1. " },
     { label: "☑", title: "Tarea", kind: "prefix", value: "- [ ] " },
-    // Bloques
-    { label: "▦", title: "Tabla", kind: "block", template: "| Col 1 | Col 2 |\n| --- | --- |\n|  |  |" },
-    { label: "{}", title: "Bloque de código", kind: "block", template: "```\n\n```" },
-    { label: "―", title: "Regla horizontal", kind: "block", template: "---" },
-    { label: "Def", title: "Lista de definición", kind: "block", template: "término\n: definición" },
-    { label: "†", title: "Nota al pie (añade la definición «[^1]: ...» al final del correo)", kind: "insert", value: "[^1]" },
-    // Admonitions (cajas)
-    { label: "ℹ", title: "Admonition: Nota", kind: "block", template: "> [!NOTE]\n> " },
-    { label: "💡", title: "Admonition: Consejo", kind: "block", template: "> [!TIP]\n> " },
-    { label: "❗", title: "Admonition: Importante", kind: "block", template: "> [!IMPORTANT]\n> " },
-    { label: "⚠", title: "Admonition: Advertencia", kind: "block", template: "> [!WARNING]\n> " },
-    { label: "🛑", title: "Admonition: Precaución", kind: "block", template: "> [!CAUTION]\n> " },
+    { menu: "▦", title: "Insertar bloque", items: [
+      { label: "▦", title: "Tabla", kind: "block", template: "| Col 1 | Col 2 |\n| --- | --- |\n|  |  |" },
+      { label: "{}", title: "Bloque de código", kind: "block", template: "```\n\n```" },
+      { label: "―", title: "Regla horizontal", kind: "block", template: "---" },
+      { label: "Def", title: "Lista de definición", kind: "block", template: "término\n: definición" },
+      { label: "†", title: "Nota al pie (añade «[^1]: ...» al final)", kind: "insert", value: "[^1]" },
+    ] },
+    { menu: "ℹ", title: "Avisos (admonitions)", items: [
+      { label: "ℹ", title: "Nota", kind: "block", template: "> [!NOTE]\n> " },
+      { label: "💡", title: "Consejo", kind: "block", template: "> [!TIP]\n> " },
+      { label: "❗", title: "Importante", kind: "block", template: "> [!IMPORTANT]\n> " },
+      { label: "⚠", title: "Advertencia", kind: "block", template: "> [!WARNING]\n> " },
+      { label: "🛑", title: "Precaución", kind: "block", template: "> [!CAUTION]\n> " },
+    ] },
   ];
 
   let active = false;
@@ -65,8 +75,9 @@
   // usuario en emailCustomCss.
   let emailTheme = "default";
   let emailCustomCss = "";
-  // Desplegable de estilo de la barra: cambia el tema SOLO de este correo (no toca Opciones).
-  let themeSelectEl = null;
+  // Menú de estilo de la barra: cambia el tema SOLO de este correo (no toca Opciones).
+  let themeMenu = null;
+  let toolbarObserver = null;
 
   // --- Inserción de Markdown en el editor nativo (contenteditable) ---
 
@@ -197,91 +208,119 @@
     insertMd(md);
   }
 
+  const BTN_CSS = "cursor:pointer;border:1px solid #d0d7de;background:#fff;color:#1f2328;border-radius:4px;" +
+    "padding:2px 5px;font:13px sans-serif;white-space:nowrap;";
+
+  function runSpec(spec) {
+    switch (spec.kind) {
+      case "wrap": wrap(spec.before, spec.after); break;
+      case "prefix": prefixLine(spec.value); break;
+      case "link": insertMd("[" + selectedText() + "](url)"); break;
+      case "image": insertMd("![" + selectedText() + "](url)"); break;
+      case "block": insertBlock(spec.template); break;
+      case "insert": insertMd(spec.value); break;
+    }
+  }
+
+  function makeButton(label, title, onClick) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = label;
+    btn.title = title;
+    btn.setAttribute("aria-label", title);
+    btn.style.cssText = BTN_CSS;
+    // No robar la selección del editor al pulsar el botón.
+    btn.addEventListener("mousedown", (e) => e.preventDefault());
+    btn.addEventListener("click", onClick);
+    return btn;
+  }
+
+  function closeMenus(except) {
+    if (!toolbarEl) return;
+    toolbarEl.querySelectorAll("[data-cothunder-popup]").forEach((p) => {
+      if (p !== except) p.style.display = "none";
+    });
+  }
+
+  // Menú desplegable propio: botón "label ▾" + panel de botones. Devuelve { wrap, setItems, setLabel }.
+  function makeMenu(label, title) {
+    const wrapEl = document.createElement("span");
+    wrapEl.style.cssText = "position:relative;display:inline-flex;";
+    const popup = document.createElement("div");
+    popup.setAttribute("data-cothunder-popup", "");
+    popup.setAttribute("role", "menu");
+    popup.style.cssText =
+      "display:none;position:absolute;top:100%;left:0;margin-top:2px;z-index:20;flex-direction:column;" +
+      "min-width:max-content;max-height:60vh;overflow:auto;padding:3px;gap:1px;background:#fff;" +
+      "border:1px solid #d0d7de;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.18);";
+    const btn = makeButton(label + " ▾", title, () => {
+      const open = popup.style.display !== "none";
+      closeMenus(popup);
+      if (open) { popup.style.display = "none"; return; }
+      popup.style.display = "flex";
+      // Si se sale por la derecha de la barra, se alinea a la derecha del botón.
+      popup.style.left = "0"; popup.style.right = "auto";
+      const bar = toolbarEl.getBoundingClientRect(), r = popup.getBoundingClientRect();
+      if (r.right > bar.right) { popup.style.left = "auto"; popup.style.right = "0"; }
+    });
+    btn.setAttribute("aria-haspopup", "menu");
+    wrapEl.append(btn, popup);
+    const setItems = (items) => {
+      popup.replaceChildren();
+      for (const it of items) {
+        const item = makeButton(it.text, it.title || it.text, () => { popup.style.display = "none"; it.onClick(); });
+        item.setAttribute("role", "menuitem");
+        item.style.cssText = BTN_CSS + "border-color:transparent;text-align:left;";
+        item.addEventListener("mouseenter", () => { item.style.background = "#eaeef2"; });
+        item.addEventListener("mouseleave", () => { item.style.background = "#fff"; });
+        popup.appendChild(item);
+      }
+    };
+    const setLabel = (text, t) => { btn.textContent = text + " ▾"; btn.title = t; btn.setAttribute("aria-label", t); };
+    return { wrap: wrapEl, setItems, setLabel };
+  }
+
   function buildToolbar() {
     const toolbar = document.createElement("div");
     toolbar.id = IDS.toolbar;
-    // No editable: la barra vive dentro del cuerpo editable y, si no, el desplegable de
-    // estilo no se abriría y se podría escribir dentro de ella.
+    // No editable ni revisado por el corrector: la barra vive dentro del cuerpo editable.
     toolbar.contentEditable = "false";
+    toolbar.spellcheck = false;
     toolbar.style.cssText =
-      "position:fixed;top:0;left:0;width:50%;box-sizing:border-box;display:flex;" +
+      "position:fixed;top:0;left:0;width:50%;box-sizing:border-box;display:flex;align-items:center;" +
       "flex-wrap:wrap;gap:2px;padding:4px;background:#f6f8fa;border-bottom:1px solid #d0d7de;z-index:10;";
 
-    TOOLBAR_BUTTONS.forEach((spec) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.textContent = spec.label;
-      btn.title = spec.title;
-      btn.style.cssText =
-        "cursor:pointer;border:1px solid #d0d7de;background:#fff;border-radius:4px;padding:2px 7px;font:13px sans-serif;";
-
-      const action = () => {
-        switch (spec.kind) {
-          case "wrap":
-            wrap(spec.before, spec.after);
-            break;
-          case "prefix":
-            prefixLine(spec.value);
-            break;
-          case "link":
-            insertMd("[" + selectedText() + "](url)");
-            break;
-          case "image":
-            insertMd("![" + selectedText() + "](url)");
-            break;
-          case "block":
-            insertBlock(spec.template);
-            break;
-          case "insert":
-            insertMd(spec.value);
-            break;
-        }
-      };
-
-      // No robar la selección del editor al pulsar el botón.
-      btn.addEventListener("mousedown", (e) => e.preventDefault());
-      btn.addEventListener("click", action);
-      toolbar.appendChild(btn);
+    TOOLBAR_ITEMS.forEach((spec) => {
+      if (spec.menu) {
+        const m = makeMenu(spec.menu, spec.title);
+        m.setItems(spec.items.map((it) => ({ text: it.label + "  " + it.title, title: it.title, onClick: () => runSpec(it) })));
+        toolbar.appendChild(m.wrap);
+      } else {
+        toolbar.appendChild(makeButton(spec.label, spec.title, () => runSpec(spec)));
+      }
     });
 
-    toolbar.appendChild(buildThemeSelect());
+    themeMenu = makeMenu("🎨", "Estilo de este correo");
+    themeMenu.wrap.style.marginLeft = "auto";
+    toolbar.appendChild(themeMenu.wrap);
+    fillThemeMenu();
     return toolbar;
   }
 
-  // Desplegable "Estilo": lista los presets de themes.js (+ "Personalizado" si hay CSS propio).
-  // Cambia el estilo de ESTE correo al momento (preview y envío); el tema por defecto sigue
-  // siendo el de Opciones.
-  function buildThemeSelect() {
-    const sel = document.createElement("select");
-    sel.title = "Estilo de este correo (el tema por defecto se elige en Opciones)";
-    sel.setAttribute("aria-label", "Estilo del correo");
-    sel.style.cssText =
-      "margin-left:auto;cursor:pointer;border:1px solid #d0d7de;background:#fff;border-radius:4px;" +
-      "padding:2px 4px;font:13px sans-serif;max-width:12em;";
-    themeSelectEl = sel;
-    fillThemeSelect();
-    sel.addEventListener("change", () => {
-      emailTheme = sel.value;
-      renderPreview();
-      if (bodyEl) bodyEl.focus();
-    });
-    return sel;
-  }
-
-  function fillThemeSelect() {
-    const sel = themeSelectEl;
-    if (!sel) return;
-    sel.replaceChildren();
-    const add = (value, text) => {
-      const opt = document.createElement("option");
-      opt.value = value;
-      opt.textContent = "🎨 " + text;
-      sel.appendChild(opt);
-    };
-    PRESETS.forEach((p) => add(p.id, p.name));
-    if (emailCustomCss.trim() || emailTheme === "custom") add("custom", "Personalizado");
-    sel.value = emailTheme;
-    if (sel.value !== emailTheme) sel.value = "default";
+  // Menú "🎨 Estilo": presets de themes.js (+ "Personalizado" si hay CSS propio). Cambia el
+  // estilo de ESTE correo al momento (preview y envío); el tema por defecto sigue siendo el
+  // de Opciones.
+  function fillThemeMenu() {
+    if (!themeMenu) return;
+    const list = PRESETS.map((p) => ({ id: p.id, name: p.name }));
+    if (emailCustomCss.trim() || emailTheme === "custom") list.push({ id: "custom", name: "Personalizado" });
+    const current = list.find((t) => t.id === emailTheme) || list[0];
+    themeMenu.setLabel("🎨", "Estilo de este correo: " + (current ? current.name : "") +
+      " (el tema por defecto se elige en Opciones)");
+    themeMenu.setItems(list.map((t) => ({
+      text: (current && t.id === current.id ? "✓ " : "\u2003") + t.name,
+      onClick: () => { emailTheme = t.id; fillThemeMenu(); renderPreview(); }
+    })));
   }
 
   // Fuente Markdown: clona el cuerpo editable (sin el preview), convierte las
@@ -379,20 +418,30 @@
     timer = setTimeout(function () { timer = null; renderPreview(); }, 150);
   }
 
+  // Cierra los menús de la barra al pulsar fuera de ellos o con Escape.
+  function onOutsideMenu(e) {
+    if (toolbarEl && !toolbarEl.contains(e.target)) closeMenus(null);
+  }
+  function onMenuKey(e) {
+    if (e.key === "Escape") closeMenus(null);
+  }
+
   function activate() {
     if (active) return;
     bodyEl = document.querySelector(SELECTORS.body);
     if (!bodyEl) return;
 
-    // Reserva la mitad derecha del área de edición para el preview.
+    // Reserva la mitad derecha del área de edición para el preview, y arriba el alto real
+    // de la barra (si no cabe en una línea y baja a dos, el texto no queda tapado).
     const style = document.createElement("style");
     style.id = IDS.style;
-    style.textContent =
-      "body{margin-right:50% !important;margin-top:40px !important;}" +
-      "#" + IDS.preview + "{position:fixed;top:40px;right:0;width:50%;height:calc(100% - 40px);" +
+    const layout = (h) =>
+      "body{margin-right:50% !important;margin-top:" + h + "px !important;}" +
+      "#" + IDS.preview + "{position:fixed;top:" + h + "px;right:0;width:50%;height:calc(100% - " + h + "px);" +
       "overflow:auto;box-sizing:border-box;border-left:1px solid #bbb;" +
       "background:#fff;color:#111;padding:10px;}" +
       "#" + IDS.preview + " img{max-width:100%;height:auto;}";
+    style.textContent = layout(40);
     (document.head || document.documentElement).appendChild(style);
 
     previewEl = document.createElement("div");
@@ -402,6 +451,17 @@
 
     toolbarEl = buildToolbar();
     bodyEl.appendChild(toolbarEl);
+    const fit = () => {
+      if (!toolbarEl) return;
+      style.textContent = layout(Math.max(40, Math.ceil(toolbarEl.getBoundingClientRect().height) + 6));
+    };
+    fit();
+    if (typeof ResizeObserver === "function") {
+      toolbarObserver = new ResizeObserver(fit);
+      toolbarObserver.observe(toolbarEl);
+    }
+    document.addEventListener("mousedown", onOutsideMenu, true);
+    document.addEventListener("keydown", onMenuKey, true);
 
     bodyEl.addEventListener("input", scheduleRender);
     bodyEl.addEventListener("paste", onPaste);
@@ -421,9 +481,12 @@
       bodyEl.removeEventListener("input", scheduleRender);
       bodyEl.removeEventListener("paste", onPaste);
     }
+    if (toolbarObserver) { toolbarObserver.disconnect(); toolbarObserver = null; }
+    document.removeEventListener("mousedown", onOutsideMenu, true);
+    document.removeEventListener("keydown", onMenuKey, true);
     previewEl = null;
     toolbarEl = null;
-    themeSelectEl = null;
+    themeMenu = null;
     active = false;
   }
 
@@ -447,7 +510,7 @@
     emailAccent = s.emailAccent || "#0969da";
     emailTheme = s.emailTheme || "default";
     emailCustomCss = s.emailCustomCss || "";
-    fillThemeSelect();
+    fillThemeMenu();
     if (active) renderPreview();
   });
 
@@ -459,7 +522,7 @@
     if (changes.emailAccent) emailAccent = changes.emailAccent.newValue || "#0969da";
     if (changes.emailTheme) emailTheme = changes.emailTheme.newValue || "default";
     if (changes.emailCustomCss) emailCustomCss = changes.emailCustomCss.newValue || "";
-    if (changes.emailTheme || changes.emailCustomCss) fillThemeSelect();
+    if (changes.emailTheme || changes.emailCustomCss) fillThemeMenu();
     if (active && (changes.emailAccent || changes.emailTheme || changes.emailCustomCss)) renderPreview();
   });
 })();
