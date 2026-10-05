@@ -14,7 +14,7 @@
     $("state").textContent = text;
   };
 
-  const prefs = await messenger.storage.local.get({ emailTheme: "default", lastAgentId: "", agents: [] });
+  const prefs = await messenger.storage.local.get({ emailTheme: "default", lastAgentId: "", agents: [], customAgents: [] });
 
   // Tema por defecto (los mismos de Opciones).
   for (const p of EMAIL_THEME_PRESETS) {
@@ -31,13 +31,15 @@
 
   const fillAgents = (agents, selected) => {
     $("agent").length = 1;
-    for (const a of agents || []) {
+    const seen = new Set();
+    agents = [...(prefs.customAgents || []), ...(agents || [])].filter((a) => a && a.id && !seen.has(a.id) && seen.add(a.id));
+    for (const a of agents) {
       const opt = document.createElement("option");
       opt.value = a.id;
       opt.textContent = a.label;
       $("agent").appendChild(opt);
     }
-    if (selected && (agents || []).some((a) => a.id === selected)) $("agent").value = selected;
+    if (selected && agents.some((a) => a.id === selected)) $("agent").value = selected;
   };
   fillAgents(prefs.agents, prefs.lastAgentId);
   $("agent").addEventListener("change", async () => {

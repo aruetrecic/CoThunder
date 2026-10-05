@@ -260,7 +260,7 @@ function sigRegex(text) {
   const words = String(text).trim().split(/\s+/).filter(Boolean).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   return words.length ? words.join("\\s+") : null;
 }
-function stripOwnSignatures(text, signatures) {
+function stripOwnSignatures(text, signatures, keepLayout) {
   let t = String(text || "");
   for (const sig of signatures || []) {
     const whole = sigRegex(sig);
@@ -274,7 +274,9 @@ function stripOwnSignatures(text, signatures) {
       t = t.replace(new RegExp(sigRegex(line), "g"), "");
     }
   }
-  return t === text ? t : normalizeText(t);
+  // keepLayout: para Markdown, conserva las líneas en blanco (normalizeText las quitaría).
+  if (t === text) return t;
+  return keepLayout ? t.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim() : normalizeText(t);
 }
 
 async function extractBody(messageId) {
@@ -509,6 +511,57 @@ function buildSummaryPrompt(messages, opts) {
   return parts.join(SECTION_SEP);
 }
 
+// --- Exportar un correo a Markdown (descargar o pasárselo a Copilot) ---
+// Ficha del correo: título con el asunto, datos principales y el cuerpo ya en Markdown.
+// forCopilot omite Para y CC (direcciones de terceros que Copilot no necesita).
+function formatBytes(n) {
+  if (!(n >= 0)) return "";
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return Math.round(n / 1024) + " KB";
+  return (n / 1048576).toFixed(1).replace(".", ",") + " MB";
+}
+function emailToMarkdown(meta, bodyMd, opts) {
+  const m = meta || {};
+  const forCopilot = !!(opts && opts.forCopilot);
+  const lines = ["# " + (String(m.subject || "").trim() || "(sin asunto)"), ""];
+  const row = (k, v) => { if (v && String(v).trim()) lines.push("- **" + k + ":** " + String(v).trim()); };
+  row("De", m.author);
+  if (!forCopilot) {
+    row("Para", (m.recipients || []).join(", "));
+    row("CC", (m.cc || []).join(", "));
+  }
+  row("Fecha", m.date);
+  const atts = (m.attachments || []).filter((a) => a && a.name);
+  row("Adjuntos", atts.map((a) => a.name + (a.size ? " (" + formatBytes(a.size) + ")" : "")).join(", "));
+  lines.push("", "---", "", String(bodyMd || "").trim() || "_(correo sin texto)_");
+  return lines.join("\n") + "\n";
+}
+
+// Nombre de fichero para el .md: fecha (aaaa-mm-dd) y asunto sin caracteres problemáticos.
+function markdownFileName(subject, date) {
+  const d = date ? new Date(date) : null;
+  const p2 = (n) => String(n).padStart(2, "0");
+  const stamp = d && !isNaN(d) ? d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()) + " " : "";
+  const name = String(subject || "correo").normalize("NFC").replace(/^\s*((re|rv|fw|fwd|reenviado)\s*:\s*)+/i, "")
+    .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "correo";
+  return (stamp + name).trim() + ".md";
+}
+
+// Prompt para pasar uno o varios correos (ya en Markdown) a Copilot o a un agente, con la
+// pregunta del usuario. Sin pregunta, se pide un resumen breve y que espere instrucciones.
+function buildAskPrompt(markdown, question, opts) {
+  const o = opts || {};
+  const parts = [INJECTION_GUARD];
+  if (o.userContext && o.userContext.trim()) parts.push(o.userContext.trim());
+  const q = String(question || "").trim();
+  parts.push(q
+    ? "PETICIÓN DEL USUARIO (es lo que debes hacer con el correo):\n" + q
+    : "Te paso este correo en Markdown para trabajar con él. Resúmelo en pocas líneas (qué piden, plazos y si requiere respuesta) y quedo a la espera de mis preguntas.");
+  parts.push("--- CORREO (Markdown) ---\n" + String(markdown || "").trim() + "\n--- FIN CORREO ---");
+  parts.push("Responde en Markdown, dentro de un único bloque de código que empiece por ```markdown y termine con ```.");
+  return parts.join(SECTION_SEP);
+}
+
 // --- «Mejorar con Copilot» en el editor: reescribe un fragmento del borrador del usuario ---
 const IMPROVE_ACTIONS = {
   formal: { label: "Más formal", instruction: "Reescríbelo con un tono más formal y profesional." },
@@ -646,6 +699,7 @@ if (typeof module !== "undefined" && module.exports) {
     buildPrompt, buildComposedPrompt, buildCreatePrompt, toneLengthInstruction,
     detectInjection, normalizeText, buildUserContext,
     detectLanguage, splitVersions, stripCodeFences, versionsInstruction, buildSummaryPrompt, buildImprovePrompt,
-    IMPROVE_ACTIONS, QUICK_ACTIONS, LANG_NAMES, copilotErrorText, chatTitle
+    IMPROVE_ACTIONS, QUICK_ACTIONS, LANG_NAMES, copilotErrorText, chatTitle,
+    emailToMarkdown, markdownFileName, buildAskPrompt, formatBytes
   };
 }

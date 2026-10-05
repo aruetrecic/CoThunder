@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exportar a Markdown · CoThunder</title>
+<link rel="stylesheet" href="pages.css">
+<style>
+  body { padding: 14px 16px 0; }
+  .top { margin-bottom: 8px; }
+  .top img { width: 28px; height: 28px; }
+  h1 { font-size: 18px; }
+  [role="tablist"] { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+  [role="tab"] { border-radius: 8px 8px 0 0; border-bottom: 0; background: transparent; font-weight: 600; opacity: .8; }
+  [role="tab"][aria-selected="true"] { opacity: 1; background: var(--soft); box-shadow: inset 0 3px 0 var(--accent); }
+  [role="tabpanel"][hidden] { display: none; }
+  /* Vista como el correo: sobre blanco, igual que la vista previa del editor. */
+  .paper { background: #fff; color: #1f2328; border: 1px solid var(--border); border-top: 0; border-radius: 0 0 10px 10px;
+    padding: 14px 18px; font: 14px/1.55 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; overflow-wrap: anywhere;
+    max-height: 46vh; overflow: auto; }
+  .paper img { max-width: 100%; height: auto; }
+  #source { width: 100%; min-height: 46vh; border-top: 0; border-radius: 0 0 10px 10px;
+    font: 13px/1.5 ui-monospace, Consolas, monospace; resize: vertical; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+  .ask h2 { border: 0; margin: 0 0 6px; padding: 0; font-size: 16px; }
+  .ask .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+  .ask label { font-weight: 600; display: block; margin-bottom: 4px; }
+  .ask select, .ask textarea { width: 100%; }
+  .ask textarea { min-height: 64px; resize: vertical; }
+  .check { display: flex; gap: 8px; align-items: center; font-weight: 400 !important; }
+  .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+  #askStatus { font-weight: 600; }
+  @media (max-width: 600px) { .ask .grid { grid-template-columns: 1fr; } }
+</style>
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <img src="../icon.svg" alt="">
+    <h1 id="title" class="grow">Exportar a Markdown</h1>
+  </header>
+
+  <div role="tablist" aria-label="Vista">
+    <button type="button" role="tab" id="tab-view" aria-controls="view" aria-selected="true">Vista</button>
+    <button type="button" role="tab" id="tab-source" aria-controls="sourcePanel" aria-selected="false" tabindex="-1">Markdown</button>
+  </div>
+  <div role="tabpanel" id="view" aria-labelledby="tab-view" class="paper" tabindex="0"></div>
+  <div role="tabpanel" id="sourcePanel" aria-labelledby="tab-source" hidden>
+    <textarea id="source" aria-label="Código Markdown (puedes editarlo antes de descargar)" spellcheck="false"></textarea>
+  </div>
+
+  <div class="row">
+    <button type="button" id="download" class="primary">Descargar .md</button>
+    <button type="button" id="copy">Copiar Markdown</button>
+    <span id="msg" class="muted" role="status"></span>
+  </div>
+
+  <section class="card ask" aria-labelledby="askTitle">
+    <h2 id="askTitle">Pasárselo a Copilot</h2>
+    <p class="muted" style="margin-top:0">Se envía el correo en Markdown, sin tu firma ni las direcciones de Para y CC. La respuesta se abre en una ventana y queda también en el chat de Copilot.</p>
+    <div class="grid">
+      <div>
+        <label for="agent">Agente</label>
+        <select id="agent"><option value="">Copilot por defecto</option></select>
+      </div>
+      <div>
+        <label for="question">¿Qué quieres que haga? <span class="muted">(opcional)</span></label>
+        <textarea id="question" placeholder="Ej.: extrae las fechas y tareas; prepara una respuesta; compáralo con nuestra normativa…"></textarea>
+      </div>
+    </div>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="newChat" checked> Empezar chat nuevo</label>
+      <button type="button" id="ask" class="primary">Enviar a Copilot</button>
+      <button type="button" id="cancel" hidden>Cancelar</button>
+      <span id="askStatus" role="status" aria-live="polite"></span>
+    </div>
+  </section>
+</div>
+<script src="../common.js"></script>
+<script src="../markdown.js"></script>
+<script src="export.js"></script>
+</body></html>

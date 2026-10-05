@@ -43,7 +43,7 @@ Sin API, sin claves y sin telemetría.
 | **Preguntar a Copilot** | Barra del visor de un mensaje | Lee el correo abierto, monta un prompt editable y trae la respuesta de Copilot a una **respuesta** lista para revisar. |
 | **Crear desde Copilot** | Barra principal | Redacta un **correo nuevo desde cero** (asunto y cuerpo) a partir de tus indicaciones. |
 | **Editor Markdown** | Ventana de redacción | Escribes en Markdown a la izquierda y ves el correo maquetado a la derecha; sale con formato en un clic. Con **✨ Mejorar con Copilot** reescribes lo que selecciones. |
-| **Menú CoThunder** | Clic derecho sobre un correo de la lista | **Resumir** (uno o varios), **responder aceptando**, **declinando**, **acusar recibo** o con tu prompt, en un clic. |
+| **Menú CoThunder** | Clic derecho sobre un correo de la lista | **Resumir** (uno o varios), **responder aceptando**, **declinando**, **acusar recibo** o con tu prompt, en un clic. **Exportar a Markdown**: descarga el correo como `.md` o pásaselo a Copilot o a un agente con tu petición. |
 
 La extensión no llama a ninguna API: pilota la web de Copilot en una ventana propia, con la sesión que ya tienes iniciada.
 
@@ -69,7 +69,7 @@ Paso a paso completo, con todos los campos: **[manual de uso](docs/MANUAL.md)**.
 <details open>
 <summary><strong>Comunes a los dos modos</strong></summary>
 
-- **Agente**: *Copilot por defecto* o cualquiera de tus **agentes fijados** en la barra lateral de Copilot (↻ para refrescar).
+- **Agente**: *Copilot por defecto* o tus **agentes**: los detecta en el panel de Copilot (↻ para refrescar) y puedes **añadirlos a mano por su enlace** en Opciones.
 - **Prompt** y **Formato** desde tus **plantillas de Thunderbird**; **Tono** (formal, cercano, directo, negativa cordial) y **Longitud**.
 - **Incluir mi firma**: tu firma de Thunderbird (logo, datos, aviso legal) se añade **en tu equipo** al final del correo generado; Copilot nunca la ve.
 - Respuesta **siempre maquetada en Markdown** y **Regenerar** para pedir otra versión.
@@ -158,7 +158,7 @@ El contenido de los correos solo viaja a **Microsoft 365 Copilot**, el mismo des
 | El correo que respondes (remitente, asunto, cuerpo) y, si lo marcas, el hilo | **Tu firma** de Thunderbird: se añade en tu equipo después de la respuesta |
 | Tu perfil «Sobre ti» (nombre, cargo, organización, cómo escribes) | **Las firmas dentro del correo leído**: la tuya citada (aunque cambien los saltos de línea), las marcadas por Thunderbird y las de texto plano tras `-- ` |
 | Las plantillas de Prompt y Formato que elijas | Contraseñas ni claves: no hay API ni servidores propios, y nada sale hacia otro destino |
-| Con **Mejorar con Copilot**, solo el texto que seleccionas; con **Resumir**, los correos elegidos (recortados) | El **diagnóstico** y el **registro de actividad**: se quedan en tu equipo |
+| Con **Mejorar con Copilot**, solo el texto que seleccionas; con **Resumir** o **Pasárselo a Copilot**, los correos elegidos (recortados, sin Para/CC) | El **diagnóstico**, el **registro de actividad** y los **.md descargados**: se quedan en tu equipo |
 
 Copilot tiene además la instrucción de **terminar en la despedida**, sin firma ni datos de contacto, para no duplicar tu firma.
 

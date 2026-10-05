@@ -17,6 +17,7 @@ Guía paso a paso para usar CoThunder en Thunderbird 140 o superior. Para instal
 11. [Acciones de un clic, resúmenes y versiones](#11-acciones-de-un-clic-resúmenes-y-versiones)
 12. [Mejorar con Copilot](#12-mejorar-con-copilot)
 13. [Progreso, sesión y diagnóstico](#13-progreso-sesión-y-diagnóstico)
+14. [Exportar a Markdown y pasárselo a Copilot](#14-exportar-a-markdown-y-pasárselo-a-copilot)
 
 ## 1. Primeros pasos
 
@@ -66,7 +67,9 @@ En este modo, el selector **Prompt** muestra las plantillas pensadas para crear 
 
 ## 4. Agentes
 
-CoThunder lista los agentes que tienes **fijados en la barra lateral** de Copilot. Para que uno aparezca en el selector, fíjalo en Copilot y pulsa el botón **↻** en la ventana de CoThunder para refrescar la lista. Recuerda el último agente que usaste.
+CoThunder detecta los agentes que Copilot muestra en su **panel lateral** y guarda su enlace. Pulsa **↻** en la ventana (o **Detectar ahora** en Opciones › General) para actualizar la lista. Recuerda el último agente que usaste.
+
+**Si un agente no aparece**, añádelo a mano en **Opciones › General › Agentes de Copilot**: un nombre y su enlace. Para conseguir el enlace, abre `https://m365.cloud.microsoft/chat` en el navegador, entra en el agente desde el panel izquierdo y copia la dirección (suele contener `titleId=`). Con el enlace, CoThunder abre el agente aunque no esté visible en el panel.
 
 ## 5. Prompts y Formatos (plantillas)
 
@@ -125,7 +128,7 @@ En detalle:
 
 - **No escribe en Copilot / no captura la respuesta:** comprueba que tienes sesión iniciada en Copilot en la ventana que abre CoThunder. Si la interfaz de Copilot cambió, el prompt se copia al portapapeles y se avisa; pégalo a mano mientras se actualiza CoThunder.
 - **La respuesta no se ve maquetada:** activa el editor Markdown con su botón o con Ctrl+Alt+M (sección 7).
-- **No aparece mi agente:** fíjalo en la barra lateral de Copilot y pulsa **↻**.
+- **No aparece mi agente:** pulsa **↻** con Copilot abierto; si sigue sin salir, añádelo a mano con su enlace (sección 4).
 - **La ventana se ve pequeña o los campos apretados:** puedes redimensionarla; recuerda su tamaño. Si no cabe todo, aparece una barra de scroll.
 - **Acabo de recargar la extensión y otro complemento (Markdown Here) no responde:** reinicia Thunderbird; recargar una extensión temporal puede dejar otros complementos en estado inconsistente.
 
@@ -147,3 +150,12 @@ En el editor Markdown, selecciona un trozo de tu borrador y elige en el menú �
 - Al enviar, la ventana muestra los pasos (**Abriendo Copilot → Escribiendo → Esperando** con los segundos **→ Recibida**) y el botón **Cancelar**.
 - Si no has iniciado sesión en Copilot, CoThunder lo detecta, pone su ventana delante y te lo dice.
 - **Opciones › Diagnóstico** guarda qué paso técnico falló (sin texto de correos). Si algo deja de funcionar, pulsa **Copiar diagnóstico** y envíalo a quien mantiene CoThunder.
+
+## 14. Exportar a Markdown y pasárselo a Copilot
+
+Clic derecho sobre uno o varios correos › **CoThunder › Exportar a Markdown / preguntar a Copilot…**, o el botón **⬇ .md** de la ventana de respuesta. Se abre una ventana con:
+
+- **Vista** (el correo maquetado) y **Markdown** (el código, que puedes retocar).
+- **Descargar .md**: guarda el fichero con la fecha y el asunto como nombre. Incluye remitente, destinatarios, fecha, lista de adjuntos y el cuerpo con su formato.
+- **Copiar Markdown**.
+- **Pasárselo a Copilot**: elige el agente, escribe qué quieres (por ejemplo, «extrae fechas y tareas») o déjalo vacío para que lo resuma, y pulsa **Enviar a Copilot**. La respuesta se abre en una ventana y queda en el chat para seguir preguntando allí. Se envía sin tu firma ni las direcciones de Para y CC.

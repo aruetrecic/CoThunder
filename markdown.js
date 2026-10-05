@@ -801,6 +801,136 @@ function parseCss(css) {
   return rules;
 }
 
+// --- HTML → Markdown (exportar un correo recibido) ----------------------------
+// Recorre el DOM (de DOMParser: nada se ejecuta) y produce Markdown legible: títulos, énfasis,
+// enlaces, listas anidadas, citas, código, reglas y tablas de datos. Las tablas de MAQUETACIÓN
+// (anidadas, de una columna o de una fila, típicas de Outlook y boletines) se aplanan a texto.
+// Las imágenes incrustadas (cid:, data:) y los píxeles de seguimiento se reducen a su texto alternativo.
+const HTMLMD_SKIP = /^(STYLE|SCRIPT|HEAD|TITLE|META|LINK|NOSCRIPT|TEMPLATE|SVG|BUTTON|INPUT|SELECT|TEXTAREA)$/;
+const HTMLMD_LINE_BLOCKS = /^(DIV|SECTION|ARTICLE|HEADER|FOOTER|MAIN|ASIDE|NAV|CENTER|FORM|FIELDSET|FIGURE|FIGCAPTION|ADDRESS|DL|DT|DD|TBODY|THEAD|TFOOT|TR|TD|TH|CAPTION)$/;
+
+function htmlMdOneLine(s) { return String(s).replace(/\s*\n\s*/g, " ").replace(/\s+/g, " ").trim(); }
+
+function htmlMdWrap(mark, s) {
+  if (!s.trim()) return s;
+  const lead = s.match(/^\s*/)[0], trail = s.match(/\s*$/)[0];
+  return lead + mark + s.trim() + mark + trail;
+}
+
+function htmlMdChildren(node, ctx) {
+  let out = "";
+  for (const c of node.childNodes) out += htmlMdNode(c, ctx);
+  return out;
+}
+
+function htmlMdTable(table, ctx) {
+  const rows = Array.from(table.rows || []);
+  const width = rows.reduce((n, r) => Math.max(n, r.cells.length), 0);
+  const layout = table.querySelector("table") || rows.length < 2 || width < 2 ||
+    (table.getAttribute("role") || "").toLowerCase() === "presentation";
+  if (layout) {
+    return "\n" + rows.map((r) => Array.from(r.cells).map((c) => htmlMdChildren(c, ctx)).join("\n")).join("\n") + "\n";
+  }
+  const cell = (c) => htmlMdOneLine(htmlMdChildren(c, ctx)).replace(/\|/g, "\\|") || " ";
+  const lines = rows.map((r) => {
+    const cells = Array.from(r.cells).map(cell);
+    while (cells.length < width) cells.push(" ");
+    return "| " + cells.join(" | ") + " |";
+  });
+  lines.splice(1, 0, "| " + Array(width).fill("---").join(" | ") + " |");
+  return "\n\n" + lines.join("\n") + "\n\n";
+}
+
+function htmlMdList(list, ctx) {
+  const ordered = list.nodeName === "OL";
+  let n = Number(list.getAttribute("start")) || 1;
+  const items = Array.from(list.children).filter((li) => li.nodeName === "LI").map((li) => {
+    const marker = ordered ? (n++) + ". " : "- ";
+    // Una sublista va pegada a su elemento (sin línea en blanco), para que siga siendo la misma lista.
+    const body = htmlMdChildren(li, ctx).replace(/\n{3,}/g, "\n\n").replace(/\n\n(?=[ \t]*([-*+]|\d+\.)\s)/g, "\n").trim();
+    const pad = " ".repeat(marker.length);
+    return marker + body.split("\n").map((l, i) => (i === 0 || !l ? l : pad + l)).join("\n");
+  });
+  return "\n\n" + items.join("\n") + "\n\n";
+}
+
+function htmlMdNode(c, ctx) {
+  if (c.nodeType === 3) return ctx.pre ? c.nodeValue : c.nodeValue.replace(/[ \t\r\n\f]+/g, " ");
+  if (c.nodeType !== 1) return "";
+  const tag = c.nodeName.toUpperCase();
+  if (HTMLMD_SKIP.test(tag)) return "";
+  if (ctx.dropSignatures && c.classList && c.classList.contains("moz-signature")) return "";
+  const inner = () => htmlMdChildren(c, ctx);
+  const block = (s) => "\n\n" + s.trim() + "\n\n";
+  switch (tag) {
+    case "H1": case "H2": case "H3": case "H4": case "H5": case "H6": {
+      const text = htmlMdOneLine(inner());
+      return text ? block("#".repeat(Number(tag[1])) + " " + text) : "";
+    }
+    case "P": return block(inner());
+    case "BR": return "\n";
+    case "HR": return block("---");
+    case "STRONG": case "B": return htmlMdWrap("**", inner());
+    case "EM": case "I": case "CITE": return htmlMdWrap("*", inner());
+    case "S": case "DEL": case "STRIKE": return htmlMdWrap("~~", inner());
+    case "MARK": return htmlMdWrap("==", inner());
+    case "CODE": case "KBD": case "SAMP": case "TT":
+      return ctx.pre ? c.textContent : (c.textContent.trim() ? "`" + c.textContent.replace(/`/g, "\\`").trim() + "`" : "");
+    case "PRE": return block("```\n" + c.textContent.replace(/\n+$/, "") + "\n```");
+    case "BLOCKQUOTE": {
+      const body = inner().replace(/\n{3,}/g, "\n\n").trim();
+      return body ? block(body.split("\n").map((l) => (l.trim() ? "> " + l : ">")).join("\n")) : "";
+    }
+    case "UL": case "OL": return htmlMdList(c, ctx);
+    case "TABLE": return htmlMdTable(c, ctx);
+    case "A": {
+      const text = inner();
+      const href = (c.getAttribute("href") || "").trim();
+      if (!href || href.startsWith("#") || /^javascript:/i.test(href) || !text.trim()) return text;
+      if (htmlMdOneLine(text) === href || htmlMdOneLine(text) === href.replace(/^mailto:/i, "")) return "<" + href.replace(/^mailto:/i, "") + ">";
+      return "[" + htmlMdOneLine(text) + "](" + href.replace(/\s/g, "%20") + ")";
+    }
+    case "IMG": {
+      const alt = htmlMdOneLine(c.getAttribute("alt") || "");
+      const src = (c.getAttribute("src") || "").trim();
+      const tiny = Number(c.getAttribute("width")) <= 2 && Number(c.getAttribute("height")) <= 2 && c.hasAttribute("width");
+      if (tiny) return "";
+      if (/^https?:/i.test(src)) return "![" + alt + "](" + src + ")";
+      return alt ? "[imagen: " + alt + "]" : "";
+    }
+    default:
+      if (HTMLMD_LINE_BLOCKS.test(tag)) return "\n" + inner() + "\n";
+      return inner();
+  }
+}
+
+// Limpieza final: espacios de fin de línea, sangría sobrante fuera de listas y código, y
+// como mucho una línea en blanco seguida.
+// La sangría solo se conserva dentro de una lista (subelementos y continuaciones que pone
+// htmlMdList); en el resto de líneas es espacio sobrante del HTML y se quita.
+const HTMLMD_ITEM_RE = /^\s*([-*+]|\d+\.)\s/;
+function htmlMdTidy(md) {
+  let fence = false, inList = false;
+  const out = [];
+  for (let l of md.replace(/ /g, " ").split("\n")) {
+    if (/^\s*```/.test(l)) { fence = !fence; out.push(l.trim()); continue; }
+    if (fence) { out.push(l); continue; }
+    l = l.replace(/[ \t]+$/, "");
+    if (!l) { out.push(l); continue; }
+    if (HTMLMD_ITEM_RE.test(l)) inList = true;
+    else if (!/^\s/.test(l)) inList = false;
+    // Espacios dobles dentro de la línea (restos del HTML) a uno; la sangría inicial se respeta.
+    l = l.replace(/(\S)[ \t]{2,}/g, "$1 ");
+    out.push(inList ? l : l.replace(/^[ \t]+/, ""));
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function htmlToMarkdown(html, opts) {
+  const doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+  return htmlMdTidy(htmlMdChildren(doc.body, { pre: false, dropSignatures: !!(opts && opts.dropSignatures) }));
+}
+
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { mdEscape, renderInline, renderMarkdown, styleEmail, highlightCode, parseCss, formatMarkdown, formatMarkdownBlocks, joinSourceBlocks };
 }

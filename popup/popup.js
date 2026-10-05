@@ -126,9 +126,12 @@
   window.addEventListener("resize", () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveBounds, 400); });
   window.addEventListener("pagehide", saveBounds);
 
+  let customAgents = [];
   const populateAgents = (agents, selectedId) => {
     const sel = $("agent");
     sel.length = 1; // conserva la primera opción "Copilot por defecto"
+    const seen = new Set();
+    agents = [...customAgents, ...(agents || [])].filter((a) => a && a.id && !seen.has(a.id) && seen.add(a.id));
     for (const a of agents) {
       const opt = document.createElement("option");
       opt.value = a.id;
@@ -230,7 +233,7 @@
     }
 
     const prefs = await messenger.storage.local.get({
-      lastAgentId: "", agents: [], prefTone: "", prefLength: "", prefSignature: true, prefQuote: false, prefThread: false, prefLanguage: ""
+      lastAgentId: "", agents: [], customAgents: [], prefTone: "", prefLength: "", prefSignature: true, prefQuote: false, prefThread: false, prefLanguage: ""
     });
     $("tone").value = prefs.prefTone;
     $("length").value = prefs.prefLength;
@@ -241,7 +244,11 @@
     if (mode === "create") $("language").value = prefs.prefLanguage;
 
     rebuildPrompt();
+    customAgents = prefs.customAgents || [];
     populateAgents(prefs.agents, prefs.lastAgentId);
+    $("exportMd").addEventListener("click", () => {
+      messenger.runtime.sendMessage({ type: "exportMarkdown", ids: [message.id] }).catch(() => {});
+    });
 
     // Desplegables de Prompt y Formato: plantillas de Thunderbird distinguidas por el asunto
     // ("Prompt - ..." = instrucción prioritaria; "Formato - ..." o sin prefijo = referencia de formato).
@@ -345,9 +352,10 @@
     try { res = await messenger.runtime.sendMessage({ type: "refreshAgents" }); } catch (_) { res = { ok: false }; }
     if (res && res.ok) {
       populateAgents(res.agents || [], prev);
-      setStatus("", "Agentes actualizados");
+      setStatus("", (res.agents || []).length ? "Agentes actualizados: " + res.agents.length
+        : "Copilot no muestra agentes en su panel; añádelos a mano en Opciones › General");
     } else {
-      setStatus("err", "Abre Copilot para actualizar agentes");
+      setStatus("err", "Abre Copilot para actualizar agentes (o añádelos a mano en Opciones)");
     }
     $("refreshAgents").disabled = false;
   });

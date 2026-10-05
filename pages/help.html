@@ -36,6 +36,7 @@
         <li><a href="#ventana">Responder a un correo</a></li>
         <li><a href="#crear">Crear un correo nuevo</a></li>
         <li><a href="#menu">Acciones de un clic</a></li>
+        <li><a href="#markdown">Exportar a Markdown</a></li>
         <li><a href="#resumen">Resúmenes</a></li>
         <li><a href="#versiones">Varias versiones</a></li>
         <li><a href="#idioma">Idioma de la respuesta</a></li>
@@ -104,10 +105,23 @@
             <tr><td>Responder declinando</td><td>Negativa respetuosa, con el motivo y una alternativa si cabe.</td></tr>
             <tr><td>Acusar recibo</td><td>Confirma que lo has recibido y da un plazo aproximado.</td></tr>
             <tr><td>Responder con mi prompt</td><td>Submenú con tus plantillas <code>Prompt - …</code>.</td></tr>
+            <tr><td>Exportar a Markdown / preguntar a Copilot…</td><td>Convierte el correo (o los seleccionados) a Markdown para <a href="#markdown">descargarlo, copiarlo o pasárselo a Copilot</a> o a un agente.</td></tr>
             <tr><td>Abrir la ventana de CoThunder…</td><td>La ventana completa, para ajustar antes de enviar.</td></tr>
           </tbody>
         </table>
         <p>Las acciones usan tus últimos ajustes (agente, tono, longitud, firma y cita) y responden en el <a href="#idioma">idioma del correo</a>. Una notificación confirma que se ha enviado; la respuesta se abre sola al llegar.</p>
+      </section>
+
+      <section id="markdown">
+        <h2>Exportar a Markdown y pasárselo a Copilot</h2>
+        <p>Convierte un correo recibido (o varios, hasta 20) a un documento Markdown: título con el asunto, remitente, destinatarios, fecha, lista de adjuntos y el cuerpo con su formato (títulos, negritas, enlaces, listas, tablas y citas). Las tablas de maquetación de Outlook y los boletines se aplanan a texto; las imágenes incrustadas quedan como «[imagen: …]».</p>
+        <p>Ábrelo con el clic derecho › <strong>CoThunder › Exportar a Markdown / preguntar a Copilot…</strong> o con el botón <strong>⬇ .md</strong> de la ventana de respuesta. En la ventana que se abre:</p>
+        <ul>
+          <li><strong>Vista</strong> y <strong>Markdown</strong>: el resultado maquetado y el código, que puedes retocar antes de descargar.</li>
+          <li><strong>Descargar .md</strong> (con la fecha y el asunto como nombre) o <strong>Copiar Markdown</strong>.</li>
+          <li><strong>Pasárselo a Copilot</strong>: elige el <strong>agente</strong> (o Copilot por defecto), escribe qué quieres que haga (opcional: si lo dejas vacío, lo resume y espera tus preguntas) y pulsa <strong>Enviar a Copilot</strong>. La respuesta se abre en una ventana con <em>Copiar</em> y queda en el chat de Copilot para seguir la conversación allí.</li>
+        </ul>
+        <p class="note">A Copilot se envía <strong>sin tu firma</strong> ni las direcciones de Para y CC, y recortado a 12.000 caracteres por correo. El fichero descargado es completo y se queda en tu equipo.</p>
       </section>
 
       <section id="resumen">
@@ -181,7 +195,9 @@
 
       <section id="agentes">
         <h2>Agentes</h2>
-        <p>CoThunder lista los agentes que tienes <strong>fijados en la barra lateral</strong> de Copilot. Si falta uno, fíjalo en Copilot y pulsa <strong>↻</strong> en la ventana. Se recuerda el último que usaste; también lo usan las acciones de un clic.</p>
+        <p>CoThunder detecta los agentes que Copilot muestra en su <strong>panel lateral</strong> (por su entrada en el panel y por los enlaces a agentes de la página) y guarda su enlace. Pulsa <strong>↻</strong> en la ventana o <strong>Detectar ahora</strong> en Opciones › General para actualizar la lista.</p>
+        <p><strong>Si un agente no aparece</strong>, añádelo a mano en <strong>Opciones › General › Agentes de Copilot</strong> con un nombre y su enlace (ábrelo en Copilot desde el navegador y copia la dirección; suele contener <code>titleId=</code>). Un agente con enlace se abre siempre, esté o no visible en el panel.</p>
+        <p>Se recuerda el último agente que usaste; también lo usan las acciones de un clic y la ventana de Markdown.</p>
       </section>
 
       <section id="perfil">
@@ -211,7 +227,7 @@
         <ul>
           <li>El contenido solo viaja a <strong>Microsoft 365 Copilot</strong>, con tu sesión. Sin API, sin claves, sin telemetría ni terceros.</li>
           <li><strong>Tu firma no va a Copilot</strong>: se quita del correo leído (también si viene citada) y la añade Thunderbird en local al abrir la respuesta.</li>
-          <li>Con <strong>Mejorar con Copilot</strong> solo se envía el texto que seleccionas; con los resúmenes, los correos elegidos (recortados).</li>
+          <li>Con <strong>Mejorar con Copilot</strong> solo se envía el texto que seleccionas; con los resúmenes y <strong>Pasárselo a Copilot</strong>, los correos elegidos (recortados, sin firmas ni Para/CC). <strong>Descargar .md</strong> no envía nada: el fichero se guarda en tu equipo.</li>
           <li><strong>Registro de actividad</strong> (opcional, Opciones): solo fecha, modo y número de destinatarios, nunca asuntos, direcciones ni texto.</li>
           <li><strong>Diagnóstico</strong> (Opciones): guarda en tu equipo qué paso técnico falló (por ejemplo, «no encuentro el botón de enviar») para arreglarlo rápido si Microsoft cambia Copilot. Nunca guarda texto de correos ni respuestas. Puedes copiarlo o vaciarlo.</li>
         </ul>
@@ -226,7 +242,7 @@
             <tr><td>«No encuentro el chat de Copilot» o «el botón de enviar»</td><td>Espera a que Copilot termine de cargar y repite. Si sigue, Microsoft puede haber cambiado su web: en <strong>Opciones › Diagnóstico</strong> pulsa <strong>Copiar</strong> y envíalo a quien mantiene CoThunder. Mientras, si enviabas desde la ventana, el prompt queda copiado en el portapapeles para pegarlo a mano en Copilot.</td></tr>
             <tr><td>Copilot tarda mucho</td><td>El paso «Esperando la respuesta» muestra los segundos. Puedes <strong>Cancelar</strong> y probar con un prompt más corto (sin hilo, por ejemplo).</td></tr>
             <tr><td>No se capturó la respuesta</td><td>La tienes en la ventana de Copilot: cópiala desde allí.</td></tr>
-            <tr><td>No aparece mi agente</td><td>Fíjalo en la barra lateral de Copilot y pulsa <strong>↻</strong>.</td></tr>
+            <tr><td>No aparece mi agente</td><td>Pulsa <strong>↻</strong> con Copilot abierto. Si sigue sin salir, añádelo a mano con su enlace en <strong>Opciones › General › Agentes de Copilot</strong>.</td></tr>
             <tr><td>El prompt es demasiado largo</td><td>Quita el hilo o recorta el correo en la pestaña Prompt. El primer clic en Enviar avisa; el segundo envía igualmente.</td></tr>
             <tr><td>No veo el menú CoThunder</td><td>Haz clic derecho sobre un correo de la <strong>lista</strong> de mensajes, no sobre su contenido.</td></tr>
           </tbody>

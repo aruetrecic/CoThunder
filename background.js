@@ -266,6 +266,27 @@ async function logActivity(entry) {
 // Arranca una petición a Copilot: guarda las opciones del token (para cuando llegue la respuesta),
 // abre o enfoca Copilot y le entrega el prompt. Lo usan la ventana, el menú contextual y el editor.
 // req: { token, prompt, newChat, agentId, agentLabel, opts }.
+// Agentes conocidos: los detectados en Copilot (agents) y los añadidos a mano en Opciones
+// (customAgents, ids "u_…", siempre con enlace). Devuelve { id, label, url } o null.
+async function resolveAgent(agentId, agentLabel) {
+  if (!agentId && !agentLabel) return null;
+  const { agents, customAgents } = await messenger.storage.local.get({ agents: [], customAgents: [] });
+  const all = [...(customAgents || []), ...(agents || [])];
+  return all.find((a) => agentId && a.id === agentId) || all.find((a) => agentLabel && a.label === agentLabel) ||
+    { id: agentId || "", label: agentLabel || "", url: "" };
+}
+
+// Abre una dirección (un agente) en la pestaña de Copilot y espera a que termine de cargar.
+async function navigateCopilot(tabId, url, timeoutMs = 20000) {
+  await messenger.tabs.update(tabId, { url });
+  const start = Date.now();
+  await new Promise((r) => setTimeout(r, 800));
+  while (Date.now() - start < timeoutMs) {
+    try { if ((await messenger.tabs.get(tabId)).status === "complete") return; } catch (_) { return; }
+    await new Promise((r) => setTimeout(r, 400));
+  }
+}
+
 async function startCopilotRequest(req) {
   const token = String(req.token);
   await messenger.storage.session.set({ ["opts_" + token]: req.opts });
@@ -274,10 +295,21 @@ async function startCopilotRequest(req) {
   let res;
   try {
     const tabId = await ensureCopilotTab();
-    res = await deliverWithRetry(tabId, {
+    const agent = await resolveAgent(req.agentId, req.agentLabel);
+    const payload = {
       type: "sendPrompt", prompt: req.prompt, newChat: req.newChat,
-      agentId: req.agentId, agentLabel: req.agentLabel, messageId: token
-    }, token);
+      agentId: agent ? agent.id : "", agentLabel: agent ? agent.label : "", agentUrl: agent ? agent.url : "", messageId: token
+    };
+    // Un agente añadido a mano no está en el panel de Copilot: se abre directamente por su enlace.
+    const byUrl = agent && agent.url && /^u_/.test(agent.id);
+    if (byUrl) await navigateCopilot(tabId, agent.url);
+    res = await deliverWithRetry(tabId, byUrl ? Object.assign(payload, { agentId: "", agentLabel: "", newChat: false }) : payload, token);
+    if (res && res.reason === "agent-navigate" && agent && agent.url) {
+      // El agente no estaba visible en el panel: se abre por su enlace (ya es un chat nuevo) y se reintenta.
+      diag("agente-por-enlace", agent.id);
+      await navigateCopilot(tabId, agent.url);
+      res = await deliverWithRetry(tabId, Object.assign(payload, { agentId: "", agentLabel: "", newChat: false }), token);
+    }
     if (res && res.reason === "login") {
       // Deja la ventana de Copilot delante para que el usuario inicie sesión.
       messenger.tabs.get(tabId).then((t) => messenger.windows.update(t.windowId, { focused: true })).catch(() => {});
@@ -427,6 +459,69 @@ async function handleCopilotReply(msg) {
   }
 }
 
+// --- Exportar correos a Markdown (descargar, copiar o pasárselos a Copilot) ---
+// forCopilot: sin firmas (marcadas y propias), sin Para/CC y recortado a MAX_BODY por correo.
+async function messageToMarkdown(id, forCopilot) {
+  const m = await messenger.messages.get(id);
+  const full = await messenger.messages.getFull(id);
+  const html = findPart(full, "text/html");
+  let body = html ? htmlToMarkdown(html, { dropSignatures: forCopilot }) : String(findPart(full, "text/plain") || "").replace(/\r/g, "");
+  if (forCopilot) {
+    if (!html) body = stripPlainSignature(body);
+    body = stripOwnSignatures(body, await ownSignatureTexts(), true);
+    if (body.length > MAX_BODY) body = body.slice(0, MAX_BODY) + "\n\n[correo truncado]";
+  }
+  let attachments = [];
+  try { attachments = (await messenger.messages.listAttachments(id)) || []; } catch (_) {}
+  return emailToMarkdown({
+    subject: m.subject, author: m.author, recipients: m.recipients || [], cc: m.ccList || [],
+    date: m.date ? new Date(m.date).toLocaleString("es-ES") : "",
+    attachments: attachments.map((a) => ({ name: a.name, size: a.size }))
+  }, body, { forCopilot });
+}
+
+const EXPORT_MAX_MESSAGES = 20;
+async function openExportWindow(messageIds) {
+  const ids = (messageIds || []).filter((id) => id != null).slice(0, EXPORT_MAX_MESSAGES);
+  if (!ids.length) { notify("Selecciona un correo primero."); return; }
+  try {
+    const parts = [];
+    for (const id of ids) parts.push(await messageToMarkdown(id, false));
+    const first = await messenger.messages.get(ids[0]);
+    const title = ids.length > 1 ? ids.length + " correos" : (first.subject || "(sin asunto)");
+    const fileName = ids.length > 1 ? markdownFileName(ids.length + " correos", Date.now()) : markdownFileName(first.subject, first.date);
+    const id = "x" + Date.now() + Math.floor(Math.random() * 1e6);
+    await messenger.storage.session.set({ ["result_" + id]: { kind: "export", ids, title, fileName, markdown: parts.join("\n---\n\n") } });
+    const height = (() => { try { return Math.round(screen.availHeight * 0.8); } catch (_) { return 760; } })();
+    await messenger.windows.create({
+      url: messenger.runtime.getURL("pages/export.html") + "?id=" + id, type: "popup", width: 760, height, allowScriptsToClose: true
+    });
+  } catch (e) {
+    console.error("[CoThunder] exportar a Markdown:", e);
+    notify("No se pudo convertir el correo a Markdown.");
+  }
+}
+
+// Pasa los correos exportados a Copilot (o a un agente) con la petición del usuario; la
+// respuesta vuelve a la ventana de resultados.
+async function askCopilotAbout(msg) {
+  const key = "result_" + msg.id;
+  const data = (await messenger.storage.session.get({ [key]: null }))[key];
+  if (!data || data.kind !== "export") return { ok: false, reason: "sin-datos" };
+  const cfg = await getConfig();
+  const parts = [];
+  for (const id of data.ids) parts.push(await messageToMarkdown(id, true));
+  const token = /^a\d+$/.test(String(msg.token || "")) ? String(msg.token) : "a" + Date.now() + Math.floor(Math.random() * 1e6);
+  const res = await startCopilotRequest({
+    token, newChat: msg.newChat !== false, agentId: msg.agentId || "", agentLabel: msg.agentLabel || "",
+    prompt: chatTitle("Preguntar", data.title) + "\n\n" +
+      buildAskPrompt(parts.join("\n---\n\n"), msg.question, { userContext: buildUserContext(cfg.userProfile) }),
+    opts: { mode: "summary", title: "Copilot: " + data.title, messageIds: data.ids.length === 1 ? data.ids : [] }
+  });
+  logActivity({ ts: new Date().toISOString(), mode: "ask", result: res.ok ? "ok" : "error" });
+  return Object.assign({ token }, res);
+}
+
 // Abre la ventana de CoThunder para un correo (botón del visor o menú contextual).
 async function openReplyWindow(messageId) {
   const url = messenger.runtime.getURL("popup/popup.html") + (messageId != null ? "?messageId=" + messageId : "");
@@ -510,7 +605,6 @@ async function quickAction(kind, messageIds, templateId) {
   const prefs = await messenger.storage.local.get({
     lastAgentId: "", agents: [], prefTone: "", prefLength: "", prefSignature: true, prefQuote: false
   });
-  const agent = (prefs.agents || []).find((a) => a.id === prefs.lastAgentId);
   const userContext = buildUserContext(cfg.userProfile);
   let token, prompt, opts;
   try {
@@ -544,7 +638,7 @@ async function quickAction(kind, messageIds, templateId) {
   notify(kind === "summary" ? "Pidiendo el resumen a Copilot…" : "Preguntando a Copilot; se abrirá la respuesta.");
   const res = await startCopilotRequest({
     token, prompt, newChat: cfg.newChatByDefault,
-    agentId: agent ? agent.id : "", agentLabel: agent ? agent.label : "", opts
+    agentId: prefs.lastAgentId || "", opts
   });
   if (!res.ok && res.reason !== "cancelled") notify(copilotErrorText(res.reason));
 }
@@ -568,6 +662,8 @@ messenger.runtime.onMessage.addListener(async (msg, sender) => {
   if (msg.type === "openCopilot") { await ensureCopilotTab(); return { ok: true }; }
   if (msg.type === "checkCopilot") return checkCopilot();
   if (msg.type === "openReplyWindow") { await openReplyWindow(msg.messageId); return { ok: true }; }
+  if (msg.type === "exportMarkdown") { await openExportWindow(msg.ids); return { ok: true }; }
+  if (msg.type === "askCopilot") return askCopilotAbout(msg);
   // Ventana de resultados: usar una de las versiones como respuesta.
   if (msg.type === "useVersion") {
     const key = "result_" + msg.id;
@@ -626,6 +722,7 @@ async function buildMenus() {
     add({ id: "qa-tpl", parentId: MENU_PARENT, title: "Responder con mi prompt" });
     add({ id: "qa-tpl-none", parentId: "qa-tpl", title: "(cargando…)", enabled: false });
     add({ id: "qa-sep2", parentId: MENU_PARENT, type: "separator" });
+    add({ id: "qa-export", parentId: MENU_PARENT, title: "Exportar a Markdown / preguntar a Copilot…" });
     add({ id: "qa-window", parentId: MENU_PARENT, title: "Abrir la ventana de CoThunder…" });
     add({ id: "qa-help", parentId: MENU_PARENT, title: "Ayuda de CoThunder" });
     menuTemplateIds = [];
@@ -663,6 +760,7 @@ messenger.menus.onShown.addListener(async (info, tab) => {
   const n = (info.selectedMessages && info.selectedMessages.messages || []).length;
   const many = n > 1;
   messenger.menus.update("qa-summary", { title: many ? "Resumir los " + n + " correos con Copilot" : "Resumir con Copilot" }).catch(() => {});
+  messenger.menus.update("qa-export", { title: many ? "Exportar los " + n + " correos a Markdown / preguntar a Copilot…" : "Exportar a Markdown / preguntar a Copilot…" }).catch(() => {});
   for (const k of [...Object.keys(QUICK_ACTIONS), "tpl"]) messenger.menus.update("qa-" + k, { enabled: !many }).catch(() => {});
   // Plantillas «Prompt - …» del usuario como submenú.
   try {
@@ -688,6 +786,7 @@ messenger.menus.onClicked.addListener(async (info, tab) => {
   if (id === "qa-help") { openHelp("menu"); return; }
   const ids = await menuMessageIds(info, tab);
   if (id === "qa-window") { openReplyWindow(ids[0]); return; }
+  if (id === "qa-export") { openExportWindow(ids); return; }
   if (id === "qa-summary") { quickAction("summary", ids); return; }
   if (id.startsWith("qa-tpl-")) { quickAction("template", ids, Number(id.slice("qa-tpl-".length))); return; }
   const kind = id.slice(3);

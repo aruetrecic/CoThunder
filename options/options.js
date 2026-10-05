@@ -72,7 +72,79 @@ mark { background-color: #FCC100; }
       $("filled").textContent = "No se pudo leer la identidad.";
     }
   });
+  // --- Agentes: detectados en Copilot y añadidos a mano (nombre + enlace) ---
+  const renderDetected = (agents) => {
+    const list = agents || [];
+    $("agentsDetected").textContent = "Detectados: " + list.length;
+    $("agentsList").replaceChildren(...list.map((a) => {
+      const li = document.createElement("li");
+      li.textContent = a.label;
+      return li;
+    }));
+  };
+  renderDetected((await messenger.storage.local.get({ agents: [] })).agents);
+  $("detectAgents").addEventListener("click", async () => {
+    $("detectAgents").disabled = true;
+    $("detectMsg").textContent = "Buscando…";
+    const res = await messenger.runtime.sendMessage({ type: "refreshAgents" }).catch(() => null);
+    if (res && res.ok) {
+      renderDetected(res.agents);
+      $("detectMsg").textContent = res.agents.length ? "Listo." : "Copilot no muestra agentes en su panel: añádelos a mano.";
+    } else {
+      $("detectMsg").textContent = "Abre Copilot (botón «Preguntar a Copilot») y vuelve a intentarlo.";
+    }
+    $("detectAgents").disabled = false;
+  });
+
+  const addAgentRow = (a) => {
+    const row = document.createElement("div");
+    row.className = "agentRow";
+    const n = $("customAgents").children.length + 1;
+    const name = document.createElement("input");
+    name.type = "text"; name.placeholder = "Nombre"; name.value = (a && a.label) || "";
+    name.setAttribute("aria-label", "Nombre del agente " + n);
+    const url = document.createElement("input");
+    url.type = "url"; url.placeholder = "https://m365.cloud.microsoft/chat/?titleId=…"; url.value = (a && a.url) || "";
+    url.setAttribute("aria-label", "Enlace del agente " + n);
+    const del = document.createElement("button");
+    del.type = "button"; del.textContent = "Quitar";
+    del.setAttribute("aria-label", "Quitar el agente " + n);
+    del.addEventListener("click", () => row.remove());
+    row.append(name, url, del);
+    $("customAgents").appendChild(row);
+    return name;
+  };
+  ((await messenger.storage.local.get({ customAgents: [] })).customAgents || []).forEach(addAgentRow);
+  $("addAgent").addEventListener("click", () => addAgentRow(null).focus());
+
+  // Lee las filas: { ok, agents } o { ok: false, error }. El id es estable a partir del enlace.
+  const readCustomAgents = () => {
+    const agents = [];
+    for (const row of $("customAgents").children) {
+      const [nameEl, urlEl] = row.querySelectorAll("input");
+      const label = nameEl.value.trim(), link = urlEl.value.trim();
+      if (!label && !link) continue;
+      let host = "";
+      try { host = new URL(link).host; } catch (_) {}
+      if (!label || host !== "m365.cloud.microsoft") {
+        return { ok: false, error: !label ? "Falta el nombre de un agente." : "El enlace de «" + label + "» debe empezar por https://m365.cloud.microsoft/." };
+      }
+      let h = 0;
+      for (const ch of link) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      agents.push({ id: "u_" + h.toString(36), label, url: link });
+    }
+    return { ok: true, agents };
+  };
+
   $("save").addEventListener("click", async () => {
+    const custom = readCustomAgents();
+    $("agentsMsg").textContent = custom.ok ? "" : custom.error;
+    if (!custom.ok) {
+      $("saved").textContent = "No guardado: revisa los agentes en General.";
+      setTimeout(() => { $("saved").textContent = ""; }, 5000);
+      return;
+    }
+    await messenger.storage.local.set({ customAgents: custom.agents });
     const url = $("copilotUrl").value.trim();
     // Guarda SIEMPRE, aunque la URL de Copilot esté vacía o mal formada: así los
     // demás ajustes (tema del correo, acento, perfil...) no se bloquean por la URL.

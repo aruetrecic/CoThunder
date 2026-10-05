@@ -64,6 +64,13 @@
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
   .count { font-weight: 600; }
 
+  .agents { margin: 8px 0 0; padding-left: 20px; }
+  .agents li { margin: 2px 0; }
+  h3.sub { font-size: 15px; margin: 18px 0 8px; }
+  .agentRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; gap: 8px; margin-bottom: 8px; }
+  .err { color: #b3261e; font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .err { color: #ff8a80; } }
+  @media (max-width: 560px) { .agentRow { grid-template-columns: 1fr; } }
   details.more { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 10px; }
   details.more > summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
   details.more[open] > summary { margin-bottom: 12px; }
@@ -115,6 +122,32 @@
           <textarea id="promptTemplate" rows="6"></textarea>
           <span class="muted">Se usa al responder. <code>{{author}}</code>, <code>{{subject}}</code> y <code>{{body}}</code> se sustituyen por el remitente, el asunto y el cuerpo.</span>
         </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>Agentes de Copilot</h2>
+      <p class="desc muted">CoThunder detecta los agentes que Copilot muestra en su panel lateral. Si alguno no aparece, añádelo a mano con su enlace: así se abre siempre, esté o no visible en el panel.</p>
+      <div class="row">
+        <span id="agentsDetected" class="count">Detectados: 0</span>
+        <button type="button" id="detectAgents">Detectar ahora</button>
+        <span id="detectMsg" class="muted" role="status"></span>
+      </div>
+      <ul id="agentsList" class="agents"></ul>
+
+      <h3 class="sub">Añadidos a mano</h3>
+      <div id="customAgents"></div>
+      <div class="row">
+        <button type="button" id="addAgent">Añadir agente</button>
+        <span id="agentsMsg" class="err" role="status"></span>
+      </div>
+      <details class="more">
+        <summary>¿Cómo consigo el enlace de un agente?</summary>
+        <ol>
+          <li>Abre <code>https://m365.cloud.microsoft/chat</code> en tu navegador.</li>
+          <li>En el panel de la izquierda, entra en <strong>Agentes</strong> y abre el que quieras.</li>
+          <li>Copia la dirección de la barra del navegador (suele contener <code>titleId=</code>) y pégala aquí con un nombre.</li>
+        </ol>
       </details>
     </div>
   </section>

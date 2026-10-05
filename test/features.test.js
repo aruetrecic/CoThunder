@@ -81,3 +81,43 @@ test("chatTitle: fecha, tipo y asunto recortado", () => {
   assert.match(copilotErrorText("login"), /iniciado sesión/);
   assert.match(copilotErrorText("raro"), /\(raro\)/);
 });
+
+test("emailToMarkdown: ficha completa y versión para Copilot sin Para/CC", () => {
+  const { emailToMarkdown } = require("../common.js");
+  const meta = { subject: "Reunión", author: "Ana <ana@x.es>", recipients: ["yo@x.es"], cc: ["otro@x.es"], date: "5/10/2026, 9:00",
+    attachments: [{ name: "acta.pdf", size: 204800 }, { name: "", size: 1 }] };
+  const md = emailToMarkdown(meta, "Hola **equipo**");
+  assert.match(md, /^# Reunión\n/);
+  assert.match(md, /- \*\*Para:\*\* yo@x\.es/);
+  assert.match(md, /- \*\*CC:\*\* otro@x\.es/);
+  assert.match(md, /- \*\*Adjuntos:\*\* acta\.pdf \(200 KB\)\n/);
+  assert.match(md, /---\n\nHola \*\*equipo\*\*\n$/);
+  const forCopilot = emailToMarkdown(meta, "x", { forCopilot: true });
+  assert.doesNotMatch(forCopilot, /Para|CC|yo@x\.es|otro@x\.es/);
+  assert.match(forCopilot, /De:\*\* Ana/);
+  assert.match(emailToMarkdown({}, ""), /^# \(sin asunto\)[\s\S]*_\(correo sin texto\)_/);
+});
+
+test("markdownFileName: fecha, sin prefijos RE/RV ni caracteres prohibidos", () => {
+  const { markdownFileName } = require("../common.js");
+  assert.equal(markdownFileName("RE: RV: Plazo: entrega/final?", new Date(2026, 9, 5)), "2026-10-05 Plazo entrega final.md");
+  assert.equal(markdownFileName("", null), "correo.md");
+  assert.ok(markdownFileName("x".repeat(200), null).length <= 83);
+});
+
+test("buildAskPrompt: con y sin petición, correo delimitado y con guarda", () => {
+  const { buildAskPrompt } = require("../common.js");
+  const p = buildAskPrompt("# Correo\n\nTexto", "Extrae las fechas");
+  assert.match(p, /SEGURIDAD ANTE INYECCIÓN/);
+  assert.match(p, /PETICIÓN DEL USUARIO[^\n]*\nExtrae las fechas/);
+  assert.match(p, /--- CORREO \(Markdown\) ---\n# Correo\n\nTexto\n--- FIN CORREO ---/);
+  assert.match(buildAskPrompt("x", "  "), /Resúmelo en pocas líneas/);
+});
+
+test("formatBytes", () => {
+  const { formatBytes } = require("../common.js");
+  assert.equal(formatBytes(512), "512 B");
+  assert.equal(formatBytes(2048), "2 KB");
+  assert.equal(formatBytes(3 * 1048576 + 400000), "3,4 MB");
+  assert.equal(formatBytes(undefined), "");
+});

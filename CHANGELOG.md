@@ -3,6 +3,16 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.17.0] — 2026-10-05
+
+### Añadido
+- **Exportar a Markdown**: clic derecho › *CoThunder › Exportar a Markdown / preguntar a Copilot…* o el botón **⬇ .md** de la ventana. Convierte el correo (o varios) a Markdown con remitente, destinatarios, fecha, adjuntos y el cuerpo con su formato (títulos, negritas, enlaces, listas, tablas, citas). Vista previa, código editable, **Descargar .md** y **Copiar**.
+- **Pasárselo a Copilot o a un agente**: desde la misma ventana, con tu petición (o un resumen si no escribes nada). La respuesta se abre en una ventana y queda en el chat. Va sin tu firma ni las direcciones de Para y CC.
+- **Agentes añadidos a mano** en Opciones › General: nombre y enlace. Se abren siempre, aunque Copilot no los muestre en su panel.
+
+### Corregido
+- **Los agentes no se detectaban**: CoThunder buscaba una sola clase del panel de Copilot que Microsoft ha cambiado. Ahora reconoce los agentes también por sus enlaces y marcas en la página, vuelve a mirar cuando el panel termina de cargar y guarda el enlace de cada uno: si no está visible al enviar, lo abre por su enlace. *Detectar ahora* en Opciones muestra cuántos encuentra.
+
 ## [2.16.0] — 2026-10-05
 
 ### Cambiado

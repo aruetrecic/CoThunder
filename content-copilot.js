@@ -10,7 +10,14 @@ const SELECTORS = {
   // Botón "Detener" mientras genera (para Cancelar). Si no se encuentra, se deja terminar.
   stopButton: 'button[data-testid="stopGeneratingButton"], button.fai-StopButton, button[aria-label*="Detener"], button[aria-label*="Stop"]',
   // Indicios de que no hay sesión: botón o enlace de inicio de sesión de Microsoft en la página.
-  signIn: 'a[href*="login.microsoftonline.com"], a[href*="login.live.com"], button[data-testid="signInButton"], #mectrl_headerPicture[aria-label*="Iniciar"]'
+  signIn: 'a[href*="login.microsoftonline.com"], a[href*="login.live.com"], button[data-testid="signInButton"], #mectrl_headerPicture[aria-label*="Iniciar"]',
+  // Agentes (varias señales, porque Microsoft cambia el DOM a menudo):
+  // 1) elementos del panel lateral (clase del spike de julio; se filtran por id de agente);
+  agentNavItems: ".fai-CopilotNavSubItem",
+  // 2) enlaces a un agente: llevan su id en la URL (?titleId=T_…, ?agentId=…, /agent/…);
+  agentLinks: 'a[href*="titleId="], a[href*="agentId="], a[href*="/agents/"], a[href*="/agent/"]',
+  // 3) elementos cuyo id o data-testid es de agente.
+  agentMarked: '[id^="T_"], [id^="P_"], [data-testid*="agent" i] a, [data-testid*="agent" i] [role="link"], [data-testid*="agent" i][role="link"]'
 };
 
 // Avisos al background y a la ventana de CoThunder: progreso de una petición y diagnóstico técnico
@@ -82,33 +89,99 @@ async function startNewChat() {
   return true;
 }
 
-// Agentes del nav de Copilot. Los chats del historial comparten clase con los agentes,
-// así que se filtra por el id: los agentes empiezan por P_/T_ o contienen "agent"/"gpt";
-// las conversaciones del historial son GUID sueltos.
+// Agentes de Copilot. Los chats del historial comparten clase con los agentes, así que se
+// filtra por el id: los agentes empiezan por P_/T_ o contienen "agent"/"gpt"; las conversaciones
+// del historial son GUID sueltos. Cada agente guarda su enlace si lo tiene: con él, el background
+// puede abrir el agente aunque no esté visible en el panel.
 function isAgentId(id) {
   return !!id && (/^[PT]_/.test(id) || /agent|gpt/i.test(id));
 }
 
-function listAgents() {
-  return [...document.querySelectorAll(".fai-CopilotNavSubItem")]
-    .map((el) => ({ label: (el.getAttribute("aria-label") || el.textContent || "").trim().replace(/\s+/g, " "), id: el.id }))
-    .filter((a) => a.label && isAgentId(a.id));
+const cleanLabel = (t) => String(t || "").trim().replace(/\s+/g, " ");
+
+function agentFromLink(href) {
+  try {
+    const u = new URL(href, location.href);
+    if (u.host !== location.host) return null;
+    const id = u.searchParams.get("titleId") || u.searchParams.get("agentId") ||
+      (u.pathname.match(/\/agents?\/([^/?#]+)/) || [])[1] || "";
+    return id ? { id, url: u.href } : null;
+  } catch (_) {
+    return null;
+  }
 }
 
-// Guarda la lista de agentes para que el popup pueda ofrecerla (la SPA tarda: se intenta a los 3 y 8 s).
+// Devuelve { agents: [{ id, label, url }], counts } con lo encontrado por cada señal (para el diagnóstico).
+function scanAgents() {
+  const found = new Map();
+  const counts = { nav: 0, links: 0, marked: 0 };
+  const add = (id, label, url, kind) => {
+    label = cleanLabel(label);
+    if (!label || label.length > 80 || !(id || url)) return;
+    const key = id || url;
+    const prev = found.get(key);
+    if (prev) { if (!prev.url && url) prev.url = url; return; }
+    found.set(key, { id: id || "", label, url: url || "" });
+    counts[kind]++;
+  };
+  for (const el of document.querySelectorAll(SELECTORS.agentNavItems)) {
+    if (!isAgentId(el.id)) continue;
+    const link = el.closest("a") || el.querySelector("a");
+    add(el.id, el.getAttribute("aria-label") || el.textContent, link && link.href, "nav");
+  }
+  for (const el of document.querySelectorAll(SELECTORS.agentLinks)) {
+    const ag = agentFromLink(el.getAttribute("href"));
+    if (ag) add(ag.id, el.getAttribute("aria-label") || el.getAttribute("title") || el.textContent, ag.url, "links");
+  }
+  for (const el of document.querySelectorAll(SELECTORS.agentMarked)) {
+    const id = isAgentId(el.id) ? el.id : "";
+    const link = el.closest("a") || (el.matches("a") ? el : el.querySelector("a"));
+    const ag = link ? agentFromLink(link.getAttribute("href")) : null;
+    if (id || ag) add(id || ag.id, el.getAttribute("aria-label") || el.textContent, ag && ag.url, "marked");
+  }
+  return { agents: [...found.values()], counts };
+}
+
+function listAgents() {
+  return scanAgents().agents;
+}
+
+// Guarda la lista de agentes para que el popup pueda ofrecerla (la SPA tarda: se intenta varias
+// veces y al cambiar el panel lateral).
+let lastAgentsKey = "";
 function saveAgents() {
   const agents = listAgents();
-  if (agents.length) messenger.storage.local.set({ agents }).catch(() => {});
+  const key = JSON.stringify(agents);
+  if (!agents.length || key === lastAgentsKey) return;
+  lastAgentsKey = key;
+  messenger.storage.local.set({ agents }).catch(() => {});
 }
 setTimeout(saveAgents, 3000);
 setTimeout(saveAgents, 8000);
+setTimeout(saveAgents, 20000);
 setInterval(saveAgents, 60000); // refresco periódico por si el usuario crea agentes nuevos
+// Cambios en la página (el panel lateral se carga tarde o se despliega): se vuelve a mirar, con calma.
+let agentsTimer = null;
+try {
+  new MutationObserver(() => {
+    if (agentsTimer) return;
+    agentsTimer = setTimeout(() => { agentsTimer = null; saveAgents(); }, 2000);
+  }).observe(document.documentElement, { childList: true, subtree: true });
+} catch (_) {}
 
-// Selecciona un agente por id (estable) o, en su defecto, por nombre.
+// Selecciona un agente por id (estable) o, en su defecto, por nombre. Si no está en la página,
+// devuelve false y el background lo abrirá por su enlace.
 function selectAgent(id, label) {
   let el = id ? document.getElementById(id) : null;
+  if (!el && id) {
+    el = [...document.querySelectorAll(SELECTORS.agentLinks)].find((a) => {
+      const ag = agentFromLink(a.getAttribute("href"));
+      return ag && ag.id === id;
+    }) || null;
+  }
   if (!el && label) {
-    el = [...document.querySelectorAll(".fai-CopilotNavSubItem")].find((n) => (n.getAttribute("aria-label") || "").trim() === label);
+    el = [...document.querySelectorAll(SELECTORS.agentNavItems + ", " + SELECTORS.agentLinks)]
+      .find((n) => cleanLabel(n.getAttribute("aria-label") || n.textContent) === label) || null;
   }
   if (el) { el.click(); return true; }
   return false;
@@ -216,9 +289,10 @@ function waitForReply(baselineCount, baselineText, token, timeoutMs = 120000) {
 messenger.runtime.onMessage.addListener(async (msg) => {
   if (!msg) return;
   if (msg.type === "getAgents") {
-    const agents = listAgents();
+    const { agents, counts } = scanAgents();
     if (agents.length) messenger.storage.local.set({ agents }).catch(() => {});
-    return { agents };
+    diag("agentes-detectados", agents.length + " (panel " + counts.nav + ", enlaces " + counts.links + ", marcados " + counts.marked + ")");
+    return { agents, counts };
   }
   if (msg.type === "cancelPrompt") {
     cancelled.add(msg.token);
@@ -233,7 +307,11 @@ messenger.runtime.onMessage.addListener(async (msg) => {
   const token = msg.messageId;
   progress(token, "typing");
   if (msg.agentId || msg.agentLabel) {
-    if (!selectAgent(msg.agentId, msg.agentLabel)) diag("agente-no-encontrado", msg.agentId || "por nombre");
+    if (!selectAgent(msg.agentId, msg.agentLabel)) {
+      // No está en la página: si el background conoce su enlace, que lo abra y vuelva a entregar.
+      if (msg.agentUrl) return { ok: false, reason: "agent-navigate" };
+      diag("agente-no-encontrado", msg.agentId || "por nombre");
+    }
     await delay(1500);
   } else if (msg.newChat) {
     if (!(await startNewChat())) diag("selector-no-encontrado", "newChat " + SELECTORS.newChat);
