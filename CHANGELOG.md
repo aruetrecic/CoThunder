@@ -3,6 +3,16 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.19.0] — 2026-10-05
+
+### Añadido
+- **Indicaciones** al responder: escribe en tus palabras qué quieres («acepta, pero propón el jueves») sin elegir plantilla ni tocar el prompt. Mandan sobre el resto de opciones.
+
+### Cambiado
+- Al enviar, **Copilot ya no tapa la ventana**: escribe el prompt y la ventana de CoThunder vuelve al frente con el progreso y Cancelar.
+- **Avisos y errores completos junto al botón Enviar** (antes se cortaban en una esquina), con su botón de acción: *Ir a Copilot* si falta iniciar sesión.
+- **Un solo indicador de estado** (el de Copilot, arriba) y un solo botón *Abrir Copilot*.
+
 ## [2.18.0] — 2026-10-05
 
 ### Añadido

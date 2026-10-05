@@ -59,3 +59,20 @@ Todo lo de las versiones 2.7–2.12 se ha probado en Edge headless, no dentro de
 - [x] Aviso de sesión caducada.
 - [x] Diagnóstico exportable.
 - [x] Ayuda integrada con todas las funciones.
+
+## 7. Usabilidad (análisis del 5 de octubre)
+
+- [x] Campo «Indicaciones» al responder (v2.19.0).
+- [x] Que Copilot no tape la ventana al enviar (v2.19.0).
+- [x] Errores completos junto a Enviar, con acción (v2.19.0).
+- [x] Un solo indicador de estado y un solo «Abrir Copilot» (v2.19.0).
+- [ ] Pestaña Prompt: resumen de lo que se envía y el texto completo plegado. **M**
+- [ ] Quitar los emoji de las etiquetas de la ventana (o usar los iconos SVG del editor). **B**
+- [ ] «Más opciones» plegado con el resumen de lo elegido («Formal · Breve · Inglés»). **B**
+- [ ] Atajos de teclado globales: preguntar a Copilot y resumir el correo abierto. **B**
+- [ ] Cerrar la ventana sola al abrirse la respuesta (opcional). **B**
+- [ ] Opciones con guardado automático, sin botón Guardar. **B**
+- [ ] «Guardar como prompt» desde la ventana (crea la plantilla con el prefijo correcto). **M**
+- [ ] Progreso y Cancelar también en las acciones de un clic. **M**
+- [ ] Aviso de «Novedades» tras actualizar. **B**
+- [ ] Editor: ocultar la vista previa o cambiar el reparto en pantallas pequeñas. **B**

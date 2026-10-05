@@ -77,6 +77,8 @@
 
   // Envío a Copilot con progreso y Cancelar.
   let token = null;
+  let myWindowId = null;
+  messenger.windows.getCurrent().then((w) => { myWindowId = w.id; }).catch(() => {});
   const STAGE_TEXT = { opening: "Abriendo Copilot…", typing: "Escribiendo…", waiting: "Copilot está respondiendo…", done: "Respuesta recibida: se abre en una ventana." };
   const finish = () => { $("ask").disabled = false; $("cancel").hidden = true; };
   messenger.runtime.onMessage.addListener((m) => {
@@ -93,7 +95,7 @@
     token = "a" + Date.now() + Math.floor(Math.random() * 1e6);
     const opt = $("agent").selectedOptions[0];
     const res = await messenger.runtime.sendMessage({
-      type: "askCopilot", id, token, question: $("question").value, newChat: $("newChat").checked,
+      type: "askCopilot", id, token, returnFocusTo: myWindowId, question: $("question").value, newChat: $("newChat").checked,
       agentId: $("agent").value, agentLabel: opt && $("agent").value ? opt.dataset.label : ""
     }).catch((e) => ({ ok: false, reason: e && e.message }));
     if (!res || !res.ok) {

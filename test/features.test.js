@@ -121,3 +121,10 @@ test("formatBytes", () => {
   assert.equal(formatBytes(3 * 1048576 + 400000), "3,4 MB");
   assert.equal(formatBytes(undefined), "");
 });
+
+test("buildComposedPrompt: indicaciones del usuario, prioritarias y antes del correo", () => {
+  const p = buildComposedPrompt({ author: "Ana", subject: "Reunión" }, "¿Os viene bien el martes?", { instructions: "Acepta, pero propón el jueves" });
+  assert.match(p, /INDICACIONES DEL USUARIO PARA ESTA RESPUESTA[^\n]*\nAcepta, pero propón el jueves/);
+  assert.ok(p.indexOf("Acepta, pero") < p.indexOf("¿Os viene bien"));
+  assert.doesNotMatch(buildComposedPrompt({}, "x", { instructions: "   " }), /INDICACIONES DEL USUARIO/);
+});

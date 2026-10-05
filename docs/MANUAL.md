@@ -40,13 +40,14 @@ Ambas ventanas necesitan que tengas **sesión iniciada en Copilot**. La primera 
 1. Abre el correo que quieres responder.
 2. Pulsa **Preguntar a Copilot** en la barra del visor. Se abre la ventana de CoThunder con el prompt ya montado a partir del remitente, el asunto y el cuerpo.
 3. Ajusta lo que quieras. La ventana tiene dos pestañas, **⚙️ Opciones** y **📜 Prompt**; el botón **Enviar a Copilot** queda siempre visible abajo:
+   - **Indicaciones** (opcional): qué quieres responder, en tus palabras («acepta, pero propón el jueves»). Mandan sobre el resto de opciones.
    - **Agente** (opcional): elige un agente de Copilot para que aporte su conocimiento.
    - **Prompt** y **Formato** (opcional): elige una de tus plantillas.
    - En **Más opciones** (plegable): **Tono**, **Longitud**, **Responder en** (idioma; por defecto el del correo, detectado) y **Versiones** (una, dos o tres para elegir).
    - **Incluir mi firma**, **Incluir el correo citado**, **Incluir el hilo** (mensajes anteriores).
    - **Empezar chat nuevo**: parte de una conversación limpia en Copilot.
    - Edita el **Prompt a enviar** a mano si quieres; la mini barra Markdown ayuda a dar formato.
-4. Pulsa **Enviar a Copilot** (o **Ctrl+Enter**). Se abre Copilot, escribe el prompt y lo envía.
+4. Pulsa **Enviar a Copilot** (o **Ctrl+Enter**). Copilot se pone delante para escribir el prompt y la ventana de CoThunder vuelve al frente con el progreso. Si algo falla, el aviso aparece completo junto al botón Enviar.
 5. Cuando Copilot termina, se abre una **ventana de composición** con la respuesta al remitente, lista para revisar y enviar.
 6. Si quieres otra versión, pulsa **Regenerar**: reenvía el prompt en un chat nuevo.
 

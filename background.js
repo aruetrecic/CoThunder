@@ -318,6 +318,11 @@ async function startCopilotRequest(req) {
     console.error("[CoThunder] startCopilotRequest:", e);
     res = { ok: false, reason: e && e.message ? e.message : String(e) };
   }
+  // Enviado: la ventana que lo pidió vuelve al frente (progreso y Cancelar a la vista). Si falta
+  // iniciar sesión no se hace: Copilot debe quedar delante.
+  if (res && res.ok && req.returnFocusTo != null) {
+    messenger.windows.update(req.returnFocusTo, { focused: true }).catch(() => {});
+  }
   if (!res || !res.ok) {
     const reason = (res && res.reason) || "desconocido";
     if (reason !== "cancelled") diag("envio-fallido", reason);
@@ -514,6 +519,7 @@ async function askCopilotAbout(msg) {
   const token = /^a\d+$/.test(String(msg.token || "")) ? String(msg.token) : "a" + Date.now() + Math.floor(Math.random() * 1e6);
   const res = await startCopilotRequest({
     token, newChat: msg.newChat !== false, agentId: msg.agentId || "", agentLabel: msg.agentLabel || "",
+    returnFocusTo: msg.returnFocusTo,
     prompt: chatTitle("Preguntar", data.title) + "\n\n" +
       buildAskPrompt(parts.join("\n---\n\n"), msg.question, { userContext: buildUserContext(cfg.userProfile) }),
     opts: { mode: "summary", title: "Copilot: " + data.title, messageIds: data.ids.length === 1 ? data.ids : [] }
@@ -565,6 +571,7 @@ async function sendFromWindow(msg) {
   const token = msg.messageId != null ? String(msg.messageId) : msg.requestId;
   return startCopilotRequest({
     token, prompt: msg.prompt, newChat: msg.newChat, agentId: msg.agentId, agentLabel: msg.agentLabel,
+    returnFocusTo: msg.returnFocusTo,
     opts: {
       mode: msg.mode || "reply",
       includeSignature: msg.includeSignature !== false,

@@ -6,7 +6,6 @@
     <span class="title" id="title">Preguntar a Copilot</span>
     <button type="button" id="exportMd" class="reply-only" title="Exportar el correo a Markdown o pasárselo a Copilot" aria-label="Exportar el correo a Markdown o pasárselo a Copilot">⬇ .md</button>
     <button type="button" id="help" title="Ayuda (F1)" aria-label="Ayuda (F1)">?</button>
-    <div id="status"><span id="dot"></span><span id="statusText">Preparando…</span></div>
   </div>
 
   <!-- Estado de Copilot al entrar: abierto y listo, sin sesión, cargando o cerrado. -->
@@ -84,11 +83,14 @@
   </div>
 
   <div class="tabpanel" role="tabpanel" id="panel-options" aria-labelledby="tab-options" data-modes="create reply">
+    <div class="field reply-only">
+      <label for="instructions">💬 Indicaciones <span class="opt">(opcional)</span></label>
+      <textarea id="instructions" class="instructions" rows="2" placeholder="Ej.: acepta, pero propón el jueves por la tarde; di que adjunto el acta"></textarea>
+    </div>
     <div class="field">
       <label for="agent">🤖 Agente</label>
       <div class="inline">
         <select id="agent"><option value="">Copilot por defecto</option></select>
-        <button type="button" id="openCopilot" title="Abrir Copilot (para iniciar sesión o cargar los agentes)">Abrir Copilot</button>
         <button type="button" id="refreshAgents" title="Detectar los agentes (abre Copilot si hace falta)" aria-label="Detectar los agentes (abre Copilot si hace falta)">↻</button>
       </div>
     </div>
@@ -178,6 +180,12 @@
       </div>
       <textarea id="prompt"></textarea>
     </div>
+  </div>
+
+  <!-- Mensajes de la operación (preparando, enviado, errores completos), junto al botón Enviar. -->
+  <div id="status" class="msgbar" role="status" aria-live="polite">
+    <span id="dot"></span><span id="statusText">Preparando…</span>
+    <button type="button" id="statusAction" hidden></button>
   </div>
 
   <!-- Progreso de la petición: pasos, tiempo de espera y Cancelar. -->

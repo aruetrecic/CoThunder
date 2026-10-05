@@ -42,7 +42,7 @@ body {
 
 .header { display: flex; align-items: center; gap: 8px; }
 .header .logo { width: 22px; height: 22px; flex: none; }
-.header .title { font-size: 15px; font-weight: 700; }
+.header .title { font-size: 15px; font-weight: 700; flex: 1; }
 #help { flex: none; width: 22px; height: 22px; padding: 0; font: inherit; line-height: 20px;
   text-align: center; color: inherit; background: transparent;
   border: 1px solid var(--border); border-radius: 50%; cursor: pointer; }
@@ -50,8 +50,14 @@ body {
 #exportMd { flex: none; height: 24px; padding: 0 8px; font: inherit; font-size: 12px; font-weight: 600; color: inherit;
   background: transparent; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; }
 
-#status { margin-left: auto; display: flex; gap: 6px; align-items: center; justify-content: flex-end;
-  text-align: right; font-size: 12px; opacity: .9; max-width: 55%; }
+/* Mensajes de la operación: ancho completo, el texto se ajusta en varias líneas (no se corta). */
+#status { flex: none; display: flex; gap: 8px; align-items: center; padding: 6px 10px; font-size: 12px;
+  border: 1px solid var(--border); border-radius: 8px; }
+#status[hidden] { display: none; }
+#status.err { border-color: #c01c28; background: color-mix(in srgb, #c01c28 8%, transparent); }
+#statusAction { flex: none; padding: 3px 10px; font: inherit; font-weight: 600; color: inherit; background: transparent;
+  border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+#statusAction[hidden] { display: none; }
 #dot { width: 10px; height: 10px; border-radius: 50%; background: #888; flex: none; }
 #dot.busy { background: #e5a50a; }
 #dot.ok { background: #26a269; }
@@ -60,6 +66,8 @@ body {
 
 .field { display: flex; flex-direction: column; gap: 3px; }
 .field > label { font-size: 12px; font-weight: 700; opacity: .85; }
+.field > label .opt { font-weight: 400; }
+textarea.instructions { min-height: 3.2em; resize: vertical; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .inline { display: flex; gap: 6px; }
@@ -185,6 +193,7 @@ textarea.invalid { border-color: #c01c28; }
 .count { font-weight: 400; opacity: .75; margin-left: 4px; }
 .count.over { color: #c01c28; font-weight: 700; opacity: 1; }
 @media (prefers-color-scheme: dark) {
+  #status.err { border-color: #ff7b72; background: color-mix(in srgb, #ff7b72 10%, transparent); }
   .hint.err, .count.over { color: #ff7b72; }
   textarea.invalid { border-color: #ff7b72; }
 }

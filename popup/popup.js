@@ -1,7 +1,17 @@
 "use strict";
 (async () => {
   const $ = (id) => document.getElementById(id);
-  const setStatus = (cls, text) => { $("dot").className = cls; $("statusText").textContent = text; };
+  // Mensaje de la operación junto a Enviar. «Listo» sin más no se muestra (no aporta). action:
+  // { label, run } añade un botón (p. ej. «Ir a Copilot» si falta iniciar sesión).
+  const setStatus = (cls, text, action) => {
+    $("dot").className = cls;
+    $("status").className = "msgbar " + (cls || "");
+    $("statusText").textContent = text;
+    $("status").hidden = !text || (!cls && text === "Listo");
+    $("statusAction").hidden = !action;
+    $("statusAction").textContent = action ? action.label : "";
+    $("statusAction").onclick = action ? action.run : null;
+  };
 
   // Modo de la ventana: "create" (correo nuevo) o "reply" (respuesta). Determina UI y tamaño.
   const params = new URLSearchParams(location.search);
@@ -210,6 +220,7 @@
         })
       : buildComposedPrompt(message, body, {
           userContext, template: cfg.promptTemplate, promptBody, formatBody,
+          instructions: $("instructions").value,
           thread: $("includeThread").checked ? threadBody : null,
           tone: $("tone").value, length: $("length").value,
           language: replyLanguage(), versions: Number($("versions").value) || 1
@@ -288,6 +299,7 @@
     $("includeSignature").addEventListener("change", () => messenger.storage.local.set({ prefSignature: $("includeSignature").checked }).catch(() => {}));
     $("includeQuote").addEventListener("change", () => messenger.storage.local.set({ prefQuote: $("includeQuote").checked }).catch(() => {}));
     $("reply-language").addEventListener("change", rebuildPrompt);
+    $("instructions").addEventListener("input", rebuildPrompt);
     $("versions").addEventListener("change", rebuildPrompt);
 
     // Reconstruye el prompt al editar los campos de creación (solo existen en modo creación).
@@ -388,11 +400,6 @@
     setTimeout(pollCopilot, 1500);
   });
 
-  $("openCopilot").addEventListener("click", async () => {
-    await messenger.runtime.sendMessage({ type: "openCopilot" }).catch(() => {});
-    setStatus("", "Copilot abierto; pulsa ↻ cuando haya cargado");
-  });
-
   // Refresco manual de la lista de agentes (abre Copilot si hace falta y espera a que cargue).
   $("refreshAgents").addEventListener("click", async () => {
     const prev = $("agent").value;
@@ -411,6 +418,13 @@
     }
     $("refreshAgents").disabled = false;
   });
+
+  // Error de Copilot con el texto completo y, si falta iniciar sesión, el botón para ir a Copilot.
+  const showError = (reason, extra) => {
+    $("progress").hidden = true;   // los pasos ya no aplican: el mensaje explica qué pasó
+    setStatus("err", copilotErrorText(reason) + (extra || ""),
+      reason === "login" ? { label: "Ir a Copilot", run: () => openCopilot(false) } : null);
+  };
 
   // --- Progreso de la petición en curso: pasos, segundos de espera y Cancelar ---
   const STAGES = ["opening", "typing", "waiting", "done"];
@@ -438,7 +452,7 @@
     if (m.stage === "error") {
       stopElapsed();
       $("cancel").hidden = true;
-      setStatus("err", copilotErrorText(m.reason));
+      showError(m.reason);
       return;
     }
     if (m.stage === "cancelled") {
@@ -481,7 +495,9 @@
       const base = {
         type: "sendToCopilot", prompt: title + "\n\n" + $("prompt").value,
         newChat: forceNewChat || $("newChat").checked, title: (message && message.subject) || "",
-        agentId, agentLabel, includeSignature: $("includeSignature").checked
+        agentId, agentLabel, includeSignature: $("includeSignature").checked,
+        // Copilot se pone delante para escribir; después, esta ventana vuelve al frente (progreso y Cancelar).
+        returnFocusTo: thisWindowId
       };
       if (mode === "create") {
         res = await messenger.runtime.sendMessage({
@@ -505,9 +521,12 @@
     } else {
       stopElapsed();
       $("cancel").hidden = true;
-      let copied = false;
-      try { await navigator.clipboard.writeText($("prompt").value); copied = true; } catch (_) {}
-      setStatus("err", copilotErrorText(res && res.reason) + (copied ? " (Prompt copiado al portapapeles.)" : ""));
+      // El error se muestra ya; la copia al portapapeles puede tardar y solo completa el mensaje.
+      const reason = res && res.reason;
+      showError(reason);
+      navigator.clipboard.writeText($("prompt").value)
+        .then(() => showError(reason, " El prompt está copiado en el portapapeles para pegarlo a mano."))
+        .catch(() => {});
     }
     $("send").disabled = false;
     $("regen").disabled = false;
