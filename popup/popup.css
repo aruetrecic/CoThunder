@@ -223,3 +223,16 @@ textarea.invalid { border-color: #c01c28; }
   .steps li.active::before { animation: ct-pulse 1.2s ease-in-out infinite; }
   @keyframes ct-pulse { 50% { opacity: .35; } }
 }
+
+/* Iconos (Fluent UI, icons.js) en etiquetas, pestañas y botones: siguen el color del texto. */
+.ct-icon { vertical-align: -3px; flex: none; }
+.tabs [role="tab"] .ct-icon, .field > label .ct-icon, .field-head > label .ct-icon { opacity: .9; }
+#help { display: inline-grid; place-items: center; }
+#help .ct-icon, #refreshAgents .ct-icon { vertical-align: middle; }
+#exportMd { display: inline-flex; align-items: center; gap: 3px; }
+.mdbar button { display: inline-flex; align-items: center; justify-content: center; }
+.field-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.field-head > label { font-size: 12px; font-weight: 700; opacity: .85; }
+.emoji-btn { flex: none; display: inline-grid; place-items: center; width: 26px; height: 22px; padding: 0; color: inherit;
+  background: transparent; border: 1px solid var(--border); border-radius: 5px; cursor: pointer; }
+.emoji-btn:hover { background: color-mix(in srgb, currentColor 12%, transparent); }

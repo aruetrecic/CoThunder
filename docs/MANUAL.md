@@ -39,7 +39,7 @@ Ambas ventanas necesitan que tengas **sesión iniciada en Copilot**. La primera 
 
 1. Abre el correo que quieres responder.
 2. Pulsa **Preguntar a Copilot** en la barra del visor. Se abre la ventana de CoThunder con el prompt ya montado a partir del remitente, el asunto y el cuerpo.
-3. Ajusta lo que quieras. La ventana tiene dos pestañas, **⚙️ Opciones** y **📜 Prompt**; el botón **Enviar a Copilot** queda siempre visible abajo:
+3. Ajusta lo que quieras. La ventana tiene dos pestañas, **Opciones** y **Prompt**; el botón **Enviar a Copilot** queda siempre visible abajo:
    - **Indicaciones** (opcional): qué quieres responder, en tus palabras («acepta, pero propón el jueves»). Mandan sobre el resto de opciones.
    - **Agente** (opcional): elige un agente de Copilot para que aporte su conocimiento.
    - **Prompt** y **Formato** (opcional): elige una de tus plantillas.
@@ -56,7 +56,7 @@ Si el correo contiene un intento de manipular a la IA (inyección), CoThunder lo
 ## 3. Crear un correo nuevo (Crear desde Copilot)
 
 1. Pulsa **Crear desde Copilot** en la barra principal. No necesitas tener ningún correo abierto.
-2. Rellena las pestañas (**✍️ Redactar**, **✉️ Destinatarios**, **⚙️ Opciones** y **📜 Prompt**; cambia entre ellas con un clic o con Ctrl+RePág/AvPág):
+2. Rellena las pestañas (**Redactar**, **Destinatarios**, **Opciones** y **Prompt**; cambia entre ellas con un clic o con Ctrl+RePág/AvPág):
    - **¿Qué quieres crear?**: describe el correo (por ejemplo, "convocar una reunión de coordinación para el jueves"). Este campo crece con la ventana y tiene su propia barra Markdown.
    - **Contexto / notas** (opcional): propósito, puntos a incluir o a quién va dirigido. Enriquece el prompt; no es el destinatario.
    - **Idioma** (opcional): fuerza el idioma del correo generado.
@@ -98,7 +98,8 @@ CoThunder recuerda tus preferencias.
 
 La respuesta llega en Markdown (con `#`, `**`, listas, tablas, citas). CoThunder trae su **propio editor**: escribes a la izquierda y ves el correo maquetado a la derecha; al enviar sale ya con formato. Se enciende y apaga con el botón **Editor Markdown** o con **Ctrl+Alt+M**.
 
-- **Barra de herramientas:** negrita, cursiva, tachado, resaltado, código, enlace, cita y listas, más los menús **H ▾** (títulos 1 a 6), **Aa ▾** (negrita+cursiva, subíndice, superíndice), **Insertar ▾** (imagen, emoji, tabla, bloque de código, regla, definición, nota al pie) y **Avisos ▾**. Los botones usan iconos propios; pasa el ratón por encima para ver su nombre.
+- **Barra de herramientas:** negrita, cursiva, tachado, resaltado, código, enlace, cita y listas, más los menús **H ▾** (títulos 1 a 6), **Aa ▾** (negrita+cursiva, subíndice, superíndice), **Insertar ▾** (imagen, tabla, bloque de código, regla, definición, nota al pie) y **Avisos ▾**.
+- **Emoji:** el botón de emoji (también en los campos de texto de la ventana) abre un selector con búsqueda en español («gracias», «reunión», «ok»), categorías y recientes. Inserta el emoji en el cursor. Los botones usan iconos propios; pasa el ratón por encima para ver su nombre.
 - **Ordenar** (o **Ctrl+Shift+F**): deja el código fuente limpio sin cambiar el resultado: alinea las columnas de las tablas, tabula las listas anidadas (4 espacios por nivel), deja una línea en blanco entre bloques y quita espacios sobrantes. Se deshace con Ctrl+Z. La zona de escritura usa letra monoespaciada para que la alineación se vea.
 - **Listas y tablas línea a línea:** puedes escribir cada elemento de una lista o cada fila de una tabla pulsando Enter; CoThunder las une en una sola lista o tabla (antes cada Enter partía la lista).
 - **✨ Mejorar con Copilot ▾:** reescribe el texto seleccionado (sección 12).

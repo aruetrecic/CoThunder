@@ -4,8 +4,8 @@
   <div class="header">
     <img class="logo" src="../icon.svg" alt="">
     <span class="title" id="title">Preguntar a Copilot</span>
-    <button type="button" id="exportMd" class="reply-only" title="Exportar el correo a Markdown o pasárselo a Copilot" aria-label="Exportar el correo a Markdown o pasárselo a Copilot">⬇ .md</button>
-    <button type="button" id="help" title="Ayuda (F1)" aria-label="Ayuda (F1)">?</button>
+    <button type="button" id="exportMd" class="reply-only" title="Exportar el correo a Markdown o pasárselo a Copilot" aria-label="Exportar el correo a Markdown o pasárselo a Copilot"><span data-icon="download"></span> .md</button>
+    <button type="button" id="help" title="Ayuda (F1)" aria-label="Ayuda (F1)"><span data-icon="help" data-size="18"></span></button>
   </div>
 
   <!-- Estado de Copilot al entrar: abierto y listo, sin sesión, cargando o cerrado. -->
@@ -23,34 +23,35 @@
   <!-- Pestañas: agrupan los campos para que la ventana quepa en resoluciones bajas o con escalado
        del 125-150 %. Cabecera y botón de envío quedan fijos; solo hace scroll la pestaña activa. -->
   <div class="tabs" role="tablist" aria-label="Secciones">
-    <button type="button" role="tab" id="tab-create" aria-controls="panel-create" data-modes="create">✍️ Redactar</button>
-    <button type="button" role="tab" id="tab-recipients" aria-controls="panel-recipients" data-modes="create">✉️ Destinatarios <span class="badge" id="recipients-count" hidden></span></button>
-    <button type="button" role="tab" id="tab-options" aria-controls="panel-options" data-modes="create reply">⚙️ Opciones</button>
-    <button type="button" role="tab" id="tab-prompt" aria-controls="panel-prompt" data-modes="create reply">📜 Prompt</button>
+    <button type="button" role="tab" id="tab-create" aria-controls="panel-create" data-modes="create"><span data-icon="write"></span> Redactar</button>
+    <button type="button" role="tab" id="tab-recipients" aria-controls="panel-recipients" data-modes="create"><span data-icon="mail"></span> Destinatarios <span class="badge" id="recipients-count" hidden></span></button>
+    <button type="button" role="tab" id="tab-options" aria-controls="panel-options" data-modes="create reply"><span data-icon="options"></span> Opciones</button>
+    <button type="button" role="tab" id="tab-prompt" aria-controls="panel-prompt" data-modes="create reply"><span data-icon="promptText"></span> Prompt</button>
   </div>
 
   <div class="tabpanel" role="tabpanel" id="panel-create" aria-labelledby="tab-create" data-modes="create">
     <div class="field create-only grow">
-      <label for="create-brief">📝 ¿Qué quieres crear?</label>
+      <label for="create-brief"><span data-icon="write"></span> ¿Qué quieres crear?</label>
       <div class="mdbar" id="brief-mdbar">
         <button type="button" data-md="bold" title="Negrita"><b>B</b></button>
         <button type="button" data-md="italic" title="Cursiva"><i>I</i></button>
         <button type="button" data-md="h" title="Encabezado">H</button>
-        <button type="button" data-md="ul" title="Lista con viñetas">•</button>
-        <button type="button" data-md="ol" title="Lista numerada">1.</button>
-        <button type="button" data-md="quote" title="Cita">❝</button>
+        <button type="button" data-md="ul" title="Lista con viñetas"><span data-icon="list"></span></button>
+        <button type="button" data-md="ol" title="Lista numerada"><span data-icon="olist"></span></button>
+        <button type="button" data-md="quote" title="Cita"><span data-icon="quote"></span></button>
         <button type="button" data-md="code" title="Código">&lt;/&gt;</button>
-        <button type="button" data-md="link" title="Enlace">🔗</button>
+        <button type="button" data-md="link" title="Enlace"><span data-icon="link"></span></button>
+        <button type="button" data-emoji title="Emoji" aria-label="Insertar emoji"><span data-icon="emoji"></span></button>
       </div>
       <textarea id="create-brief" placeholder="Describe el correo que quieres redactar…"></textarea>
     </div>
     <div class="grid2 create-only">
       <div class="field">
-        <label for="create-context">👤 Contexto / notas</label>
+        <label for="create-context"><span data-icon="person"></span> Contexto / notas</label>
         <input type="text" id="create-context" placeholder="Propósito, puntos a incluir, a quién va dirigido…">
       </div>
       <div class="field">
-        <label for="language">🌐 Idioma</label>
+        <label for="language"><span data-icon="language"></span> Idioma</label>
         <select id="language">
           <option value="">Automático</option>
           <option value="es">Español</option>
@@ -66,17 +67,17 @@
 
   <div class="tabpanel" role="tabpanel" id="panel-recipients" aria-labelledby="tab-recipients" data-modes="create">
     <div class="field create-only">
-      <label for="recipient-to">✉️ Para (un email por línea o separados por comas)</label>
+      <label for="recipient-to"><span data-icon="mail"></span> Para (un email por línea o separados por comas)</label>
       <textarea id="recipient-to" class="emails" rows="2" placeholder="nombre@dominio.com&#10;otro@dominio.com"></textarea>
       <div class="hint err" id="recipient-to-hint" hidden></div>
     </div>
     <div class="field create-only">
-      <label for="recipient-cc">📋 CC (con copia; uno por línea o por comas)</label>
+      <label for="recipient-cc"><span data-icon="cc"></span> CC (con copia; uno por línea o por comas)</label>
       <textarea id="recipient-cc" class="emails" rows="2" placeholder="copia@dominio.com&#10;otra.copia@dominio.com"></textarea>
       <div class="hint err" id="recipient-cc-hint" hidden></div>
     </div>
     <div class="field create-only">
-      <label for="recipient-bcc">🕶️ CCO (copia oculta; uno por línea o por comas)</label>
+      <label for="recipient-bcc"><span data-icon="bcc"></span> CCO (copia oculta; uno por línea o por comas)</label>
       <textarea id="recipient-bcc" class="emails" rows="2" placeholder="oculta@dominio.com&#10;otra.oculta@dominio.com"></textarea>
       <div class="hint err" id="recipient-bcc-hint" hidden></div>
     </div>
@@ -84,24 +85,27 @@
 
   <div class="tabpanel" role="tabpanel" id="panel-options" aria-labelledby="tab-options" data-modes="create reply">
     <div class="field reply-only">
-      <label for="instructions">💬 Indicaciones <span class="opt">(opcional)</span></label>
+      <div class="field-head">
+        <label for="instructions"><span data-icon="instructions"></span> Indicaciones <span class="opt">(opcional)</span></label>
+        <button type="button" class="emoji-btn" data-emoji-for="instructions" title="Emoji" aria-label="Insertar emoji en las indicaciones"><span data-icon="emoji"></span></button>
+      </div>
       <textarea id="instructions" class="instructions" rows="2" placeholder="Ej.: acepta, pero propón el jueves por la tarde; di que adjunto el acta"></textarea>
     </div>
     <div class="field">
-      <label for="agent">🤖 Agente</label>
+      <label for="agent"><span data-icon="agent"></span> Agente</label>
       <div class="inline">
         <select id="agent"><option value="">Copilot por defecto</option></select>
-        <button type="button" id="refreshAgents" title="Detectar los agentes (abre Copilot si hace falta)" aria-label="Detectar los agentes (abre Copilot si hace falta)">↻</button>
+        <button type="button" id="refreshAgents" title="Detectar los agentes (abre Copilot si hace falta)" aria-label="Detectar los agentes (abre Copilot si hace falta)"><span data-icon="refresh"></span></button>
       </div>
     </div>
 
     <div class="grid2 both">
       <div class="field">
-        <label for="prompt-sel">⭐ Prompt</label>
+        <label for="prompt-sel"><span data-icon="prompt"></span> Prompt</label>
         <select id="prompt-sel"><option value="">Ninguno</option></select>
       </div>
       <div class="field">
-        <label for="format-sel">📄 Formato</label>
+        <label for="format-sel"><span data-icon="format"></span> Formato</label>
         <select id="format-sel"><option value="">Ninguno</option></select>
       </div>
     </div>
@@ -111,7 +115,7 @@
       <summary>Más opciones</summary>
     <div class="grid4">
       <div class="field">
-        <label for="tone">🎭 Tono</label>
+        <label for="tone"><span data-icon="tone"></span> Tono</label>
         <select id="tone">
           <option value="">Automático</option>
           <option value="formal">Formal</option>
@@ -121,7 +125,7 @@
         </select>
       </div>
       <div class="field">
-        <label for="length">📏 Longitud</label>
+        <label for="length"><span data-icon="length"></span> Longitud</label>
         <select id="length">
           <option value="">Automática</option>
           <option value="breve">Breve</option>
@@ -130,7 +134,7 @@
         </select>
       </div>
       <div class="field reply-only">
-        <label for="reply-language">🌐 Responder en</label>
+        <label for="reply-language"><span data-icon="language"></span> Responder en</label>
         <select id="reply-language">
           <option value="auto">Como el correo</option>
           <option value="es">Español</option>
@@ -142,7 +146,7 @@
         </select>
       </div>
       <div class="field reply-only">
-        <label for="versions">🔢 Versiones</label>
+        <label for="versions"><span data-icon="versions"></span> Versiones</label>
         <select id="versions">
           <option value="1">Una</option>
           <option value="2">Dos, para elegir</option>
@@ -152,7 +156,7 @@
     </div>
 
     <div class="field">
-      <label for="chat-title">🏷️ Título del chat (opcional)</label>
+      <label for="chat-title"><span data-icon="title"></span> Título del chat (opcional)</label>
       <input type="text" id="chat-title" placeholder="Si lo dejas vacío, se usa el asunto o el brief">
     </div>
     </details>
@@ -167,16 +171,17 @@
 
   <div class="tabpanel" role="tabpanel" id="panel-prompt" aria-labelledby="tab-prompt" data-modes="create reply">
     <div class="field grow">
-      <label for="prompt">✍️ Prompt a enviar <span class="count" id="prompt-count"></span></label>
+      <label for="prompt"><span data-icon="promptText"></span> Prompt a enviar <span class="count" id="prompt-count"></span></label>
       <div class="mdbar" id="prompt-mdbar">
         <button type="button" data-md="bold" title="Negrita"><b>B</b></button>
         <button type="button" data-md="italic" title="Cursiva"><i>I</i></button>
         <button type="button" data-md="h" title="Encabezado">H</button>
-        <button type="button" data-md="ul" title="Lista con viñetas">•</button>
-        <button type="button" data-md="ol" title="Lista numerada">1.</button>
-        <button type="button" data-md="quote" title="Cita">❝</button>
+        <button type="button" data-md="ul" title="Lista con viñetas"><span data-icon="list"></span></button>
+        <button type="button" data-md="ol" title="Lista numerada"><span data-icon="olist"></span></button>
+        <button type="button" data-md="quote" title="Cita"><span data-icon="quote"></span></button>
         <button type="button" data-md="code" title="Código">&lt;/&gt;</button>
-        <button type="button" data-md="link" title="Enlace">🔗</button>
+        <button type="button" data-md="link" title="Enlace"><span data-icon="link"></span></button>
+        <button type="button" data-emoji title="Emoji" aria-label="Insertar emoji"><span data-icon="emoji"></span></button>
       </div>
       <textarea id="prompt"></textarea>
     </div>
@@ -205,5 +210,7 @@
   </div>
 
   <script src="../common.js"></script>
+  <script src="../icons.js"></script>
+  <script src="../emoji.js"></script>
   <script src="popup.js"></script>
 </body></html>

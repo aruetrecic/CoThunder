@@ -114,7 +114,8 @@ Sustituye a Markdown Here, que dejó de funcionar en las versiones nuevas de Thu
 |---|---|
 | **B I S**, resaltado, `</>`, enlace, cita, listas y tarea | Formato básico, enlace, cita, listas y tareas (iconos propios, también en tema oscuro). |
 | **H ▾** · **Aa ▾** | Títulos 1 a 6 · negrita+cursiva, subíndice, superíndice. |
-| **Insertar ▾** | Imagen, emoji, tabla, bloque de código, regla, lista de definición, nota al pie. |
+| **Emoji** | Selector de emoji con búsqueda en español, categorías y recientes (también en los campos de la ventana). |
+| **Insertar ▾** | Imagen, tabla, bloque de código, regla, lista de definición, nota al pie. |
 | **Avisos ▾** | Avisos: nota, consejo, importante, advertencia, precaución. |
 | **Ordenar** | Alinea tablas, tabula listas y separa bloques en el código fuente, sin cambiar el resultado (**Ctrl+Shift+F**). |
 | **✨ Mejorar con Copilot ▾** | Reescribe el texto seleccionado: más formal, más cercano, más corto, desarrollar, corregir o traducir (Ctrl+Z lo deshace). |
@@ -181,6 +182,10 @@ Análisis detallado (uso en la UPO y usuario general, ENS y riesgos): **[informe
 4. En unos segundos aparece en **[Releases](https://github.com/aruetrecic/CoThunder/releases)** con dos ficheros iguales: `cothunder-X.Y.Z.xpi` y `cothunder.xpi` (nombre fijo, el que enlaza el botón de descarga).
 
 Para **compilar sin publicar**, lanza *Release XPI* a mano desde **Actions** (`workflow_dispatch`): el `.xpi` queda como artefacto del workflow.
+
+## Créditos
+
+Iconos de la interfaz: [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons) de Microsoft (licencia MIT), integrados en la extensión.
 
 ## Desarrollo
 

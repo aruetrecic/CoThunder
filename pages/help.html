@@ -42,6 +42,7 @@
         <li><a href="#idioma">Idioma de la respuesta</a></li>
         <li><a href="#progreso">Progreso y Cancelar</a></li>
         <li><a href="#editor">Editor Markdown</a></li>
+        <li><a href="#emoji">Emoji</a></li>
         <li><a href="#mejorar">Mejorar con Copilot</a></li>
         <li><a href="#plantillas">Prompts y Formatos</a></li>
         <li><a href="#temas">Temas del correo</a></li>
@@ -72,10 +73,10 @@
         <h2>Responder a un correo</h2>
         <ol>
           <li>Abre el correo y pulsa <strong>Preguntar a Copilot</strong>.</li>
-          <li>En la pestaña <strong>⚙️ Opciones</strong> escribe, si quieres, tus <strong>Indicaciones</strong> en tus palabras («acepta, pero propón el jueves»): mandan sobre el resto. Elige también, si quieres, <strong>Agente</strong>, <strong>Prompt</strong> (una plantilla) y <strong>Formato</strong> (estructura).</li>
+          <li>En la pestaña <strong>Opciones</strong> escribe, si quieres, tus <strong>Indicaciones</strong> en tus palabras («acepta, pero propón el jueves»): mandan sobre el resto. Elige también, si quieres, <strong>Agente</strong>, <strong>Prompt</strong> (una plantilla) y <strong>Formato</strong> (estructura).</li>
           <li>En <strong>Más opciones</strong> (plegable; la ventana recuerda si lo dejaste abierto): <strong>Tono</strong>, <strong>Longitud</strong>, <strong>Responder en</strong> (idioma), <strong>Versiones</strong> y <strong>Título del chat</strong>.</li>
           <li>Casillas: <strong>Empezar chat nuevo</strong>, <strong>Incluir mi firma</strong>, <strong>Incluir el correo citado</strong> e <strong>Incluir el hilo</strong> (mensajes anteriores como contexto).</li>
-          <li>En <strong>📜 Prompt</strong> ves y puedes editar exactamente lo que se enviará. Un contador avisa si es tan largo que Copilot podría cortarlo.</li>
+          <li>En <strong>Prompt</strong> ves y puedes editar exactamente lo que se enviará. Un contador avisa si es tan largo que Copilot podría cortarlo.</li>
           <li>Pulsa <strong>Enviar a Copilot</strong> o <kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Copilot se pone delante un momento para escribir y la ventana de CoThunder vuelve al frente con el <a href="#progreso">progreso</a> paso a paso. Los avisos y errores aparecen completos junto al botón Enviar, con su botón de acción (por ejemplo, <em>Ir a Copilot</em> si falta iniciar sesión).</li>
           <li>Se abre la respuesta al remitente, con tu firma si la marcaste. <strong>Regenerar</strong> pide otra versión en un chat nuevo.</li>
         </ol>
@@ -88,8 +89,8 @@
         <h2>Crear un correo nuevo</h2>
         <ol>
           <li>Pulsa <strong>Crear desde Copilot</strong> en la barra principal.</li>
-          <li>En <strong>✍️ Redactar</strong>, describe el correo en <strong>¿Qué quieres crear?</strong>. Añade, si quieres, <strong>Contexto / notas</strong> e <strong>Idioma</strong>.</li>
-          <li>En <strong>✉️ Destinatarios</strong>, Para, CC y CCO admiten varias direcciones (una por línea o separadas por comas, también <code>Nombre &lt;correo&gt;</code>). Las no válidas se marcan en rojo y se avisa antes de enviar.</li>
+          <li>En <strong>Redactar</strong>, describe el correo en <strong>¿Qué quieres crear?</strong>. Añade, si quieres, <strong>Contexto / notas</strong> e <strong>Idioma</strong>.</li>
+          <li>En <strong>Destinatarios</strong>, Para, CC y CCO admiten varias direcciones (una por línea o separadas por comas, también <code>Nombre &lt;correo&gt;</code>). Las no válidas se marcan en rojo y se avisa antes de enviar.</li>
           <li>Envía. Se abre un correo nuevo con el <strong>asunto</strong> y el <strong>cuerpo</strong> generados y los destinatarios.</li>
         </ol>
         <p>En este modo, el selector Prompt muestra tus plantillas <code>Prompt crear - …</code>.</p>
@@ -155,7 +156,8 @@
         <ul>
           <li><strong>H ▾</strong> títulos 1 a 6 · <strong>B</strong> negrita · <strong>I</strong> cursiva · <strong>S</strong> tachado · resaltado · <strong>&lt;/&gt;</strong> código · <strong>Aa ▾</strong> negrita+cursiva, subíndice, superíndice.</li>
           <li>Enlace, cita, lista, lista numerada y tarea.</li>
-          <li><strong>Insertar ▾</strong>: imagen, emoji, tabla, bloque de código, regla, lista de definición y nota al pie. <strong>Avisos ▾</strong>: nota, consejo, importante, advertencia y precaución.</li>
+          <li><strong>Emoji</strong>: abre el selector de emoji (ver <a href="#emoji">abajo</a>).</li>
+          <li><strong>Insertar ▾</strong>: imagen, tabla, bloque de código, regla, lista de definición y nota al pie. <strong>Avisos ▾</strong>: nota, consejo, importante, advertencia y precaución.</li>
           <li><strong>Ordenar</strong> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>): alinea tablas, tabula listas y separa bloques sin cambiar el resultado. Se deshace con <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</li>
           <li><strong>Mejorar con Copilot ▾</strong>: ver <a href="#mejorar">abajo</a>.</li>
           <li><strong>Plantillas ▾</strong>: inserta tus plantillas de formato en el cursor.</li>
@@ -169,6 +171,17 @@
           <li>Puedes escribir cada línea de una lista o de una tabla con Enter: se unen en una sola.</li>
           <li>Al pegar desde una web o desde otro correo, el formato se convierte a Markdown.</li>
           <li>Si Thunderbird está en tema oscuro, la barra también. La vista previa sigue en blanco: es el correo tal como lo verá el destinatario.</li>
+        </ul>
+      </section>
+
+      <section id="emoji">
+        <h2>Emoji en tus textos</h2>
+        <p>El botón <strong>Emoji</strong> de la barra del editor, y el de los campos <strong>Indicaciones</strong>, <strong>¿Qué quieres crear?</strong> y <strong>Prompt a enviar</strong> de la ventana, abren un selector con más de 170 emoji por categorías (habituales, caras, gestos, trabajo y oficina, símbolos, celebración, naturaleza).</p>
+        <ul>
+          <li><strong>Busca en español</strong>, sin tildes: «gracias», «reunión», «ok», «urgente»…</li>
+          <li>Arriba aparecen tus <strong>recientes</strong>.</li>
+          <li>Con el teclado: flecha abajo desde la búsqueda, flechas para moverte, <kbd>Enter</kbd> para insertar y <kbd>Escape</kbd> para cerrar.</li>
+          <li>Se inserta el emoji real (😀) donde estaba el cursor; los programas de correo actuales lo muestran bien.</li>
         </ul>
       </section>
 

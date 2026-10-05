@@ -48,7 +48,6 @@
     { label: "svg:task", title: "Tarea", kind: "prefix", value: "- [ ] " },
     { menu: "svg:plus", title: "Insertar", items: [
       { label: "🖼", title: "Imagen", kind: "image" },
-      { label: "😀", title: "Emoji", kind: "insert", value: ":smile:" },
       { label: "▦", title: "Tabla", kind: "block", template: "| Col 1 | Col 2 |\n| --- | --- |\n|  |  |" },
       { label: "{}", title: "Bloque de código", kind: "block", template: "```\n\n```" },
       { label: "―", title: "Regla horizontal", kind: "block", template: "---" },
@@ -62,7 +61,7 @@
       { label: "⚠", title: "Advertencia", kind: "block", template: "> [!WARNING]\n> " },
       { label: "🛑", title: "Precaución", kind: "block", template: "> [!CAUTION]\n> " },
     ] },
-    { label: "svg:format", title: "Ordenar el Markdown: alinea tablas, tabula listas y separa bloques (Ctrl+Shift+F)", kind: "format" },
+    { label: "svg:tidy", title: "Ordenar el Markdown: alinea tablas, tabula listas y separa bloques (Ctrl+Shift+F)", kind: "format" },
   ];
 
   let active = false;
@@ -243,7 +242,7 @@
     "border:1px solid var(--ct-line);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.18);}" +
     T + " [role=menuitem]{border-color:transparent;text-align:left;}" +
     T + " button{display:inline-flex;align-items:center;gap:2px;min-height:24px;}" +
-    T + " svg{fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;}" +
+    T + " svg.ct-icon{flex:none;}" +
     T + " .ct-status{flex:1 1 100%;font:12px sans-serif;color:var(--ct-fg);padding:2px 4px;}" +
     T + " .ct-status:empty{display:none;}";
 
@@ -278,38 +277,7 @@
     }
   }
 
-  // Iconos SVG propios (16×16, trazo en currentColor: siguen el tema claro/oscuro de la barra y se
-  // ven igual en todos los sistemas, a diferencia de los emoji). Se crean con createElementNS.
-  const SVG_NS = "http://www.w3.org/2000/svg";
-  const ICONS = {
-    highlight: ["M3 13.5h6", "M5 11.5l1-3 5.5-5.5 2 2L8 10.5l-3 1z"],
-    link: ["M6.5 9.5l3-3", "M7.5 4.5l1-1a2.5 2.5 0 013.5 3.5l-1 1", "M8.5 11.5l-1 1A2.5 2.5 0 014 9l1-1"],
-    quote: ["M3 12V9.5C3 7 4 5.5 6 4.5", "M3 9.5h3V12H3z", "M9 12V9.5c0-2.5 1-4 3-5", "M9 9.5h3V12H9z"],
-    list: ["M6 4h8", "M6 8h8", "M6 12h8", "M2.5 4h.5", "M2.5 8h.5", "M2.5 12h.5"],
-    olist: ["M6.5 4h7.5", "M6.5 8h7.5", "M6.5 12h7.5", "M2.5 2.5L3.5 2v4", "M2 10.5c0-.8 2.5-.8 2 .5L2 13.5h2.5"],
-    task: ["M2.5 2.5h11v11h-11z", "M5 8l2 2 4-4.5"],
-    plus: ["M2.5 2.5h11v11h-11z", "M8 5v6", "M5 8h6"],
-    info: ["M8 1.8a6.2 6.2 0 100 12.4A6.2 6.2 0 008 1.8z", "M8 7v4.5", "M8 4.6v.1"],
-    format: ["M2 3.5h12", "M5 6.5h9", "M5 9.5h9", "M2 12.5h12", "M2 6l1.5 1.5L2 9"],
-    template: ["M4 1.8h5l3 3v9.4H4z", "M9 1.8v3h3", "M6 8h4", "M6 10.5h4"],
-    palette: ["M8 1.8a6.2 6.2 0 000 12.4c1 0 1.5-.6 1.5-1.3 0-.9-.8-1.1-.8-2 0-.6.5-1.1 1.2-1.1H12a2.2 2.2 0 002.2-2.2C14.2 4.4 11.4 1.8 8 1.8z", "M5 7.2v.1", "M7 4.7v.1", "M10 4.9v.1"],
-    sparkle: ["M8 1.8l1.4 4.3 4.3 1.4-4.3 1.4L8 13.2 6.6 8.9 2.3 7.5l4.3-1.4z", "M13 11.5v3", "M11.5 13h3"],
-    help: ["M8 1.8a6.2 6.2 0 100 12.4A6.2 6.2 0 008 1.8z", "M6.2 6.2a1.9 1.9 0 113 1.6c-.7.4-1.2.8-1.2 1.6", "M8 11.4v.1"]
-  };
-  function iconEl(name) {
-    const svg = document.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("viewBox", "0 0 16 16");
-    svg.setAttribute("width", "16");
-    svg.setAttribute("height", "16");
-    svg.setAttribute("aria-hidden", "true");
-    svg.setAttribute("focusable", "false");
-    for (const d of ICONS[name] || []) {
-      const p = document.createElementNS(SVG_NS, "path");
-      p.setAttribute("d", d);
-      svg.appendChild(p);
-    }
-    return svg;
-  }
+  // Iconos: Fluent UI System Icons (icons.js, inyectado antes en el compose script, mismo scope).
   // Contenido de un botón: "svg:nombre" pinta el icono; el resto es texto. suffix va detrás (▾).
   function setButtonContent(btn, label, suffix) {
     btn.replaceChildren();
@@ -418,6 +386,7 @@
   // vuelve al editor); Tab cierra el menú abierto.
   function onToolbarKey(e) {
     const target = e.target;
+    if (target.closest(".ct-emoji")) return;
     const popup = target.closest("[role=menu]");
     if (popup) {
       const items = Array.from(popup.querySelectorAll("[role=menuitem]"));
@@ -477,6 +446,35 @@
       }
     });
 
+    // Emoji: selector con búsqueda; inserta el carácter real donde estaba el cursor.
+    const emojiWrap = document.createElement("span");
+    emojiWrap.style.cssText = "position:relative;display:inline-flex;";
+    emojiPicker = createEmojiPicker({
+      onPick: (ch) => { returnToEditor(); insertMd(ch); },
+      onClose: () => { if (inToolbar(document.activeElement)) emojiBtn.focus(); emojiBtn.setAttribute("aria-expanded", "false"); },
+      getRecent: () => messenger.storage.local.get({ emojiRecent: [] }).then((r) => r.emojiRecent),
+      saveRecent: (list) => { messenger.storage.local.set({ emojiRecent: list }).catch(() => {}); }
+    });
+    emojiPicker.el.style.top = "100%";
+    emojiPicker.el.style.left = "0";
+    const emojiBtn = makeButton("svg:emoji", "Emoji", () => {
+      if (emojiPicker.isOpen()) { emojiPicker.close(); return; }
+      closeMenus(null);
+      // Guarda el cursor del editor: el foco pasa a la búsqueda del selector.
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount && bodyEl.contains(sel.anchorNode) && !inToolbar(sel.anchorNode)) savedRange = sel.getRangeAt(0).cloneRange();
+      emojiBtn.setAttribute("aria-expanded", "true");
+      emojiPicker.open();
+      // Si se sale por la derecha de la barra, se alinea a la derecha del botón.
+      emojiPicker.el.style.left = "0"; emojiPicker.el.style.right = "auto";
+      const bar = toolbarEl.getBoundingClientRect(), r = emojiPicker.el.getBoundingClientRect();
+      if (r.right > bar.right) { emojiPicker.el.style.left = "auto"; emojiPicker.el.style.right = "0"; }
+    });
+    emojiBtn.setAttribute("aria-haspopup", "dialog");
+    emojiBtn.setAttribute("aria-expanded", "false");
+    emojiWrap.append(emojiBtn, emojiPicker.el);
+    toolbar.appendChild(emojiWrap);
+
     improveMenu = makeMenu("svg:sparkle", "Mejorar con Copilot el texto seleccionado");
     toolbar.appendChild(improveMenu.wrap);
     loadImproveMenu();
@@ -508,6 +506,7 @@
   // El background pone el prompt y entrega la respuesta con "cothunder-improved"; el texto nuevo
   // sustituye la selección guardada con insertHTML, así que Ctrl+Z lo deshace.
   let improveMenu = null;
+  let emojiPicker = null;
   let statusEl = null;
   let statusTimer = null;
   let improving = null; // { token, range }
@@ -852,7 +851,7 @@
 
   // Cierra los menús de la barra al pulsar fuera de ellos o con Escape.
   function onOutsideMenu(e) {
-    if (toolbarEl && !toolbarEl.contains(e.target)) closeMenus(null);
+    if (toolbarEl && !toolbarEl.contains(e.target)) { closeMenus(null); if (emojiPicker) emojiPicker.close(); }
   }
   // Atajos Markdown: sustituyen a los de formato de Thunderbird (cuya negrita/cursiva HTML se
   // perdería al convertir el correo). Ctrl+B/I/K/E y Ctrl+1…6 para títulos.
@@ -966,6 +965,7 @@
     themeMenu = null;
     templateMenu = null;
     improveMenu = null;
+    emojiPicker = null;
     statusEl = null;
     improving = null;
     active = false;

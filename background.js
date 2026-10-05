@@ -1,7 +1,7 @@
 "use strict";
 
 // --- Editor Markdown en la ventana de redacción -------------------------------
-const COMPOSE_SCRIPT = { id: "cothunder-compose", js: ["markdown.js", "themes.js", "content-compose.js"], css: ["compose.css"] };
+const COMPOSE_SCRIPT = { id: "cothunder-compose", js: ["markdown.js", "themes.js", "icons.js", "emoji.js", "content-compose.js"], css: ["compose.css"] };
 
 // Registro idempotente: solo registra si falta. NO desregistra en cada despertar del
 // event page: ese hueco entre unregister y register dejaba sin editor a las redacciones

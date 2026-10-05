@@ -1,6 +1,7 @@
 "use strict";
 (async () => {
   const $ = (id) => document.getElementById(id);
+  hydrateIcons();
   // Mensaje de la operación junto a Enviar. «Listo» sin más no se muestra (no aporta). action:
   // { label, run } añade un botón (p. ej. «Ir a Copilot» si falta iniciar sesión).
   const setStatus = (cls, text, action) => {
@@ -201,6 +202,44 @@
       });
     });
   };
+  // Selector de emoji (emoji.js) para los campos de texto: uno compartido, junto al botón pulsado.
+  // Inserta el emoji en el cursor del campo y avisa con «input» (se rehace el prompt).
+  let emojiTarget = null, emojiOpener = null;
+  const picker = createEmojiPicker({
+    onPick: (ch) => {
+      const ta = emojiTarget;
+      if (!ta) return;
+      ta.focus();
+      ta.setRangeText(ch, ta.selectionStart, ta.selectionEnd, "end");
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    },
+    onClose: () => { if (emojiOpener) emojiOpener.setAttribute("aria-expanded", "false"); },
+    getRecent: () => messenger.storage.local.get({ emojiRecent: [] }).then((r) => r.emojiRecent),
+    saveRecent: (list) => { messenger.storage.local.set({ emojiRecent: list }).catch(() => {}); }
+  });
+  picker.el.style.position = "fixed";
+  document.body.appendChild(picker.el);
+  const openEmoji = (btn, ta) => {
+    if (picker.isOpen() && emojiOpener === btn) { picker.close(); return; }
+    emojiTarget = ta; emojiOpener = btn;
+    btn.setAttribute("aria-expanded", "true");
+    picker.open();
+    const r = btn.getBoundingClientRect(), w = picker.el.offsetWidth, h = picker.el.offsetHeight;
+    picker.el.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + "px";
+    picker.el.style.top = (r.bottom + 4 + h > window.innerHeight ? Math.max(8, r.top - h - 4) : r.bottom + 4) + "px";
+  };
+  const wireEmoji = (btn, ta) => {
+    if (!btn || !ta) return;
+    btn.setAttribute("aria-haspopup", "dialog");
+    btn.setAttribute("aria-expanded", "false");
+    btn.addEventListener("mousedown", (e) => e.preventDefault());
+    btn.addEventListener("click", () => openEmoji(btn, ta));
+  };
+  wireEmoji($("prompt-mdbar") && $("prompt-mdbar").querySelector("[data-emoji]"), $("prompt"));
+  wireEmoji($("brief-mdbar") && $("brief-mdbar").querySelector("[data-emoji]"), $("create-brief"));
+  document.querySelectorAll("[data-emoji-for]").forEach((b) => wireEmoji(b, $(b.dataset.emojiFor)));
+  document.addEventListener("mousedown", (e) => { if (picker.isOpen() && !picker.el.contains(e.target)) picker.close(); });
+
   setupMdBar($("prompt-mdbar"), $("prompt"));
   setupMdBar($("brief-mdbar"), $("create-brief"));
 

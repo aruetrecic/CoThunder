@@ -3,6 +3,14 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.20.0] — 2026-10-05
+
+### Añadido
+- **Selector de emoji** para tus textos: en la barra del editor y en los campos de la ventana (Indicaciones, ¿Qué quieres crear?, Prompt). Más de 170 emoji por categorías, **búsqueda en español** («gracias», «reunión», «ok») y **recientes**. Inserta el emoji real donde está el cursor.
+
+### Cambiado
+- **Iconos profesionales en la interfaz**: la ventana y la barra del editor usan los iconos **Fluent** de Microsoft (el estilo de Microsoft 365 y Copilot) en lugar de emoji decorativos. Van integrados en la extensión, sin descargas.
+
 ## [2.19.0] — 2026-10-05
 
 ### Añadido

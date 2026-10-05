@@ -67,7 +67,7 @@ Todo lo de las versiones 2.7–2.12 se ha probado en Edge headless, no dentro de
 - [x] Errores completos junto a Enviar, con acción (v2.19.0).
 - [x] Un solo indicador de estado y un solo «Abrir Copilot» (v2.19.0).
 - [ ] Pestaña Prompt: resumen de lo que se envía y el texto completo plegado. **M**
-- [ ] Iconos SVG en lugar de emoji en las etiquetas de la ventana (aspecto profesional). Los emoji, para el texto de los usuarios. **B**
+- [x] Iconos Fluent en la interfaz y selector de emoji para el texto de los usuarios (v2.20.0).
 - [ ] «Más opciones» plegado con el resumen de lo elegido («Formal · Breve · Inglés»). **B**
 - [ ] Atajos de teclado globales: preguntar a Copilot y resumir el correo abierto. **B**
 - [ ] Cerrar la ventana sola al abrirse la respuesta (opcional). **B**
