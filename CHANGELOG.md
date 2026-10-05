@@ -3,6 +3,14 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.17.1] — 2026-10-05
+
+### Añadido
+- Botón **Abrir Copilot** junto al selector de agente de la ventana y en Opciones › General › Agentes de Copilot.
+
+### Cambiado
+- **↻** y **Detectar agentes** abren Copilot si no está abierto y esperan a que cargue su panel antes de leer los agentes. Si falta iniciar sesión, lo dicen.
+
 ## [2.17.0] — 2026-10-05
 
 ### Añadido

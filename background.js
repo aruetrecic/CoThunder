@@ -689,21 +689,41 @@ messenger.runtime.onMessage.addListener(async (msg, sender) => {
     }
   }
 
-  if (msg.type === "refreshAgents") {
-    let responded = false;
-    for (const id of await findCopilotTabIds()) {
-      try {
-        const res = await messenger.tabs.sendMessage(id, { type: "getAgents" });
-        if (res && res.agents) {
-          responded = true;
-          if (res.agents.length) return { ok: true, agents: res.agents };
-        }
-      } catch (_) {}
-    }
-    // Respondió pero sin agentes -> lista vacía (no error); nadie respondió -> Copilot no está cargado.
-    return responded ? { ok: true, agents: [] } : { ok: false, reason: "no-copilot" };
-  }
+  if (msg.type === "refreshAgents") return refreshAgents(!!msg.open);
 });
+
+// Pide los agentes a la ventana de Copilot. Respondió sin agentes -> lista vacía (no error);
+// nadie respondió -> Copilot no está cargado.
+async function askAgents() {
+  let responded = false;
+  for (const id of await findCopilotTabIds()) {
+    try {
+      const res = await messenger.tabs.sendMessage(id, { type: "getAgents" });
+      if (res && res.agents) {
+        responded = true;
+        if (res.agents.length) return { ok: true, agents: res.agents };
+      }
+    } catch (_) {}
+  }
+  return responded ? { ok: true, agents: [] } : { ok: false, reason: "no-copilot" };
+}
+
+// Con open: si Copilot no está abierto (o aún no muestra agentes), lo abre y espera hasta 25 s a que
+// cargue su panel. Si no lo consigue, dice por qué (sin sesión o aún cargando).
+async function refreshAgents(open) {
+  let res = await askAgents();
+  if (!open || (res.ok && res.agents.length)) return res;
+  await ensureCopilotTab();
+  const start = Date.now();
+  while (Date.now() - start < 25000) {
+    await new Promise((r) => setTimeout(r, 1500));
+    res = await askAgents();
+    if (res.ok && res.agents.length) return res;
+    const st = await checkCopilot();
+    if (st.state === "login") return { ok: false, reason: "login" };
+  }
+  return res.ok ? res : { ok: false, reason: (await checkCopilot()).state === "login" ? "login" : "loading" };
+}
 
 // Menú contextual «CoThunder» en la lista de mensajes y en el botón del visor. Se rehace en cada
 // arranque del event page (removeAll + create: ids fijos, sin duplicados) y el submenú de

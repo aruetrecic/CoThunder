@@ -344,18 +344,26 @@
     return;
   }
 
-  // Refresco manual de la lista de agentes.
+  $("openCopilot").addEventListener("click", async () => {
+    await messenger.runtime.sendMessage({ type: "openCopilot" }).catch(() => {});
+    setStatus("", "Copilot abierto; pulsa ↻ cuando haya cargado");
+  });
+
+  // Refresco manual de la lista de agentes (abre Copilot si hace falta y espera a que cargue).
   $("refreshAgents").addEventListener("click", async () => {
     const prev = $("agent").value;
     $("refreshAgents").disabled = true;
+    setStatus("busy", "Buscando agentes en Copilot…");
     let res;
-    try { res = await messenger.runtime.sendMessage({ type: "refreshAgents" }); } catch (_) { res = { ok: false }; }
+    try { res = await messenger.runtime.sendMessage({ type: "refreshAgents", open: true }); } catch (_) { res = { ok: false }; }
     if (res && res.ok) {
       populateAgents(res.agents || [], prev);
       setStatus("", (res.agents || []).length ? "Agentes actualizados: " + res.agents.length
         : "Copilot no muestra agentes en su panel; añádelos a mano en Opciones › General");
     } else {
-      setStatus("err", "Abre Copilot para actualizar agentes (o añádelos a mano en Opciones)");
+      setStatus("err", res && res.reason === "login"
+        ? "Inicia sesión en Copilot y vuelve a pulsar ↻"
+        : "Copilot aún está cargando; vuelve a pulsar ↻ en unos segundos");
     }
     $("refreshAgents").disabled = false;
   });

@@ -83,15 +83,22 @@ mark { background-color: #FCC100; }
     }));
   };
   renderDetected((await messenger.storage.local.get({ agents: [] })).agents);
+  $("openCopilot").addEventListener("click", async () => {
+    await messenger.runtime.sendMessage({ type: "openCopilot" }).catch(() => {});
+    $("detectMsg").textContent = "Copilot abierto. Cuando haya cargado, pulsa «Detectar agentes».";
+  });
+  // Detectar: abre Copilot si hace falta y espera a que cargue su panel.
   $("detectAgents").addEventListener("click", async () => {
     $("detectAgents").disabled = true;
-    $("detectMsg").textContent = "Buscando…";
-    const res = await messenger.runtime.sendMessage({ type: "refreshAgents" }).catch(() => null);
+    $("detectMsg").textContent = "Abriendo Copilot y buscando agentes…";
+    const res = await messenger.runtime.sendMessage({ type: "refreshAgents", open: true }).catch(() => null);
     if (res && res.ok) {
       renderDetected(res.agents);
-      $("detectMsg").textContent = res.agents.length ? "Listo." : "Copilot no muestra agentes en su panel: añádelos a mano.";
+      $("detectMsg").textContent = res.agents.length ? "Listo: " + res.agents.length + " agentes." : "Copilot no muestra agentes en su panel: añádelos a mano abajo.";
+    } else if (res && res.reason === "login") {
+      $("detectMsg").textContent = "Inicia sesión en la ventana de Copilot y vuelve a pulsar «Detectar agentes».";
     } else {
-      $("detectMsg").textContent = "Abre Copilot (botón «Preguntar a Copilot») y vuelve a intentarlo.";
+      $("detectMsg").textContent = "Copilot aún está cargando. Espera unos segundos y vuelve a intentarlo.";
     }
     $("detectAgents").disabled = false;
   });

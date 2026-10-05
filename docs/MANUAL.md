@@ -67,7 +67,7 @@ En este modo, el selector **Prompt** muestra las plantillas pensadas para crear 
 
 ## 4. Agentes
 
-CoThunder detecta los agentes que Copilot muestra en su **panel lateral** y guarda su enlace. Pulsa **↻** en la ventana (o **Detectar ahora** en Opciones › General) para actualizar la lista. Recuerda el último agente que usaste.
+CoThunder detecta los agentes que Copilot muestra en su **panel lateral** y guarda su enlace. Pulsa **↻** en la ventana (o **Detectar agentes** en Opciones › General) para actualizar la lista: si Copilot no está abierto, lo abre y espera a que cargue. **Abrir Copilot**, al lado, solo abre Copilot (por ejemplo, para iniciar sesión antes). Recuerda el último agente que usaste.
 
 **Si un agente no aparece**, añádelo a mano en **Opciones › General › Agentes de Copilot**: un nombre y su enlace. Para conseguir el enlace, abre `https://m365.cloud.microsoft/chat` en el navegador, entra en el agente desde el panel izquierdo y copia la dirección (suele contener `titleId=`). Con el enlace, CoThunder abre el agente aunque no esté visible en el panel.
 

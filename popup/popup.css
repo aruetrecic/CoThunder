@@ -75,7 +75,7 @@ select, textarea {
   border-radius: 6px;
 }
 
-#refreshAgents {
+#refreshAgents, #openCopilot {
   flex: none;
   padding: 5px 10px;
   font: inherit;
