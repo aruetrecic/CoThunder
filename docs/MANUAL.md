@@ -31,6 +31,8 @@ CoThunder añade dos botones y un menú:
 
 La primera vez que abras una de las dos ventanas, verás un aviso de que el contenido se envía a Microsoft 365 Copilot. Pulsa **Entendido** para continuar; no vuelve a aparecer.
 
+Arriba de la ventana se indica si **Copilot está abierto y listo**, cargando, sin sesión o cerrado, con un botón para abrirlo. Si está cerrado, se abre solo en segundo plano (se puede desactivar en Opciones › General).
+
 Ambas ventanas necesitan que tengas **sesión iniciada en Copilot**. La primera vez se abre una ventana de Copilot para que inicies sesión; hazlo y deja esa ventana abierta.
 
 ## 2. Responder a un correo (Preguntar a Copilot)

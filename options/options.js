@@ -46,6 +46,7 @@ mark { background-color: #FCC100; }
   $("promptTemplate").value = cfg.promptTemplate;
   $("newChatByDefault").checked = cfg.newChatByDefault;
   $("mdEditorDefault").checked = cfg.mdEditorDefault;
+  $("autoOpenCopilot").checked = cfg.autoOpenCopilot;
   $("emailAccent").value = cfg.emailAccent;
   $("emailTheme").value = cfg.emailTheme;
   $("emailCustomCss").value = cfg.emailCustomCss;
@@ -160,6 +161,7 @@ mark { background-color: #FCC100; }
       promptTemplate: $("promptTemplate").value,
       newChatByDefault: $("newChatByDefault").checked,
       mdEditorDefault: $("mdEditorDefault").checked,
+      autoOpenCopilot: $("autoOpenCopilot").checked,
       emailAccent: $("emailAccent").value,
       emailTheme: $("emailTheme").value,
       emailCustomCss: $("emailCustomCss").value,

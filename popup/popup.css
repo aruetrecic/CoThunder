@@ -19,6 +19,18 @@ body {
   gap: 10px;
 }
 
+/* Estado de Copilot: punto de color + texto + acción (abrir o ir a Copilot). */
+.copilotbar { flex: none; display: flex; align-items: center; gap: 8px; font-size: 12px;
+  padding: 5px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.copilotbar .cdot { width: 10px; height: 10px; border-radius: 50%; background: #888; flex: none; }
+.copilotbar[data-state="ok"] .cdot { background: #26a269; }
+.copilotbar[data-state="loading"] .cdot, .copilotbar[data-state="opening"] .cdot { background: #e5a50a; }
+.copilotbar[data-state="login"] .cdot, .copilotbar[data-state="closed"] .cdot { background: #c01c28; }
+#copilotText { flex: 1; }
+#copilotAction { flex: none; padding: 3px 10px; font: inherit; font-weight: 600; color: inherit; background: transparent;
+  border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+#copilotAction:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+#copilotAction[hidden] { display: none; }
 .notice { display: flex; align-items: center; gap: 8px; font-size: 12px;
   padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
   background: color-mix(in srgb, var(--accent) 10%, transparent); }

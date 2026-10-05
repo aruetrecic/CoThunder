@@ -112,6 +112,8 @@ const DEFAULTS = {
   newChatByDefault: true,
   // Editor Markdown en la ventana de redacción: activo por defecto (alternable con el botón/atajo).
   mdEditorDefault: true,
+  // Al abrir la ventana de CoThunder, abrir Copilot si está cerrado (sin quitarle el foco a la ventana).
+  autoOpenCopilot: true,
   // Perfil del usuario (el mismo en Thunderbird y en Copilot): contexto para enriquecer las respuestas.
   userProfile: { name: "", role: "", org: "", about: "", style: "" },
   // Color de acento del correo (encabezados, tablas y citas del cuerpo Markdown maquetado).

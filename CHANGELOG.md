@@ -3,6 +3,12 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.18.0] — 2026-10-05
+
+### Añadido
+- **Estado de Copilot al entrar**: la ventana indica si Copilot está abierto y listo, cargando, sin sesión o cerrado, con el botón para abrirlo o ir a él. Se actualiza solo.
+- **Apertura automática**: si Copilot está cerrado, se abre en segundo plano al abrir la ventana de CoThunder, que sigue delante. Se puede desactivar en Opciones › General.
+
 ## [2.17.1] — 2026-10-05
 
 ### Añadido

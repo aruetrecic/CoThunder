@@ -659,7 +659,12 @@ messenger.runtime.onMessage.addListener(async (msg, sender) => {
     return { actions: Object.entries(IMPROVE_ACTIONS).map(([id, a]) => ({ id, label: a.label })) };
   }
   if (msg.type === "openHelp") { await openHelp(msg.anchor); return { ok: true }; }
-  if (msg.type === "openCopilot") { await ensureCopilotTab(); return { ok: true }; }
+  if (msg.type === "openCopilot") {
+    await ensureCopilotTab();
+    // Apertura automática: la ventana que lo pidió vuelve al frente para no quedar tapada.
+    if (msg.returnFocusTo != null) messenger.windows.update(msg.returnFocusTo, { focused: true }).catch(() => {});
+    return { ok: true };
+  }
   if (msg.type === "checkCopilot") return checkCopilot();
   if (msg.type === "openReplyWindow") { await openReplyWindow(msg.messageId); return { ok: true }; }
   if (msg.type === "exportMarkdown") { await openExportWindow(msg.ids); return { ok: true }; }

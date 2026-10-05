@@ -344,6 +344,50 @@
     return;
   }
 
+  // --- Estado de Copilot: se comprueba al entrar y cada pocos segundos mientras la ventana está
+  // abierta. Si está cerrado y el ajuste lo permite, se abre solo, devolviendo el foco aquí. ---
+  const COPILOT_STATES = {
+    ok: ["Copilot abierto y listo", ""],
+    login: ["Copilot está abierto, pero falta iniciar sesión", "Ir a Copilot"],
+    loading: ["Copilot está cargando…", ""],
+    closed: ["Copilot no está abierto", "Abrir Copilot"],
+    opening: ["Abriendo Copilot en segundo plano…", ""]
+  };
+  const showCopilot = (state) => {
+    const [text, action] = COPILOT_STATES[state] || ["No se pudo comprobar Copilot", "Abrir Copilot"];
+    $("copilotBar").dataset.state = state;
+    $("copilotText").textContent = text;
+    $("copilotAction").textContent = action || "Abrir Copilot";
+    $("copilotAction").hidden = !action;
+  };
+  let thisWindowId = null;
+  messenger.windows.getCurrent().then((w) => { thisWindowId = w.id; }).catch(() => {});
+  const openCopilot = (keepFocus) => messenger.runtime.sendMessage({
+    type: "openCopilot", returnFocusTo: keepFocus ? thisWindowId : null
+  }).catch(() => {});
+  let copilotTimer = null;
+  const pollCopilot = async () => {
+    const res = await messenger.runtime.sendMessage({ type: "checkCopilot" }).catch(() => null);
+    const state = (res && res.state) || "closed";
+    if ($("copilotBar").dataset.state !== "opening" || state !== "closed") showCopilot(state);
+    clearTimeout(copilotTimer);
+    copilotTimer = setTimeout(pollCopilot, state === "ok" ? 10000 : 3000);
+    return state;
+  };
+  $("copilotAction").addEventListener("click", () => {
+    showCopilot("opening");
+    openCopilot(false);
+    setTimeout(pollCopilot, 1500);
+  });
+  pollCopilot().then(async (state) => {
+    if (state !== "closed") return;
+    const { autoOpenCopilot } = await messenger.storage.local.get({ autoOpenCopilot: true });
+    if (!autoOpenCopilot) return;
+    showCopilot("opening");
+    await openCopilot(true);
+    setTimeout(pollCopilot, 1500);
+  });
+
   $("openCopilot").addEventListener("click", async () => {
     await messenger.runtime.sendMessage({ type: "openCopilot" }).catch(() => {});
     setStatus("", "Copilot abierto; pulsa ↻ cuando haya cargado");
