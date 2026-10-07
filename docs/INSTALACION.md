@@ -18,7 +18,7 @@ En Thunderbird, ve a **Herramientas › Complementos y temas**.
 
 En el **Administrador de complementos**, pulsa el engranaje **⚙** junto a *Administre sus extensiones* y elige **Instalar complemento desde archivo…**.
 
-![Engranaje del Administrador de complementos](instalacion/0025_install_cothunder.png)
+![Menú del engranaje › Instalar complemento desde archivo…](instalacion/0026_install_cothunder.png)
 
 Selecciona `cothunder.xpi` en *Descargas* y pulsa **Abrir**.
 
