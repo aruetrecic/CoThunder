@@ -1,6 +1,6 @@
 # Manual de uso de CoThunder
 
-Guía paso a paso para usar CoThunder en Thunderbird 140 o superior. Para instalar y ver las características, consulta el [README](../README.md).
+Guía paso a paso para usar CoThunder en Thunderbird 140 o superior. Para instalar, sigue la [guía de instalación](INSTALACION.md); las características están en el [README](../README.md).
 
 ## Índice
 

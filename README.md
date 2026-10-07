@@ -53,6 +53,8 @@ La extensión no llama a ninguna API: pilota la web de Copilot en una ventana pr
 2. En Thunderbird: **Herramientas › Complementos y temas › ⚙ › Instalar complemento desde archivo…** y elige el fichero.
 3. Pulsa cualquier botón de CoThunder. La primera vez, inicia sesión en Copilot en la ventana que se abre.
 
+Guía con capturas: [docs/INSTALACION.md](docs/INSTALACION.md).
+
 Para **actualizar**, repite los pasos 1 y 2 con la versión nueva: se conservan tus ajustes y plantillas. Requiere **Thunderbird ESR 140 o superior**.
 
 ## Uso rápido
