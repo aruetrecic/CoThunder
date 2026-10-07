@@ -380,6 +380,13 @@ test("renderMarkdown: tabla con líneas en blanco entre filas (estilo Copilot)",
   );
 });
 
+test("renderMarkdown: lista con líneas en blanco entre elementos (estilo Copilot) es una sola lista", () => {
+  assert.equal(
+    renderMarkdown("1. a\n\n2. b\n\n   - b1\n\n3. c\n\nFin"),
+    "<ol><li>a</li><li>b<ul><li>b1</li></ul></li><li>c</li></ol>\n<p>Fin</p>"
+  );
+});
+
 // --- parseCss (motor de temas CSS) -------------------------------------
 
 test("parseCss: regla simple", () => {

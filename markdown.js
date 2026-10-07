@@ -350,6 +350,16 @@ function taskItemHtml(text) {
   return (checked ? "☑" : "☐") + " " + renderInline(t[2]);
 }
 
+// Salta líneas en blanco si la siguiente con contenido sigue la lista (marcador con
+// indentación >= minIndent); si no, deja `i` donde estaba y la lista termina ahí.
+// Copilot separa los elementos con una línea en blanco: sin esto, cada elemento
+// sería una lista aparte y las numeradas saldrían 1, 1, 1…
+function skipBlanksInList(lines, i, minIndent) {
+  if (i >= lines.length || !/^\s*$/.test(lines[i])) return i;
+  const k = nextNonBlank(lines, i);
+  return k < lines.length && isListMarkerLine(lines[k]) && listMarkerInfo(lines[k]).indent >= minIndent ? k : i;
+}
+
 // Parsea una lista (anidada por indentación) a partir de lines[start].
 // Devuelve el HTML de la lista y el índice tras el último renglón consumido.
 function parseList(lines, start) {
@@ -362,11 +372,11 @@ function parseList(lines, start) {
     const info = listMarkerInfo(lines[i]);
     let itemHtml = taskItemHtml(info.text);
     if (itemHtml === null) itemHtml = renderInline(info.text);
-    i++;
+    i = skipBlanksInList(lines, i + 1, baseIndent);
     if (i < lines.length && isListMarkerLine(lines[i]) && listMarkerInfo(lines[i]).indent > baseIndent) {
       const nested = parseList(lines, i);
       itemHtml += nested.html;
-      i = nested.i;
+      i = skipBlanksInList(lines, nested.i, baseIndent);
     }
     items.push(`<li>${itemHtml}</li>`);
   }
