@@ -400,6 +400,7 @@
   const COPILOT_STATES = {
     ok: ["Copilot abierto y listo", ""],
     login: ["Copilot está abierto, pero falta iniciar sesión", "Ir a Copilot"],
+    cookies: ["Thunderbird tiene las cookies desactivadas: actívalas en Ajustes › Privacidad y seguridad para iniciar sesión en Copilot", ""],
     loading: ["Copilot está cargando…", ""],
     closed: ["Copilot no está abierto", "Abrir Copilot"],
     opening: ["Abriendo Copilot en segundo plano…", ""]
@@ -451,8 +452,8 @@
       setStatus("", (res.agents || []).length ? "Agentes actualizados: " + res.agents.length
         : "Copilot no muestra agentes en su panel; añádelos a mano en Opciones › General");
     } else {
-      setStatus("err", res && res.reason === "login"
-        ? "Inicia sesión en Copilot y vuelve a pulsar ↻"
+      setStatus("err", res && res.reason === "login" ? "Inicia sesión en Copilot y vuelve a pulsar ↻"
+        : res && res.reason === "cookies" ? copilotErrorText("cookies")
         : "Copilot aún está cargando; vuelve a pulsar ↻ en unos segundos");
     }
     $("refreshAgents").disabled = false;

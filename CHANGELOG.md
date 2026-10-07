@@ -3,6 +3,12 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.20.1] — 2026-10-07
+
+### Corregido
+- **Listas numeradas que salían «1, 1, 1…»** en la vista previa y en el correo enviado: Copilot deja una línea en blanco entre elementos y cada uno se convertía en una lista aparte. Ahora es una sola lista, también con sublistas.
+- **Cookies desactivadas en Thunderbird**: Copilot no podía guardar la sesión, el inicio de sesión no terminaba o se abría otro navegador, sin ninguna explicación. CoThunder lo detecta y dice cómo activarlas (o qué excepciones añadir); el aviso de «falta iniciar sesión» también lo menciona.
+
 ## [2.20.0] — 2026-10-05
 
 ### Añadido

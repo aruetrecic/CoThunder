@@ -464,7 +464,8 @@ function stripCodeFences(text) {
 
 // Mensajes para el usuario según el motivo de fallo que devuelven background y content script.
 const COPILOT_ERRORS = {
-  login: "No has iniciado sesión en Microsoft 365 Copilot. Inicia sesión en la ventana de Copilot que se ha abierto y vuelve a intentarlo.",
+  login: "No has iniciado sesión en Microsoft 365 Copilot. Inicia sesión en la ventana de Copilot que se ha abierto y vuelve a intentarlo. Si no consigues entrar o se abre otro navegador, revisa que Thunderbird acepte cookies (Ajustes › Privacidad y seguridad).",
+  cookies: "Thunderbird tiene las cookies desactivadas y Copilot no puede guardar tu sesión. Actívalas en Ajustes › Privacidad y seguridad › Contenido web › «Aceptar cookies de los sitios», o permite como excepción https://m365.cloud.microsoft y https://login.microsoftonline.com.",
   "no-editor": "No encuentro el chat de Copilot. Si acaba de cargar, inténtalo de nuevo; si sigue fallando, puede que Microsoft haya cambiado la interfaz (Opciones › Diagnóstico).",
   "no-send": "No encuentro el botón de enviar de Copilot. Puede que Microsoft haya cambiado la interfaz (Opciones › Diagnóstico).",
   timeout: "Copilot no ha respondido a tiempo. Comprueba que su ventana ha terminado de cargar y vuelve a intentarlo.",

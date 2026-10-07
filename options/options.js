@@ -96,6 +96,8 @@ mark { background-color: #FCC100; }
     if (res && res.ok) {
       renderDetected(res.agents);
       $("detectMsg").textContent = res.agents.length ? "Listo: " + res.agents.length + " agentes." : "Copilot no muestra agentes en su panel: añádelos a mano abajo.";
+    } else if (res && res.reason === "cookies") {
+      $("detectMsg").textContent = copilotErrorText("cookies");
     } else if (res && res.reason === "login") {
       $("detectMsg").textContent = "Inicia sesión en la ventana de Copilot y vuelve a pulsar «Detectar agentes».";
     } else {

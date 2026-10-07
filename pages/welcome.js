@@ -4,7 +4,8 @@
   const $ = (id) => document.getElementById(id);
   const STATES = {
     ok: ["status-ok", "Listo: sesión iniciada en Copilot."],
-    login: ["status-err", "Falta iniciar sesión: entra en la ventana de Copilot y vuelve a comprobar."],
+    login: ["status-err", "Falta iniciar sesión: entra en la ventana de Copilot y vuelve a comprobar. Si no consigues entrar o se abre otro navegador, revisa que Thunderbird acepte cookies (Ajustes › Privacidad y seguridad)."],
+    cookies: ["status-err", "Thunderbird tiene las cookies desactivadas y Copilot no puede guardar tu sesión. Actívalas en Ajustes › Privacidad y seguridad › Contenido web, o permite como excepción https://m365.cloud.microsoft y https://login.microsoftonline.com."],
     loading: ["", "Copilot aún está cargando. Espera unos segundos y vuelve a comprobar."],
     closed: ["", "Copilot no está abierto. Pulsa «Abrir Copilot»."]
   };

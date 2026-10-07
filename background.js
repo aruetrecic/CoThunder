@@ -555,6 +555,7 @@ async function checkCopilot() {
     try {
       const res = await messenger.tabs.sendMessage(id, { type: "checkSession" });
       if (!res) continue;
+      if (res.cookies === false) return { state: "cookies" };
       if (res.editor) {
         const ag = await messenger.tabs.sendMessage(id, { type: "getAgents" }).catch(() => null);
         return { state: "ok", agents: (ag && ag.agents) || [] };
@@ -732,9 +733,11 @@ async function refreshAgents(open) {
     res = await askAgents();
     if (res.ok && res.agents.length) return res;
     const st = await checkCopilot();
-    if (st.state === "login") return { ok: false, reason: "login" };
+    if (st.state === "login" || st.state === "cookies") return { ok: false, reason: st.state };
   }
-  return res.ok ? res : { ok: false, reason: (await checkCopilot()).state === "login" ? "login" : "loading" };
+  if (res.ok) return res;
+  const last = (await checkCopilot()).state;
+  return { ok: false, reason: last === "login" || last === "cookies" ? last : "loading" };
 }
 
 // Menú contextual «CoThunder» en la lista de mensajes y en el botón del visor. Se rehace en cada

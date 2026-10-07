@@ -80,6 +80,8 @@ test("chatTitle: fecha, tipo y asunto recortado", () => {
   assert.equal(chatTitle("X", "a".repeat(100), d).length, "2026_10_05_09_07 X: ".length + 60);
   assert.match(copilotErrorText("login"), /iniciado sesión/);
   assert.match(copilotErrorText("raro"), /\(raro\)/);
+  assert.match(copilotErrorText("cookies"), /cookies desactivadas.*Privacidad y seguridad/);
+  assert.match(copilotErrorText("login"), /cookies/);
 });
 
 test("emailToMarkdown: ficha completa y versión para Copilot sin Para/CC", () => {

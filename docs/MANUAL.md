@@ -153,6 +153,7 @@ En detalle:
 ## 10. Problemas frecuentes
 
 - **No escribe en Copilot / no captura la respuesta:** comprueba que tienes sesión iniciada en Copilot en la ventana que abre CoThunder. Si la interfaz de Copilot cambió, el prompt se copia al portapapeles y se avisa; pégalo a mano mientras se actualiza CoThunder.
+- **Al iniciar sesión en Copilot se abre otro navegador (Firefox) o no consigues entrar:** Thunderbird tiene las **cookies desactivadas** y Copilot no puede guardar tu sesión. Actívalas en **Ajustes › Privacidad y seguridad › Contenido web › Aceptar cookies de los sitios**, o, si tienen que seguir desactivadas, añade como excepción permitida `https://m365.cloud.microsoft` y `https://login.microsoftonline.com` (botón **Excepciones…**). CoThunder te avisa si lo detecta.
 - **La respuesta no se ve maquetada:** activa el editor Markdown con su botón o con Ctrl+Alt+M (sección 7).
 - **No aparece mi agente:** pulsa **↻** con Copilot abierto; si sigue sin salir, añádelo a mano con su enlace (sección 4).
 - **La ventana se ve pequeña o los campos apretados:** puedes redimensionarla; recuerda su tamaño. Si no cabe todo, aparece una barra de scroll.

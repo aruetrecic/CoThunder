@@ -301,7 +301,7 @@ messenger.runtime.onMessage.addListener(async (msg) => {
     return { ok: true };
   }
   if (msg.type === "checkSession") {
-    return { ok: true, editor: !!document.querySelector(SELECTORS.editor), signIn: signInVisible() };
+    return { ok: true, editor: !!document.querySelector(SELECTORS.editor), signIn: signInVisible(), cookies: navigator.cookieEnabled };
   }
   if (msg.type !== "sendPrompt") return;
   const token = msg.messageId;
@@ -318,7 +318,8 @@ messenger.runtime.onMessage.addListener(async (msg) => {
   }
   if (cancelled.has(token)) return { ok: false, reason: "cancelled" };
   if (!(await typeIntoEditor(msg.prompt))) {
-    // Sin editor: o no hay sesión (página de inicio de sesión) o Microsoft ha cambiado la interfaz.
+    // Sin editor: cookies bloqueadas (no hay sesión posible), sin sesión, o Microsoft ha cambiado la interfaz.
+    if (!navigator.cookieEnabled) { diag("cookies-desactivadas", "Thunderbird bloquea las cookies de Copilot"); return { ok: false, reason: "cookies" }; }
     if (signInVisible()) { diag("sin-sesion", "aviso de inicio de sesión en la página"); return { ok: false, reason: "login" }; }
     diag("selector-no-encontrado", "editor " + SELECTORS.editor);
     return { ok: false, reason: "no-editor" };
