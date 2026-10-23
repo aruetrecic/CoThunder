@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.20.4] — 2026-10-23
+
+### Corregido
+- **«Usar esta versión» que no hacía nada**: el botón se veía también en la ventana de resumen, donde no tiene función. Ahora solo aparece al elegir entre versiones. Lo mismo pasaba con «Responder…» en los resúmenes de varios correos y con «Cancelar» al exportar sin preguntar a Copilot.
+
 ## [2.20.3] — 2026-10-23
 
 ### Corregido

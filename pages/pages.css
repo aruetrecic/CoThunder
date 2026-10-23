@@ -12,6 +12,8 @@
   :root { --accent: #78aeed; --ok: #5ec488; --err: #ff8a80; }
 }
 * { box-sizing: border-box; }
+/* «hidden» manda siempre: sin esto, button/.btn (display: inline-flex) se veían aunque estuvieran ocultos. */
+[hidden] { display: none !important; }
 html { scroll-padding-top: 12px; }
 body { margin: 0; padding: 20px 16px 40px; background: Canvas; color: CanvasText;
   font: 14px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
