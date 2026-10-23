@@ -470,6 +470,7 @@ const COPILOT_ERRORS = {
   "no-send": "No encuentro el botón de enviar de Copilot. Puede que Microsoft haya cambiado la interfaz (Opciones › Diagnóstico).",
   timeout: "Copilot no ha respondido a tiempo. Comprueba que su ventana ha terminado de cargar y vuelve a intentarlo.",
   cancelled: "Cancelado.",
+  busy: "Copilot aún está respondiendo a otra petición. Espera a que termine (o cancélala) y vuelve a intentarlo.",
   capture: "No se pudo capturar la respuesta de Copilot. Revísala en la ventana de Copilot."
 };
 function copilotErrorText(reason) {

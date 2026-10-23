@@ -3,6 +3,12 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.20.3] — 2026-10-23
+
+### Corregido
+- **Respuestas cortadas**: si Copilot se paraba a buscar a mitad de respuesta, CoThunder la daba por terminada y traía solo un trozo. Ahora espera mientras Copilot sigue generando, y el límite pasa de 2 a 5 minutos. Si aun así se agota, te avisa de que la respuesta puede estar incompleta.
+- **Dos peticiones a la vez**: una acción de un clic lanzada mientras Copilot respondía a otra podía mezclar las respuestas y llevar una al correo equivocado. Ahora la segunda espera su turno con un aviso claro.
+
 ## [2.20.2] — 2026-10-23
 
 ### Corregido

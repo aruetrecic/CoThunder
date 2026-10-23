@@ -440,6 +440,7 @@ async function handleCopilotReply(msg) {
     }
     return;
   }
+  if (msg.partial) notify("Copilot tardó demasiado y la respuesta puede estar incompleta. Revísala antes de enviarla.");
   switch (opts.mode) {
     case "create":
       return openNewWithText(opts, msg.text);

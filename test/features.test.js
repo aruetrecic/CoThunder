@@ -4,7 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   detectLanguage, splitVersions, stripCodeFences, buildComposedPrompt, buildSummaryPrompt, buildImprovePrompt,
-  parseCreateReply, IMPROVE_ACTIONS, QUICK_ACTIONS
+  parseCreateReply, IMPROVE_ACTIONS, QUICK_ACTIONS, copilotErrorText
 } = require("../common.js");
 
 test("detectLanguage reconoce los idiomas habituales", () => {
@@ -129,4 +129,8 @@ test("buildComposedPrompt: indicaciones del usuario, prioritarias y antes del co
   assert.match(p, /INDICACIONES DEL USUARIO PARA ESTA RESPUESTA[^\n]*\nAcepta, pero propón el jueves/);
   assert.ok(p.indexOf("Acepta, pero") < p.indexOf("¿Os viene bien"));
   assert.doesNotMatch(buildComposedPrompt({}, "x", { instructions: "   " }), /INDICACIONES DEL USUARIO/);
+});
+
+test("copilotErrorText explica que Copilot está ocupado con otra petición", () => {
+  assert.match(copilotErrorText("busy"), /otra petición/);
 });

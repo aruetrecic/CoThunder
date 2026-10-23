@@ -6,7 +6,8 @@ const SELECTORS = {
   sendButton: "button.fai-SendButton, button.fai-ChatInput__send",
   newChat: '[data-testid="newChatButton"]',
   reply: '[data-testid="markdown-reply"]',                    // texto de la respuesta del asistente (el último)
-  loading: '[data-testid="loading-message"]',                // presente mientras Copilot genera
+  // Indicios de que Copilot sigue generando (mensaje de carga o botón Detener): no se da la respuesta por terminada.
+  generating: '[data-testid="loading-message"], button[data-testid="stopGeneratingButton"], button.fai-StopButton',
   // Botón "Detener" mientras genera (para Cancelar). Si no se encuentra, se deja terminar.
   stopButton: 'button[data-testid="stopGeneratingButton"], button.fai-StopButton, button[aria-label*="Detener"], button[aria-label*="Stop"]',
   // Indicios de que no hay sesión: botón o enlace de inicio de sesión de Microsoft en la página.
@@ -30,6 +31,8 @@ function diag(ev, detail) {
 }
 // Tokens cancelados por el usuario: la espera de la respuesta se corta y no se abre nada.
 const cancelled = new Set();
+// Petición en curso en esta pestaña (su token); se libera al capturar, cancelar o fallar.
+let busy = null;
 const signInVisible = () => !!document.querySelector(SELECTORS.signIn);
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -253,7 +256,8 @@ function extractReplyText(el) {
 }
 
 // Espera a que la respuesta del asistente aparezca (nodo nuevo o texto cambiado) y su texto se estabilice.
-function waitForReply(baselineCount, baselineText, token, timeoutMs = 120000) {
+// Resuelve { text, partial } (partial: se agotó el tiempo con el texto aún cambiando) o null si se canceló.
+function waitForReply(baselineCount, baselineText, token, timeoutMs = 300000) {
   return new Promise((resolve) => {
     const start = Date.now();
     let last = "";
@@ -271,7 +275,12 @@ function waitForReply(baselineCount, baselineText, token, timeoutMs = 120000) {
       const text = el ? el.textContent.trim() : "";
       if (nodes.length > baselineCount || (text && text !== baselineText)) appeared = true;
       if (appeared && text && text === last) {
-        if (Date.now() - stableSince > 2000) { clearInterval(tick); resolve(finish()); }
+        // Copilot puede pararse a buscar con el texto a medias: mientras siga generando se espera,
+        // con un tope de 15 s quieto por si el indicador se quedara en la página.
+        const quiet = Date.now() - stableSince;
+        if (quiet > 2000 && (quiet > 15000 || !document.querySelector(SELECTORS.generating))) {
+          clearInterval(tick); resolve({ text: finish(), partial: false });
+        }
       } else {
         last = text;
         stableSince = Date.now();
@@ -279,7 +288,7 @@ function waitForReply(baselineCount, baselineText, token, timeoutMs = 120000) {
       if (Date.now() - start > timeoutMs) {
         clearInterval(tick);
         diag("timeout-respuesta", appeared ? "texto sin estabilizar" : "sin respuesta nueva (" + SELECTORS.reply + ")");
-        resolve(finish());
+        resolve({ text: finish(), partial: appeared });
       }
     }, 500);
   });
@@ -304,7 +313,18 @@ messenger.runtime.onMessage.addListener(async (msg) => {
     return { ok: true, editor: !!document.querySelector(SELECTORS.editor), signIn: signInVisible(), cookies: navigator.cookieEnabled };
   }
   if (msg.type !== "sendPrompt") return;
+  // Una sola petición a la vez: otra escribiría mientras Copilot responde y las dos esperas
+  // capturarían la misma respuesta (podría acabar en el correo equivocado).
+  if (busy != null) { diag("copilot-ocupado", "petición en curso"); return { ok: false, reason: "busy" }; }
   const token = msg.messageId;
+  busy = token;
+  let res;
+  try { res = await sendPrompt(msg, token); } catch (e) { diag("error-envio", e && e.message); res = { ok: false, reason: "error" }; }
+  if (!res.ok) busy = null;
+  return res;
+});
+
+async function sendPrompt(msg, token) {
   // Una petición nueva con el mismo token (volver a preguntar por un correo cancelado) no hereda la cancelación.
   cancelled.delete(token);
   progress(token, "typing");
@@ -335,12 +355,14 @@ messenger.runtime.onMessage.addListener(async (msg) => {
   progress(token, "waiting");
   // Fase 2: en segundo plano, espera la respuesta y la devuelve con su token (para no cruzar correos).
   const started = Date.now();
-  waitForReply(baseline, baselineText, token).then((text) => {
-    if (text === null) { progress(token, "cancelled"); return; }
-    if (text) diag("ok", "respuesta en " + Math.round((Date.now() - started) / 1000) + " s");
+  waitForReply(baseline, baselineText, token).then((reply) => {
+    busy = null;
+    if (reply === null) { progress(token, "cancelled"); return; }
+    const { text, partial } = reply;
+    if (text) diag("ok", "respuesta en " + Math.round((Date.now() - started) / 1000) + " s" + (partial ? " (incompleta)" : ""));
     else if (!document.querySelector(SELECTORS.reply)) diag("selector-no-encontrado", "respuesta " + SELECTORS.reply);
     progress(token, text ? "done" : "error", text ? null : { reason: "capture" });
-    messenger.runtime.sendMessage({ type: "copilotReply", text, messageId: token }).catch(() => {});
+    messenger.runtime.sendMessage({ type: "copilotReply", text, partial, messageId: token }).catch(() => {});
   });
   return { ok: true };
-});
+}
