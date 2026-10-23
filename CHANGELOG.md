@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.20.6] — 2026-10-23
+
+### Corregido
+- **Respuesta 13 s más lenta**: desde la 2.20.3, CoThunder esperaba siempre 15 s antes de traer la respuesta, porque confundía un contenedor que Copilot deja en la página con el indicador de «escribiendo». Ahora detecta que Copilot ha terminado por la barra de acciones del mensaje (Copiar, me gusta…), que solo aparece al acabar: la respuesta llega en unos 2 s y sigue sin cortarse si Copilot se para a buscar.
+
 ## [2.20.5] — 2026-10-23
 
 ### Corregido

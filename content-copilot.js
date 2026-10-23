@@ -7,9 +7,11 @@ const SELECTORS = {
   // «Nuevo chat»: botón antiguo o, desde oct. 2026, el enlace del panel lateral a /chat.
   newChat: '[data-testid="newChatButton"], a.fai-CopilotNavItem[href="/chat"], a.fai-CopilotNavItem[href^="/chat?"]',
   reply: '[data-testid="markdown-reply"]',                    // texto de la respuesta del asistente (el último)
-  // Indicios de que Copilot sigue generando (mensaje de carga o botón Detener): no se da la respuesta por terminada.
-  // El botón de enviar se convierte en «Detener» mientras genera (lleva fai-SendButton__stopBackground).
-  generating: '[data-testid="loading-message"], button[data-testid="stopGeneratingButton"], button.fai-StopButton, button.fai-SendButton[aria-label*="Detener"], button.fai-SendButton[aria-label*="Stop"]',
+  // Respuesta terminada: Copilot pinta la barra de acciones (Copiar, me gusta…) de cada mensaje al
+  // acabar el streaming (enableRenderActionBarBehindEos). Se busca dentro del mensaje de la respuesta.
+  // (Ojo: [data-testid="loading-message"] envuelve la respuesta y sigue ahí al terminar; no sirve.)
+  replyMessage: '[data-testid="m365-chat-llm-web-ui-chat-message"]',
+  replyDone: '[data-testid="CopyButtonTestId"], [data-testid="feedback-button-testid"]',
   // Botón "Detener" mientras genera (para Cancelar). Si no se encuentra, se deja terminar.
   stopButton: 'button[data-testid="stopGeneratingButton"], button.fai-StopButton, button[aria-label*="Detener"], button[aria-label*="Stop"]',
   // Indicios de que no hay sesión: botón o enlace de inicio de sesión de Microsoft en la página.
@@ -319,10 +321,12 @@ function waitForReply(baselineCount, baselineText, token, timeoutMs = 300000) {
       const text = el ? el.textContent.trim() : "";
       if (nodes.length > baselineCount || (text && text !== baselineText)) appeared = true;
       if (appeared && text && text === last) {
-        // Copilot puede pararse a buscar con el texto a medias: mientras siga generando se espera,
-        // con un tope de 15 s quieto por si el indicador se quedara en la página.
+        // Copilot puede pararse a buscar con el texto a medias: hasta que pinta la barra de acciones del
+        // mensaje se sigue esperando, con un tope de 15 s quieto por si esa barra cambiara o no llegara.
         const quiet = Date.now() - stableSince;
-        if (quiet > 2000 && (quiet > 15000 || !document.querySelector(SELECTORS.generating))) {
+        const msgEl = el.closest(SELECTORS.replyMessage);
+        const done = !!(msgEl && msgEl.querySelector(SELECTORS.replyDone));
+        if (quiet > 2000 && (done || quiet > 15000)) {
           clearInterval(tick); resolve({ text: finish(), partial: false });
         }
       } else {

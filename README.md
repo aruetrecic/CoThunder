@@ -19,7 +19,7 @@ Sin API, sin claves y sin telemetría.
 >
 > **[Descargar la última versión (`cothunder.xpi`)](https://github.com/aruetrecic/CoThunder/releases/latest/download/cothunder.xpi)**
 >
-> Versión actual: **[2.20.5](https://github.com/aruetrecic/CoThunder/releases/tag/v2.20.5)** · [descarga directa de la 2.20.5](https://github.com/aruetrecic/CoThunder/releases/download/v2.20.5/cothunder-2.20.5.xpi)
+> Versión actual: **[2.20.6](https://github.com/aruetrecic/CoThunder/releases/tag/v2.20.6)** · [descarga directa de la 2.20.6](https://github.com/aruetrecic/CoThunder/releases/download/v2.20.6/cothunder-2.20.6.xpi)
 >
 > Todas las versiones y sus notas: **[página de Releases](https://github.com/aruetrecic/CoThunder/releases)** · Qué cambia en cada una: **[CHANGELOG](CHANGELOG.md)**
 
