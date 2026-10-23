@@ -100,7 +100,10 @@ messenger.compose.onBeforeSend.addListener(async (tab) => {
     try {
       const details = await messenger.compose.getComposeDetails(tab.id);
       const doc = new DOMParser().parseFromString(details.body || "", "text/html");
-      doc.querySelectorAll("#cothunder-md-preview, #cothunder-md-toolbar, #cothunder-md-style").forEach((n) => n.remove());
+      const scaffold = doc.querySelectorAll("#cothunder-md-preview, #cothunder-md-toolbar, #cothunder-md-style");
+      // Sin andamiaje no se toca: rehacer el cuerpo perdería el <head> de un correo que no usó el editor.
+      if (!scaffold.length) return;
+      scaffold.forEach((n) => n.remove());
       return { details: { body: doc.body.innerHTML } };
     } catch (e2) { /* si tampoco se puede, se envía tal cual */ }
   }

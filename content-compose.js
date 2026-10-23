@@ -794,16 +794,22 @@
     wrapper.className = "markdown-here-wrapper";
     while (doc.body.firstChild) wrapper.appendChild(doc.body.firstChild);
     doc.body.appendChild(wrapper);
+    // RGPD: un tema "custom" pegado por el usuario no debe poder disparar una
+    // petición saliente (p. ej. background-image:url(...) como tracking pixel).
+    // Se mira el valor YA interpretado por el navegador: así caen también las
+    // formas escapadas (\75rl(...)) e image-set("..."), que se serializan como url(.
+    const probe = doc.createElement("div");
+    const fetchesUrl = (d) => {
+      probe.removeAttribute("style");
+      probe.style.setProperty(d.prop, d.value, d.priority || "");
+      return /url\(/i.test(probe.style.cssText);
+    };
     for (const rule of rules) {
       let els;
       try { els = doc.querySelectorAll(rule.selector); } catch (e) { continue; }
+      const decls = rule.decls.filter((d) => !fetchesUrl(d));
       els.forEach((el) => {
-        for (const d of rule.decls) {
-          // RGPD: un tema "custom" pegado por el usuario no debe poder disparar una
-          // petición saliente (p. ej. background-image:url(...) como tracking pixel).
-          if (/url\s*\(/i.test(d.value)) continue;
-          el.style.setProperty(d.prop, d.value, d.priority || "");
-        }
+        for (const d of decls) el.style.setProperty(d.prop, d.value, d.priority || "");
       });
     }
     wrapper.removeAttribute("class");

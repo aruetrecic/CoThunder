@@ -3,6 +3,13 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.20.2] — 2026-10-23
+
+### Corregido
+- **Volver a preguntar por un correo tras cancelar**: si cancelabas una petición, ese mismo correo quedaba «cancelado» hasta recargar Copilot. Ahora se puede enviar de nuevo.
+- **CSS personalizado sin peticiones externas**: el filtro de `url(...)` se podía esquivar con formas escapadas o `image-set("...")`, que el navegador convierte en una descarga (posible píxel de rastreo). Ahora se comprueba el valor ya interpretado y se descartan todas.
+- **Correos que no usan el editor Markdown**: si el editor no respondía al enviar, el resguardo rehacía el cuerpo y perdía sus estilos aunque no hubiera nada que limpiar. Ahora solo lo toca si encuentra restos del editor.
+
 ## [2.20.1] — 2026-10-07
 
 ### Corregido

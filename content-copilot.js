@@ -305,6 +305,8 @@ messenger.runtime.onMessage.addListener(async (msg) => {
   }
   if (msg.type !== "sendPrompt") return;
   const token = msg.messageId;
+  // Una petición nueva con el mismo token (volver a preguntar por un correo cancelado) no hereda la cancelación.
+  cancelled.delete(token);
   progress(token, "typing");
   if (msg.agentId || msg.agentLabel) {
     if (!selectAgent(msg.agentId, msg.agentLabel)) {
