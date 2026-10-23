@@ -3,6 +3,13 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.20.5] — 2026-10-23
+
+### Corregido
+- **Nueva interfaz de Copilot (octubre de 2026)**: «Nuevo chat» había dejado de funcionar porque Microsoft cambió el botón por un enlace del panel lateral. Vuelve a abrir un chat nuevo.
+- **Agentes**: el panel de Copilot ya solo muestra los agentes anclados, así que la lista de CoThunder salía incompleta y con chats del historial disfrazados de agentes («Create a presentation for me» en lugar de «Canva»). Ahora se leen todos tus agentes con su nombre real, de los datos que Copilot trae al cargar la página.
+- **Detectar que Copilot sigue respondiendo**: también se reconoce el botón de enviar convertido en «Detener».
+
 ## [2.20.4] — 2026-10-23
 
 ### Corregido

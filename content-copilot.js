@@ -4,10 +4,12 @@
 const SELECTORS = {
   editor: "#m365-chat-editor-target-element",                 // editor Lexical (contenteditable)
   sendButton: "button.fai-SendButton, button.fai-ChatInput__send",
-  newChat: '[data-testid="newChatButton"]',
+  // «Nuevo chat»: botón antiguo o, desde oct. 2026, el enlace del panel lateral a /chat.
+  newChat: '[data-testid="newChatButton"], a.fai-CopilotNavItem[href="/chat"], a.fai-CopilotNavItem[href^="/chat?"]',
   reply: '[data-testid="markdown-reply"]',                    // texto de la respuesta del asistente (el último)
   // Indicios de que Copilot sigue generando (mensaje de carga o botón Detener): no se da la respuesta por terminada.
-  generating: '[data-testid="loading-message"], button[data-testid="stopGeneratingButton"], button.fai-StopButton',
+  // El botón de enviar se convierte en «Detener» mientras genera (lleva fai-SendButton__stopBackground).
+  generating: '[data-testid="loading-message"], button[data-testid="stopGeneratingButton"], button.fai-StopButton, button.fai-SendButton[aria-label*="Detener"], button.fai-SendButton[aria-label*="Stop"]',
   // Botón "Detener" mientras genera (para Cancelar). Si no se encuentra, se deja terminar.
   stopButton: 'button[data-testid="stopGeneratingButton"], button.fai-StopButton, button[aria-label*="Detener"], button[aria-label*="Stop"]',
   // Indicios de que no hay sesión: botón o enlace de inicio de sesión de Microsoft en la página.
@@ -18,7 +20,10 @@ const SELECTORS = {
   // 2) enlaces a un agente: llevan su id en la URL (?titleId=T_…, ?agentId=…, /agent/…);
   agentLinks: 'a[href*="titleId="], a[href*="agentId="], a[href*="/agents/"], a[href*="/agent/"]',
   // 3) elementos cuyo id o data-testid es de agente.
-  agentMarked: '[id^="T_"], [id^="P_"], [data-testid*="agent" i] a, [data-testid*="agent" i] [role="link"], [data-testid*="agent" i][role="link"]'
+  agentMarked: '[id^="T_"], [id^="P_"], [data-testid*="agent" i] a, [data-testid*="agent" i] [role="link"], [data-testid*="agent" i][role="link"]',
+  // 4) datos que Copilot incrusta al cargar (el panel ya solo muestra los anclados): un <script> con
+  // JSON.parse("…") que contiene "agentList". Se lee su texto como datos; nunca se ejecuta.
+  hydrationMarker: "__staticRouterHydrationData"
 };
 
 // Avisos al background y a la ventana de CoThunder: progreso de una petición y diagnóstico técnico
@@ -106,6 +111,9 @@ function agentFromLink(href) {
   try {
     const u = new URL(href, location.href);
     if (u.host !== location.host) return null;
+    // Un chat del historial hecho con un agente (/chat/agent/P_…/conversation/…) no es el agente:
+    // su texto es el título del chat.
+    if (/\/conversation\//.test(u.pathname)) return null;
     const id = u.searchParams.get("titleId") || u.searchParams.get("agentId") ||
       (u.pathname.match(/\/agents?\/([^/?#]+)/) || [])[1] || "";
     return id ? { id, url: u.href } : null;
@@ -114,19 +122,53 @@ function agentFromLink(href) {
   }
 }
 
+// Agentes de los datos incrustados en la página: [{ id, label, url }]. Se guarda tras leerlos bien
+// (el <script> no cambia mientras la página siga abierta).
+let hydratedAgents = null;
+function agentsFromHydration() {
+  if (hydratedAgents) return hydratedAgents;
+  try {
+    const script = [...document.scripts].find((s) => s.textContent.includes(SELECTORS.hydrationMarker));
+    const lit = script && script.textContent.match(/JSON\.parse\(("(?:[^"\\]|\\.)*")\)/);
+    if (!lit) return [];
+    const findList = (o, depth) => {
+      if (!o || typeof o !== "object" || depth > 12) return null;
+      if (Array.isArray(o.agentList)) return o.agentList;
+      for (const v of Object.values(o)) { const r = findList(v, depth + 1); if (r) return r; }
+      return null;
+    };
+    const list = findList(JSON.parse(JSON.parse(lit[1])), 0);
+    if (!list) return [];
+    hydratedAgents = list.filter((a) => a && a.gptId && !a.isHidden).map((a) => ({
+      id: String(a.gptId), label: a.displayName || a.name || "",
+      url: a.path ? new URL(a.path, location.href).href : ""
+    }));
+    return hydratedAgents;
+  } catch (_) {
+    return [];
+  }
+}
+
 // Devuelve { agents: [{ id, label, url }], counts } con lo encontrado por cada señal (para el diagnóstico).
 function scanAgents() {
   const found = new Map();
-  const counts = { nav: 0, links: 0, marked: 0 };
+  const paths = new Set(); // un mismo agente por varias señales (con otro id) se cuenta una vez
+  const counts = { page: 0, nav: 0, links: 0, marked: 0 };
   const add = (id, label, url, kind) => {
     label = cleanLabel(label);
     if (!label || label.length > 80 || !(id || url)) return;
     const key = id || url;
     const prev = found.get(key);
     if (prev) { if (!prev.url && url) prev.url = url; return; }
+    let path = "";
+    try { path = url ? new URL(url, location.href).pathname : ""; } catch (_) {}
+    if (path && paths.has(path)) return;
+    if (path) paths.add(path);
     found.set(key, { id: id || "", label, url: url || "" });
     counts[kind]++;
   };
+  // Primero los datos de la página: tienen el nombre limpio y el id real de cada agente.
+  for (const a of agentsFromHydration()) add(a.id, a.label, a.url, "page");
   for (const el of document.querySelectorAll(SELECTORS.agentNavItems)) {
     if (!isAgentId(el.id)) continue;
     const link = el.closest("a") || el.querySelector("a");
@@ -176,6 +218,8 @@ try {
 // devuelve false y el background lo abrirá por su enlace.
 function selectAgent(id, label) {
   let el = id ? document.getElementById(id) : null;
+  // Anclados del panel (oct. 2026): el id del agente va en el contenedor, data-agent-id="P_…".
+  if (!el && id) el = document.querySelector('[data-agent-id="' + CSS.escape(id) + '"] a');
   if (!el && id) {
     el = [...document.querySelectorAll(SELECTORS.agentLinks)].find((a) => {
       const ag = agentFromLink(a.getAttribute("href"));
@@ -300,7 +344,7 @@ messenger.runtime.onMessage.addListener(async (msg) => {
   if (msg.type === "getAgents") {
     const { agents, counts } = scanAgents();
     if (agents.length) messenger.storage.local.set({ agents }).catch(() => {});
-    diag("agentes-detectados", agents.length + " (panel " + counts.nav + ", enlaces " + counts.links + ", marcados " + counts.marked + ")");
+    diag("agentes-detectados", agents.length + " (página " + counts.page + ", panel " + counts.nav + ", enlaces " + counts.links + ", marcados " + counts.marked + ")");
     return { agents, counts };
   }
   if (msg.type === "cancelPrompt") {
