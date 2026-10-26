@@ -237,6 +237,9 @@
               " caracteres: para que lo lea entero, «Subir fichero»"
             : "· " + t.text.length.toLocaleString("es-ES") + " caracteres";
           if (t.text && detectInjection(t.text).detected) note.textContent += " · ⚠️ patrón sospechoso (protegido)";
+        } else if (sel.value === "upload" && selectedAttachments().length > UPLOAD_MAX_FILES) {
+          sel.value = "";
+          note.textContent = "· Copilot admite como máximo " + UPLOAD_MAX_FILES + " ficheros por envío: quita otro o usa «Texto en el prompt»";
         } else if (sel.value === "upload") {
           // Se comprueba que Thunderbird lo entrega (algunas imágenes de Outlook no se pueden leer),
           // para avisar aquí y no hacer fallar el envío entero.

@@ -535,6 +535,8 @@ const COPILOT_ERRORS = {
 const UPLOAD_EXTENSIONS = new Set(("pdf doc docx docm rtf xls xlsx xlsm xlsb ppt pptx ppsm txt md csv tsv log json xml " +
   "yaml yml ini config html htm eml msg png jpg jpeg gif bmp webp jfif").split(" "));
 const UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+// Copilot rechaza más de 3 ficheros por mensaje (comprobado en su chat, oct. 2026).
+const UPLOAD_MAX_FILES = 3;
 // Texto extraído en local para ir dentro del prompt (attachments.js): no deja copia en OneDrive y
 // ocupa mucho menos que el fichero. Tope por adjunto para no desbordar el prompt.
 const TEXT_EXTENSIONS = new Set("txt md csv tsv log json xml yaml yml ini config html htm docx docm xlsx xlsm pptx odt ods odp".split(" "));
@@ -792,6 +794,6 @@ if (typeof module !== "undefined" && module.exports) {
     detectInjection, normalizeText, buildUserContext,
     detectLanguage, splitVersions, stripCodeFences, versionsInstruction, buildSummaryPrompt, buildImprovePrompt,
     IMPROVE_ACTIONS, QUICK_ACTIONS, LANG_NAMES, copilotErrorText, chatTitle,
-    emailToMarkdown, markdownFileName, buildAskPrompt, formatBytes, attachmentBlocker, attachmentModes, findInlineImages, bodyImages, UPLOAD_MAX_BYTES, ATTACH_TEXT_MAX
+    emailToMarkdown, markdownFileName, buildAskPrompt, formatBytes, attachmentBlocker, attachmentModes, findInlineImages, bodyImages, UPLOAD_MAX_BYTES, UPLOAD_MAX_FILES, ATTACH_TEXT_MAX
   };
 }

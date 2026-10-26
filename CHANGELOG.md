@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.24.1] — 2026-10-26
+
+### Corregido
+- **Máximo 3 ficheros por envío**: Copilot no admite más. Al elegir «Subir fichero» en un cuarto adjunto, vuelve a «No enviar» y se avisa junto a él (puedes quitar otro o usar «Texto en el prompt»).
+
 ## [2.24.0] — 2026-10-26
 
 ### Añadido
