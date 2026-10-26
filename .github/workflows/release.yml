@@ -57,13 +57,17 @@ jobs:
           XPI="${{ steps.pack.outputs.xpi }}"
           VERSION="${{ steps.pack.outputs.version }}"
           TITLE="CoThunder ${VERSION}"
-          # Notas de la release: extrae la sección de esta versión del CHANGELOG y añade la instalación.
+          # Notas de la release (es la página que abre el aviso de CoThunder): todas las secciones del
+          # CHANGELOG de esta serie X.Y, de la más nueva a la más antigua, y la instalación.
+          MINOR="${VERSION%.*}"
           {
-            awk -v ver="$VERSION" 'substr($0,1,4)=="## [" { if(p) exit; if(index($0,"## [" ver "]")==1){p=1;next} } p{print}' CHANGELOG.md
+            echo "# Novedades de CoThunder ${MINOR}"
+            echo ""
+            awk -v minor="$MINOR" 'substr($0,1,4)=="## [" { p = index($0, "## [" minor ".")==1; if (p) { sub(/^## \[/, "## "); sub(/\]/, "") } } p{print}' CHANGELOG.md
             echo ""
             echo "---"
             echo ""
-            echo "Requiere **Thunderbird 140 o superior**. Instalación: descarga \`$XPI\` (o \`cothunder.xpi\`, el mismo fichero) de más abajo y, en Thunderbird, ve a Herramientas › Complementos y temas › engranaje › Instalar complemento desde archivo."
+            echo "Requiere **Thunderbird 140 o superior**. Si ya tienes la 2.25.0 o posterior, se actualiza sola (o en Complementos y temas › ⚙ › Buscar actualizaciones). Si no, descarga \`$XPI\` (o \`cothunder.xpi\`, el mismo fichero) de más abajo y, en Thunderbird, ve a Complementos y temas › ⚙ › Instalar complemento desde archivo."
           } > RELEASE_NOTES.md
           if [ ! -s RELEASE_NOTES.md ]; then echo "CoThunder ${VERSION} para Thunderbird 140 o superior." > RELEASE_NOTES.md; fi
           if gh release view "$TAG" >/dev/null 2>&1; then
