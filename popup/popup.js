@@ -28,6 +28,7 @@
     if (!el.dataset.modes.split(" ").includes(mode)) el.remove();
   });
   const tabs = [...document.querySelectorAll('.tabs [role="tab"]')];
+  const shownTabs = () => tabs.filter((t) => !t.hidden);   // «Adjuntos» solo aparece si el correo los tiene
   const tabKey = mode === "create" ? "lastTabCreate" : "lastTabReply";
   const selectTab = (tab, focus) => {
     for (const t of tabs) {
@@ -39,26 +40,28 @@
     if (focus) tab.focus();
     try { localStorage.setItem(tabKey, tab.id); } catch (_) {}
   };
-  tabs.forEach((t, i) => {
+  tabs.forEach((t) => {
     t.addEventListener("click", () => selectTab(t, false));
     // Navegación de teclado estándar de tablist: flechas, Inicio y Fin.
     t.addEventListener("keydown", (e) => {
-      const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      const list = shownTabs(), i = list.indexOf(t);
+      const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: list.length - 1 }[e.key];
       if (next === undefined) return;
       e.preventDefault();
-      selectTab(tabs[(next + tabs.length) % tabs.length], true);
+      selectTab(list[(next + list.length) % list.length], true);
     });
   });
   // Ctrl+PgDn / Ctrl+PgUp cambian de pestaña desde cualquier campo.
   document.addEventListener("keydown", (e) => {
     if (!e.ctrlKey || (e.key !== "PageDown" && e.key !== "PageUp")) return;
     e.preventDefault();
-    const cur = tabs.findIndex((t) => t.getAttribute("aria-selected") === "true");
-    selectTab(tabs[(cur + (e.key === "PageDown" ? 1 : -1) + tabs.length) % tabs.length], true);
+    const list = shownTabs();
+    const cur = list.findIndex((t) => t.getAttribute("aria-selected") === "true");
+    selectTab(list[(cur + (e.key === "PageDown" ? 1 : -1) + list.length) % list.length], true);
   });
   let savedTab = null;
   try { savedTab = localStorage.getItem(tabKey); } catch (_) {}
-  selectTab(tabs.find((t) => t.id === savedTab) || tabs[0], false);
+  selectTab(shownTabs().find((t) => t.id === savedTab) || tabs[0], false);
 
   // Destinatarios (solo creación): contador de direcciones válidas en la pestaña y aviso de las
   // que no lo son bajo cada caja (antes se descartaban en silencio al crear el correo).
@@ -256,7 +259,9 @@
       row.append(name, note, sel);
       $("attachmentList").appendChild(row);
     }
-    $("attachments").hidden = false;
+    $("tab-attachments").hidden = false;
+    $("attachments-count").textContent = items.length;
+    if (savedTab === "tab-attachments") selectTab($("tab-attachments"), false);
   };
   const attachmentSelects = () => [...$("attachmentList").querySelectorAll("select")];
   const selectedAttachments = () => attachmentSelects().filter((s) => s.value === "upload")

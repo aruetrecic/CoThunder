@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.24.3] — 2026-10-26
+
+### Cambiado
+- **Adjuntos en su propia pestaña** («Adjuntos», con el número de ficheros), que solo aparece si el correo los tiene. Así Opciones queda más corta.
+
 ## [2.24.2] — 2026-10-26
 
 ### Corregido

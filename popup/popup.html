@@ -27,6 +27,7 @@
     <button type="button" role="tab" id="tab-recipients" aria-controls="panel-recipients" data-modes="create"><span data-icon="mail"></span> Destinatarios <span class="badge" id="recipients-count" hidden></span></button>
     <button type="button" role="tab" id="tab-options" aria-controls="panel-options" data-modes="create reply"><span data-icon="options"></span> Opciones</button>
     <button type="button" role="tab" id="tab-prompt" aria-controls="panel-prompt" data-modes="create reply"><span data-icon="promptText"></span> Prompt</button>
+    <button type="button" role="tab" id="tab-attachments" aria-controls="panel-attachments" data-modes="reply" hidden><span data-icon="attach"></span> Adjuntos <span class="badge" id="attachments-count"></span></button>
   </div>
 
   <div class="tabpanel" role="tabpanel" id="panel-create" aria-labelledby="tab-create" data-modes="create">
@@ -167,12 +168,6 @@
       <label class="reply-only"><input type="checkbox" id="includeQuote"> Incluir el correo citado</label>
       <label class="reply-only"><input type="checkbox" id="includeThread"> Incluir el hilo (mensajes anteriores)</label>
     </div>
-
-    <fieldset id="attachments" class="attachments reply-only" hidden>
-      <legend>Adjuntos para Copilot</legend>
-      <div id="attachmentList" class="attachment-list"></div>
-      <p class="hint"><strong>Texto en el prompt</strong>: CoThunder lee el fichero en tu equipo y solo envía su texto (lo ves en la pestaña Prompt). <strong>Subir fichero</strong>: Copilot lo lee entero (también PDF e imágenes) y guarda una copia en tu OneDrive; como máximo 3 ficheros por envío.</p>
-    </fieldset>
   </div>
 
   <div class="tabpanel" role="tabpanel" id="panel-prompt" aria-labelledby="tab-prompt" data-modes="create reply">
@@ -191,6 +186,11 @@
       </div>
       <textarea id="prompt"></textarea>
     </div>
+  </div>
+
+  <div class="tabpanel" role="tabpanel" id="panel-attachments" aria-labelledby="tab-attachments" data-modes="reply">
+    <p class="hint">Elige cómo enviar cada uno. <strong>Texto en el prompt</strong>: CoThunder lee el fichero en tu equipo y solo envía su texto (lo ves en la pestaña Prompt). <strong>Subir fichero</strong>: Copilot lo lee entero (también PDF e imágenes) y guarda una copia en tu OneDrive; como máximo 3 ficheros por envío.</p>
+    <div id="attachmentList" class="attachment-list"></div>
   </div>
 
   <!-- Mensajes de la operación (preparando, enviado, errores completos), junto al botón Enviar. -->
