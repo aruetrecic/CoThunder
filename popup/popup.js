@@ -177,16 +177,30 @@
   const attachmentTexts = new Map();   // partName → { name, text, total, truncated } | { error }
   const loadAttachments = async () => {
     if (mode !== "reply" || !message) return;
-    let list = [];
+    let list = [], images = [];
     try { list = await messenger.messages.listAttachments(message.id); } catch (_) {}
-    if (!list.length) return;
-    for (const att of list) {
-      const modes = attachmentModes(att);
+    // Imágenes incrustadas en el cuerpo, con el número de su marca «[imagen N del correo]» del prompt.
+    try {
+      const full = await messenger.messages.getFull(message.id);
+      const html = findPart(full, "text/html");
+      if (html) images = bodyImages(full, inlineImageCids(html));
+    } catch (_) {}
+    const imageParts = new Set(images.map((i) => i.partName));
+    const items = images.map((img) => {
+      const why = attachmentBlocker(img);
+      return { partName: img.partName, name: img.name, size: img.size, label: "Imagen " + img.n + " del correo",
+        modes: { text: false, upload: !why, why }, hint: img.small ? "pequeña: seguramente un logotipo o icono" : "" };
+    }).concat(list.filter((att) => !imageParts.has(att.partName))
+      .map((att) => ({ partName: att.partName, name: att.name, size: att.size, label: att.name, modes: attachmentModes(att), hint: "" })));
+    if (!items.length) return;
+    for (const att of items) {
+      const modes = att.modes;
       const row = document.createElement("div");
       row.className = "attachment-row";
       const sel = document.createElement("select");
       sel.dataset.part = att.partName;
-      sel.setAttribute("aria-label", "Cómo enviar " + att.name);
+      sel.dataset.name = att.name;
+      sel.setAttribute("aria-label", "Cómo enviar " + att.label);
       const add = (value, text, enabled) => {
         const o = document.createElement("option");
         o.value = value; o.textContent = text; o.disabled = !enabled;
@@ -197,12 +211,14 @@
       add("upload", "Subir fichero", modes.upload);
       const name = document.createElement("span");
       name.className = "name";
-      name.textContent = att.name + " (" + formatBytes(att.size) + ")";
+      name.textContent = att.label + " (" + formatBytes(att.size) + ")";
       const note = document.createElement("span");
       note.className = "hint";
-      if (!modes.text && !modes.upload) { sel.disabled = true; note.textContent = "· " + modes.why; }
+      const idle = !modes.text && !modes.upload ? "· " + modes.why : att.hint ? "· " + att.hint : "";
+      if (!modes.text && !modes.upload) sel.disabled = true;
+      note.textContent = idle;
       sel.addEventListener("change", async () => {
-        note.textContent = "";
+        note.textContent = idle;
         if (sel.value === "text") {
           if (!attachmentTexts.has(att.partName)) {
             note.textContent = "· leyendo…";
@@ -222,7 +238,15 @@
             : "· " + t.text.length.toLocaleString("es-ES") + " caracteres";
           if (t.text && detectInjection(t.text).detected) note.textContent += " · ⚠️ patrón sospechoso (protegido)";
         } else if (sel.value === "upload") {
-          note.textContent = "· se guardará una copia en tu OneDrive";
+          // Se comprueba que Thunderbird lo entrega (algunas imágenes de Outlook no se pueden leer),
+          // para avisar aquí y no hacer fallar el envío entero.
+          try {
+            await messenger.messages.getAttachmentFile(message.id, att.partName);
+            note.textContent = "· se guardará una copia en tu OneDrive";
+          } catch (_) {
+            sel.value = "";
+            note.textContent = "· no se puede leer este fichero";
+          }
         }
         rebuildPrompt();
       });
@@ -232,7 +256,8 @@
     $("attachments").hidden = false;
   };
   const attachmentSelects = () => [...$("attachmentList").querySelectorAll("select")];
-  const selectedAttachments = () => attachmentSelects().filter((s) => s.value === "upload").map((s) => s.dataset.part);
+  const selectedAttachments = () => attachmentSelects().filter((s) => s.value === "upload")
+    .map((s) => ({ partName: s.dataset.part, name: s.dataset.name }));
   const promptAttachments = () => attachmentSelects().filter((s) => s.value === "text")
     .map((s) => attachmentTexts.get(s.dataset.part)).filter((t) => t && !t.error && t.text);
 

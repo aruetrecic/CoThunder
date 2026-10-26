@@ -632,19 +632,19 @@ async function sendFromWindow(msg) {
   });
 }
 
-// Adjuntos marcados en la ventana → [{ name, type, data: ArrayBuffer }] para el content script
-// (un ArrayBuffer viaja seguro por mensajes). Se vuelve a comprobar el tipo y el tamaño.
-async function readAttachments(messageId, partNames) {
-  if (messageId == null || !Array.isArray(partNames) || !partNames.length) return [];
-  const list = await messenger.messages.listAttachments(messageId);
+// Adjuntos e imágenes del cuerpo elegidos en la ventana ([{ partName, name }]) → [{ name, type,
+// data: ArrayBuffer }] para el content script (un ArrayBuffer viaja seguro por mensajes). Se leen
+// del propio mensaje por su parte (las imágenes incrustadas no salen en listAttachments) y se vuelve
+// a comprobar el tipo y el tamaño.
+async function readAttachments(messageId, picked) {
+  if (messageId == null || !Array.isArray(picked) || !picked.length) return [];
   const out = [];
-  for (const att of list) {
-    if (!partNames.includes(att.partName) || attachmentBlocker(att)) continue;
-    const file = await messenger.messages.getAttachmentFile(messageId, att.partName);
-    if (file.size > UPLOAD_MAX_BYTES) continue;
-    out.push({ name: att.name, type: att.contentType || file.type || "", data: await file.arrayBuffer() });
+  for (const p of picked) {
+    const file = await messenger.messages.getAttachmentFile(messageId, String(p.partName));
+    const name = String(p.name || file.name || "adjunto");
+    if (attachmentBlocker({ name, size: file.size })) throw new Error("adjunto no admitido: " + name);
+    out.push({ name, type: file.type || "", data: await file.arrayBuffer() });
   }
-  if (out.length !== partNames.length) throw new Error("adjuntos no disponibles");
   return out;
 }
 

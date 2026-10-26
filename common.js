@@ -202,15 +202,61 @@ function htmlToText(html) {
   // Firmas marcadas por Thunderbird (también dentro de citas): datos de contacto y avisos legales
   // que no aportan nada a Copilot y no deben viajar en el prompt.
   doc.querySelectorAll(".moz-signature").forEach((n) => n.remove());
-  // Representa las imágenes por su texto alternativo (no se puede enviar la imagen en sí).
+  // Las imágenes incrustadas (cid:) se marcan con su número, el mismo que llevan en la ventana
+  // si el usuario decide subirlas (inlineImageCids); el resto, por su texto alternativo.
+  const cids = [];
   doc.querySelectorAll("img").forEach((img) => {
     const alt = (img.getAttribute("alt") || "").trim();
-    img.replaceWith(alt ? `[imagen: ${alt}]` : "");
+    const cid = imgCid(img);
+    if (cid) {
+      if (!cids.includes(cid)) cids.push(cid);
+      img.replaceWith(`[imagen ${cids.indexOf(cid) + 1} del correo${alt ? ": " + alt : ""}]`);
+    } else {
+      img.replaceWith(alt ? `[imagen: ${alt}]` : "");
+    }
   });
   // Convierte saltos y bloques en saltos de línea para conservar la estructura.
   doc.querySelectorAll("br").forEach((br) => br.replaceWith("\n"));
   doc.querySelectorAll("p, div, li, tr, h1, h2, h3, h4, h5, h6, blockquote").forEach((el) => el.append("\n"));
   return normalizeText(doc.body ? doc.body.textContent : "");
+}
+
+// --- Imágenes incrustadas en el cuerpo (partes image/* con Content-ID, citadas como src="cid:…") ---
+function imgCid(img) {
+  const m = /^cid:(.+)$/i.exec((img.getAttribute("src") || "").trim());
+  if (!m) return "";
+  try { return decodeURIComponent(m[1]).toLowerCase(); } catch (_) { return m[1].toLowerCase(); }
+}
+// Content-ID de las imágenes en el orden en que aparecen en el cuerpo, sin las de las firmas
+// marcadas por Thunderbird: es la numeración de las marcas «[imagen N del correo]» de htmlToText.
+function inlineImageCids(html) {
+  const doc = new DOMParser().parseFromString(html || "", "text/html");
+  doc.querySelectorAll(".moz-signature").forEach((n) => n.remove());
+  const cids = [];
+  doc.querySelectorAll("img").forEach((img) => { const c = imgCid(img); if (c && !cids.includes(c)) cids.push(c); });
+  return cids;
+}
+// Partes image/* con Content-ID del árbol de messages.getFull: [{ partName, cid, contentType, size }].
+function findInlineImages(part, out = []) {
+  if (!part) return out;
+  const type = String(part.contentType || "").toLowerCase();
+  const id = part.headers && part.headers["content-id"] && part.headers["content-id"][0];
+  if (type.startsWith("image/") && id && part.partName) {
+    out.push({ partName: part.partName, cid: String(id).trim().replace(/^<|>$/g, "").toLowerCase(), contentType: type, size: Number(part.size) || 0 });
+  }
+  for (const p of part.parts || []) findInlineImages(p, out);
+  return out;
+}
+const IMAGE_EXT = { "image/png": "png", "image/jpeg": "jpg", "image/jpg": "jpg", "image/pjpeg": "jpg", "image/gif": "gif", "image/bmp": "bmp", "image/webp": "webp" };
+// Imágenes del cuerpo listas para la ventana: en el orden de las marcas, con nombre «imagen-N.ext»
+// (el que verá Copilot) y «small» para las de menos de 10 KB (logotipos, iconos, píxeles).
+function bodyImages(full, cids) {
+  const parts = findInlineImages(full);
+  return cids.map((cid, i) => {
+    const part = parts.find((p) => p.cid === cid);
+    if (!part) return null;
+    return Object.assign({}, part, { n: i + 1, name: "imagen-" + (i + 1) + "." + (IMAGE_EXT[part.contentType] || "img"), small: part.size < 10240 });
+  }).filter(Boolean);
 }
 
 function findPart(part, type) {
@@ -746,6 +792,6 @@ if (typeof module !== "undefined" && module.exports) {
     detectInjection, normalizeText, buildUserContext,
     detectLanguage, splitVersions, stripCodeFences, versionsInstruction, buildSummaryPrompt, buildImprovePrompt,
     IMPROVE_ACTIONS, QUICK_ACTIONS, LANG_NAMES, copilotErrorText, chatTitle,
-    emailToMarkdown, markdownFileName, buildAskPrompt, formatBytes, attachmentBlocker, attachmentModes, UPLOAD_MAX_BYTES, ATTACH_TEXT_MAX
+    emailToMarkdown, markdownFileName, buildAskPrompt, formatBytes, attachmentBlocker, attachmentModes, findInlineImages, bodyImages, UPLOAD_MAX_BYTES, ATTACH_TEXT_MAX
   };
 }

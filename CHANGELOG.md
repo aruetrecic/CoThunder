@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.24.0] — 2026-10-26
+
+### Añadido
+- **Imágenes incrustadas en el cuerpo**: las capturas y fotos pegadas en el correo aparecen en «Adjuntos para Copilot» como «Imagen 1 del correo», «Imagen 2…», y se pueden subir a Copilot. En el texto del prompt queda la marca «[imagen 1 del correo]» donde iba cada una, para que Copilot sepa a qué se refiere. Las imágenes de tu firma no salen, las muy pequeñas se señalan como probables logotipos y las imágenes remotas no se descargan nunca.
+
 ## [2.23.0] — 2026-10-26
 
 ### Añadido

@@ -196,3 +196,18 @@ test("attachments.js: ZIP (stored y deflate), texto Windows-1252, compactado y t
   assert.equal(colIndex("A1"), 0);
   assert.equal(colIndex("AB12"), 27);
 });
+
+test("bodyImages: imágenes incrustadas en el orden de las marcas, con nombre y aviso de pequeñas", () => {
+  const { bodyImages } = require("../common.js");
+  const full = { contentType: "multipart/related", parts: [
+    { contentType: "text/html", partName: "1.1", body: "<p>x</p>" },
+    { contentType: "image/png", partName: "1.2", size: 50000, headers: { "content-id": ["<Captura@01>"] } },
+    { contentType: "image/jpeg", partName: "1.3", size: 2000, headers: { "content-id": ["<logo@01>"] } },
+    { contentType: "image/png", partName: "1.4", size: 9000 },
+    { contentType: "image/x-emf", partName: "1.5", size: 30000, headers: { "content-id": ["<raro@01>"] } }
+  ] };
+  const imgs = bodyImages(full, ["logo@01", "no-esta@01", "captura@01", "raro@01"]);
+  assert.deepEqual(imgs.map((i) => [i.n, i.name, i.partName, i.small]), [
+    [1, "imagen-1.jpg", "1.3", true], [3, "imagen-3.png", "1.2", false], [4, "imagen-4.img", "1.5", false]
+  ]);
+});
