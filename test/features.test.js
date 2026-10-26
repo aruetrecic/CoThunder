@@ -134,3 +134,12 @@ test("buildComposedPrompt: indicaciones del usuario, prioritarias y antes del co
 test("copilotErrorText explica que Copilot está ocupado con otra petición", () => {
   assert.match(copilotErrorText("busy"), /otra petición/);
 });
+
+test("attachmentBlocker: tipos que acepta Copilot y tope de tamaño", () => {
+  const { attachmentBlocker, UPLOAD_MAX_BYTES } = require("../common.js");
+  assert.equal(attachmentBlocker({ name: "Informe.PDF", size: 1000 }), "");
+  assert.equal(attachmentBlocker({ name: "datos.xlsx", size: UPLOAD_MAX_BYTES }), "");
+  assert.match(attachmentBlocker({ name: "datos.xlsx", size: UPLOAD_MAX_BYTES + 1 }), /Supera/);
+  assert.match(attachmentBlocker({ name: "programa.exe", size: 10 }), /no admite/);
+  assert.match(attachmentBlocker({ name: "sin-extension", size: 10 }), /no admite/);
+});

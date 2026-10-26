@@ -3,6 +3,14 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.22.0] — 2026-10-26
+
+### Añadido
+- **Adjuntos a Copilot**: al responder, «Adjuntos para Copilot» lista los ficheros del correo con una casilla cada uno (desmarcadas). Los marcados se suben al chat de Copilot antes del prompt, así Copilot puede leer PDF, Word, Excel, PowerPoint, texto o imágenes (hasta 10 MB cada uno). Copilot guarda una copia en tu OneDrive (carpeta «Archivos de Microsoft Copilot Chat»).
+
+### Corregido
+- Si CoThunder pierde la referencia a la ventana de Copilot, la reutiliza en lugar de abrir otra.
+
 ## [2.21.0] — 2026-10-26
 
 ### Añadido

@@ -171,6 +171,30 @@
   };
   $("more").addEventListener("change", moreSummary);
 
+  // Adjuntos del correo que se pueden subir a Copilot: casillas desmarcadas; los que Copilot no
+  // admite o pasan del tope salen deshabilitados con el motivo.
+  const loadAttachments = async () => {
+    if (mode !== "reply" || !message) return;
+    let list = [];
+    try { list = await messenger.messages.listAttachments(message.id); } catch (_) {}
+    if (!list.length) return;
+    for (const att of list) {
+      const why = attachmentBlocker(att);
+      const label = document.createElement("label");
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.value = att.partName; cb.disabled = !!why;
+      label.append(cb, att.name + " (" + formatBytes(att.size) + ")");
+      if (why) {
+        const note = document.createElement("span");
+        note.className = "hint"; note.textContent = "· " + why;
+        label.append(note);
+      }
+      $("attachmentList").appendChild(label);
+    }
+    $("attachments").hidden = false;
+  };
+  const selectedAttachments = () => [...$("attachmentList").querySelectorAll("input:checked")].map((c) => c.value);
+
   // Mini editor Markdown reutilizable: cablea los botones de una barra a su textarea
   // (envuelve la selección o prefija las líneas). Se usa en "Prompt a enviar" y "¿Qué quieres crear?".
   const setupMdBar = (bar, ta) => {
@@ -306,6 +330,7 @@
     rebuildPrompt();
     customAgents = prefs.customAgents || [];
     populateAgents(prefs.agents, prefs.lastAgentId);
+    loadAttachments();
     $("exportMd").addEventListener("click", () => {
       messenger.runtime.sendMessage({ type: "exportMarkdown", ids: [message.id] }).catch(() => {});
     });
@@ -477,7 +502,7 @@
   };
 
   // --- Progreso de la petición en curso: pasos, segundos de espera y Cancelar ---
-  const STAGES = ["opening", "typing", "waiting", "done"];
+  const STAGES = ["opening", "uploading", "typing", "waiting", "done"];
   let currentToken = null, elapsedTimer = null, waitingSince = 0;
   const stopElapsed = () => { clearInterval(elapsedTimer); elapsedTimer = null; };
   const showStage = (stage) => {
@@ -537,6 +562,8 @@
     setStatus("busy", "Enviando a Copilot…");
     const requestId = "c" + Date.now() + Math.floor(Math.random() * 1e6);
     currentToken = mode === "create" ? requestId : String(message.id);
+    const attachments = mode === "reply" ? selectedAttachments() : [];
+    $("progress").querySelector('[data-stage="uploading"]').style.display = attachments.length ? "" : "none";
     showStage("opening");
     let res;
     try {
@@ -563,7 +590,7 @@
         });
       } else {
         res = await messenger.runtime.sendMessage({ ...base, mode: "reply", messageId: message.id,
-          includeQuote: $("includeQuote").checked, versions: Number($("versions").value) || 1 });
+          includeQuote: $("includeQuote").checked, versions: Number($("versions").value) || 1, attachments });
       }
     } catch (e) {
       res = { ok: false, reason: e && e.message ? e.message : String(e) };

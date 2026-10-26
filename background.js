@@ -185,8 +185,18 @@ async function ensureCopilotTab() {
       await messenger.windows.update(t.windowId, { focused: true });
       return copilotTabId;
     } catch (_) {
-      // la pestaña ya no existe; se recrea abajo
+      // la pestaña ya no existe; se busca otra de Copilot o se recrea abajo
     }
+  }
+  // Copilot puede seguir abierto aunque se haya perdido su id (p. ej. tras reiniciar el background).
+  const open = (await findCopilotTabIds()).find((id) => id !== copilotTabId);
+  if (open != null) {
+    try {
+      const t = await messenger.tabs.get(open);
+      await messenger.windows.update(t.windowId, { focused: true });
+      await messenger.storage.session.set({ copilotTabId: open });
+      return open;
+    } catch (_) {}
   }
   const win = await messenger.windows.create({ type: "popup", url: copilotUrl, width: 1200, height: 860 });
   const tabId = win.tabs[0].id;
@@ -324,7 +334,8 @@ async function startCopilotRequest(req) {
     const agent = await resolveAgent(req.agentId, req.agentLabel);
     const payload = {
       type: "sendPrompt", prompt: req.prompt, newChat: req.newChat,
-      agentId: agent ? agent.id : "", agentLabel: agent ? agent.label : "", agentUrl: agent ? agent.url : "", messageId: token
+      agentId: agent ? agent.id : "", agentLabel: agent ? agent.label : "", agentUrl: agent ? agent.url : "", messageId: token,
+      files: req.files || []
     };
     // Un agente añadido a mano no está en el panel de Copilot: se abre directamente por su enlace.
     const byUrl = agent && agent.url && /^u_/.test(agent.id);
@@ -597,8 +608,16 @@ async function checkCopilot() {
 async function sendFromWindow(msg) {
   // Token de correlación genérico: el messageId (respuesta) o el requestId (creación).
   const token = msg.messageId != null ? String(msg.messageId) : msg.requestId;
+  let files;
+  try {
+    files = await readAttachments(msg.messageId, msg.attachments);
+  } catch (e) {
+    console.error("[CoThunder] leer adjuntos:", e);
+    broadcastProgress(token, "error", { reason: "upload" });
+    return { ok: false, reason: "upload" };
+  }
   return startCopilotRequest({
-    token, prompt: msg.prompt, newChat: msg.newChat, agentId: msg.agentId, agentLabel: msg.agentLabel,
+    token, prompt: msg.prompt, files, newChat: msg.newChat, agentId: msg.agentId, agentLabel: msg.agentLabel,
     returnFocusTo: msg.returnFocusTo,
     opts: {
       mode: msg.mode || "reply",
@@ -611,6 +630,22 @@ async function sendFromWindow(msg) {
       bcc: (msg.bcc || "").trim()
     }
   });
+}
+
+// Adjuntos marcados en la ventana → [{ name, type, data: ArrayBuffer }] para el content script
+// (un ArrayBuffer viaja seguro por mensajes). Se vuelve a comprobar el tipo y el tamaño.
+async function readAttachments(messageId, partNames) {
+  if (messageId == null || !Array.isArray(partNames) || !partNames.length) return [];
+  const list = await messenger.messages.listAttachments(messageId);
+  const out = [];
+  for (const att of list) {
+    if (!partNames.includes(att.partName) || attachmentBlocker(att)) continue;
+    const file = await messenger.messages.getAttachmentFile(messageId, att.partName);
+    if (file.size > UPLOAD_MAX_BYTES) continue;
+    out.push({ name: att.name, type: att.contentType || file.type || "", data: await file.arrayBuffer() });
+  }
+  if (out.length !== partNames.length) throw new Error("adjuntos no disponibles");
+  return out;
 }
 
 // «Mejorar con Copilot» desde el editor: el fragmento seleccionado vuelve a la misma redacción.

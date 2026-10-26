@@ -473,8 +473,24 @@ const COPILOT_ERRORS = {
   timeout: "Copilot no ha respondido a tiempo. Comprueba que su ventana ha terminado de cargar y vuelve a intentarlo.",
   cancelled: "Cancelado.",
   busy: "Copilot aún está respondiendo a otra petición. Espera a que termine (o cancélala) y vuelve a intentarlo.",
-  capture: "No se pudo capturar la respuesta de Copilot. Revísala en la ventana de Copilot."
+  capture: "No se pudo capturar la respuesta de Copilot. Revísala en la ventana de Copilot.",
+  upload: "No se pudieron subir los adjuntos a Copilot. Vuelve a intentarlo o desmárcalos para enviar sin ellos."
 };
+
+// --- Adjuntos para Copilot: se suben como ficheros (Copilot guarda una copia en el OneDrive del
+// usuario). Extensiones que acepta su selector de ficheros (#upload-file-button, oct. 2026) y tope
+// prudente por fichero (Microsoft no publica el límite del chat).
+const UPLOAD_EXTENSIONS = new Set(("pdf doc docx docm rtf xls xlsx xlsm xlsb ppt pptx ppsm txt md csv tsv log json xml " +
+  "yaml yml ini config html htm eml msg png jpg jpeg gif bmp webp jfif").split(" "));
+const UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+// "" si el adjunto se puede subir; si no, el motivo para mostrarlo junto a su casilla.
+function attachmentBlocker(att) {
+  const name = String((att && att.name) || "");
+  const ext = name.includes(".") ? name.split(".").pop().toLowerCase() : "";
+  if (!UPLOAD_EXTENSIONS.has(ext)) return "Copilot no admite este tipo de fichero";
+  if ((Number(att.size) || 0) > UPLOAD_MAX_BYTES) return "Supera " + formatBytes(UPLOAD_MAX_BYTES);
+  return "";
+}
 function copilotErrorText(reason) {
   return COPILOT_ERRORS[reason] || "No se pudo enviar a Copilot" + (reason ? " (" + reason + ")" : "") + ".";
 }
@@ -711,6 +727,6 @@ if (typeof module !== "undefined" && module.exports) {
     detectInjection, normalizeText, buildUserContext,
     detectLanguage, splitVersions, stripCodeFences, versionsInstruction, buildSummaryPrompt, buildImprovePrompt,
     IMPROVE_ACTIONS, QUICK_ACTIONS, LANG_NAMES, copilotErrorText, chatTitle,
-    emailToMarkdown, markdownFileName, buildAskPrompt, formatBytes
+    emailToMarkdown, markdownFileName, buildAskPrompt, formatBytes, attachmentBlocker, UPLOAD_MAX_BYTES
   };
 }

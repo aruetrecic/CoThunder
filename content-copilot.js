@@ -12,6 +12,12 @@ const SELECTORS = {
   // (Ojo: [data-testid="loading-message"] envuelve la respuesta y sigue ahí al terminar; no sirve.)
   replyMessage: '[data-testid="m365-chat-llm-web-ui-chat-message"]',
   replyDone: '[data-testid="CopyButtonTestId"], [data-testid="feedback-button-testid"]',
+  // Adjuntos (oct. 2026): el selector de ficheros oculto de «+ Agregar contenido» y, al subir, una
+  // ficha por fichero (aria-label = nombre) en la barra de adjuntos. Con la subida terminada la ficha
+  // lleva el id del fichero en OneDrive/SharePoint ("SPO_…") y su zona aria-live queda vacía.
+  uploadInput: "#upload-file-button",
+  attachmentChip: '#m365-chat-input-shared-container [role="toolbar"] [data-overflow-item][aria-label]',
+  attachmentBusy: '[role="progressbar"], .fui-Spinner, [aria-busy="true"]',
   // Botón "Detener" mientras genera (para Cancelar). Si no se encuentra, se deja terminar.
   stopButton: 'button[data-testid="stopGeneratingButton"], button.fai-StopButton, button[aria-label*="Detener"], button[aria-label*="Stop"]',
   // Indicios de que no hay sesión: botón o enlace de inicio de sesión de Microsoft en la página.
@@ -372,6 +378,36 @@ messenger.runtime.onMessage.addListener(async (msg) => {
   return res;
 });
 
+// Sube los adjuntos con el selector de ficheros de Copilot (como «+ Agregar contenido») y espera a
+// que cada ficha esté lista: id "SPO_…" o, si Copilot no lo pone, 8 s sin indicador de carga ni aviso.
+async function attachFiles(files, token, timeoutMs = 60000) {
+  const input = document.querySelector(SELECTORS.uploadInput);
+  if (!input) { diag("selector-no-encontrado", "adjuntos " + SELECTORS.uploadInput); return { ok: false, reason: "upload" }; }
+  const dt = new DataTransfer();
+  for (const f of files) dt.items.add(new File([f.data], f.name, { type: f.type || "application/octet-stream" }));
+  input.files = dt.files;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  const quietSince = {};
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (cancelled.has(token)) return { ok: false, reason: "cancelled" };
+    const chips = [...document.querySelectorAll(SELECTORS.attachmentChip)];
+    const ready = files.every((f) => {
+      const chip = chips.find((c) => c.getAttribute("aria-label") === f.name);
+      if (!chip) return false;
+      if (/^SPO_/.test(chip.id)) return true;
+      const live = chip.querySelector("[aria-live]");
+      if (chip.querySelector(SELECTORS.attachmentBusy) || (live && live.textContent.trim())) { delete quietSince[f.name]; return false; }
+      quietSince[f.name] = quietSince[f.name] || Date.now();
+      return Date.now() - quietSince[f.name] > 8000;
+    });
+    if (ready) { diag("adjuntos", files.length + " subidos en " + Math.round((Date.now() - start) / 1000) + " s"); return { ok: true }; }
+    await delay(500);
+  }
+  diag("adjuntos-sin-terminar", files.length + " fichero(s), " + document.querySelectorAll(SELECTORS.attachmentChip).length + " ficha(s)");
+  return { ok: false, reason: "upload" };
+}
+
 async function sendPrompt(msg, token) {
   // Una petición nueva con el mismo token (volver a preguntar por un correo cancelado) no hereda la cancelación.
   cancelled.delete(token);
@@ -387,6 +423,12 @@ async function sendPrompt(msg, token) {
     if (!(await startNewChat())) diag("selector-no-encontrado", "newChat " + SELECTORS.newChat);
   }
   if (cancelled.has(token)) return { ok: false, reason: "cancelled" };
+  if (msg.files && msg.files.length) {
+    progress(token, "uploading");
+    const up = await attachFiles(msg.files, token);
+    if (!up.ok) return up;
+    progress(token, "typing");
+  }
   if (!(await typeIntoEditor(msg.prompt))) {
     // Sin editor: cookies bloqueadas (no hay sesión posible), sin sesión, o Microsoft ha cambiado la interfaz.
     if (!navigator.cookieEnabled) { diag("cookies-desactivadas", "Thunderbird bloquea las cookies de Copilot"); return { ok: false, reason: "cookies" }; }

@@ -167,6 +167,12 @@
       <label class="reply-only"><input type="checkbox" id="includeQuote"> Incluir el correo citado</label>
       <label class="reply-only"><input type="checkbox" id="includeThread"> Incluir el hilo (mensajes anteriores)</label>
     </div>
+
+    <fieldset id="attachments" class="attachments reply-only" hidden>
+      <legend>Adjuntos para Copilot</legend>
+      <div id="attachmentList" class="opts"></div>
+      <p class="hint">Los marcados se suben a Copilot, que guarda una copia en tu OneDrive (carpeta «Archivos de Microsoft Copilot Chat»).</p>
+    </fieldset>
   </div>
 
   <div class="tabpanel" role="tabpanel" id="panel-prompt" aria-labelledby="tab-prompt" data-modes="create reply">
@@ -197,6 +203,7 @@
   <div id="progress" class="progress" hidden>
     <ol class="steps" aria-label="Progreso">
       <li data-stage="opening">Abriendo Copilot</li>
+      <li data-stage="uploading" style="display:none">Subiendo adjuntos</li>
       <li data-stage="typing">Escribiendo el prompt</li>
       <li data-stage="waiting">Esperando la respuesta <span id="elapsed"></span></li>
       <li data-stage="done">Respuesta recibida</li>

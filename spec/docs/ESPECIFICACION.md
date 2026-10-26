@@ -2,7 +2,7 @@
 
 Extensión MailExtension para Thunderbird 140 o superior. Lee el correo abierto, monta un prompt editable con su contenido y lo envía a la web de **Microsoft 365 Copilot** automatizando el chat con la sesión que el usuario ya tiene iniciada. No usa ninguna API ni clave: pilota la interfaz web de Copilot mediante un content script.
 
-Versión de esta especificación: 2.21.0. Corresponde a la versión 2.21.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25). La 2.10 añade al editor un menú para insertar plantillas de formato (ver §26). La 2.11 lee el código fuente por bloques y añade «Ordenar» (ver §27). La 2.12 garantiza contraste WCAG AA en temas e interfaz (ver §28). La 2.13 quita los pies con datos personales de plantillas y prompts (ver §29). La 2.14 hace la barra del editor manejable con el teclado y la adapta al tema oscuro (ver §30). La 2.15 añade acciones de un clic, resúmenes, varias versiones, idioma de respuesta, «Mejorar con Copilot», progreso con Cancelar, aviso de sesión caducada, diagnóstico, iconos SVG, asistente de bienvenida y ayuda integrada (ver §31). La 2.16 reorganiza la página de Opciones en pestañas (ver §32). La 2.17 exporta correos a Markdown (descarga o envío a Copilot/agente) y mejora la detección de agentes, con alta manual por enlace (ver §33). La 2.18 muestra el estado de Copilot al abrir la ventana y lo abre automáticamente (ver §34). La 2.19 mejora la usabilidad de la ventana: indicaciones libres, foco de vuelta tras enviar, mensajes completos y un solo estado (ver §35). La 2.20 usa iconos Fluent en la interfaz y añade un selector de emoji para el texto (ver §36). La 2.21 añade atajos globales, aviso de novedades, cierre automático de la ventana, guardado automático de Opciones y otros ajustes de usabilidad (ver §37).
+Versión de esta especificación: 2.22.0. Corresponde a la versión 2.22.0 de la extensión. La 1.x se basaba en llamadas directas a una API compatible OpenAI/Azure; se sustituyó por completo por automatización de Copilot web al no disponer de acceso a API. La 2.1 añadió selección de agente, plantillas de Thunderbird, respuesta maquetada en Markdown y una ventana de UI redimensionable (ver §17). La 2.2 separa Prompts y Formatos, añade tono/longitud, firma/cita/hilo, blindaje anti-inyección, una biblioteca de plantillas sembrada al instalar y un rediseño de la ventana (ver §18, novedades v2.2). La 2.3 añade el botón "Crear desde Copilot" para redactar correos nuevos desde cero (ver §19). La 2.4 añade la sección "Sobre ti" (perfil del usuario) como contexto del autor en el prompt (ver §21). La 2.7 reorganiza la ventana en pestañas (ver §23). La 2.8 permite descargar cualquier tema y cambiar el estilo desde el editor (ver §24). La 2.9 conserva firma y cita, añade atajos y avisos previos al envío, y unifica la validación (ver §25). La 2.10 añade al editor un menú para insertar plantillas de formato (ver §26). La 2.11 lee el código fuente por bloques y añade «Ordenar» (ver §27). La 2.12 garantiza contraste WCAG AA en temas e interfaz (ver §28). La 2.13 quita los pies con datos personales de plantillas y prompts (ver §29). La 2.14 hace la barra del editor manejable con el teclado y la adapta al tema oscuro (ver §30). La 2.15 añade acciones de un clic, resúmenes, varias versiones, idioma de respuesta, «Mejorar con Copilot», progreso con Cancelar, aviso de sesión caducada, diagnóstico, iconos SVG, asistente de bienvenida y ayuda integrada (ver §31). La 2.16 reorganiza la página de Opciones en pestañas (ver §32). La 2.17 exporta correos a Markdown (descarga o envío a Copilot/agente) y mejora la detección de agentes, con alta manual por enlace (ver §33). La 2.18 muestra el estado de Copilot al abrir la ventana y lo abre automáticamente (ver §34). La 2.19 mejora la usabilidad de la ventana: indicaciones libres, foco de vuelta tras enviar, mensajes completos y un solo estado (ver §35). La 2.20 usa iconos Fluent en la interfaz y añade un selector de emoji para el texto (ver §36). La 2.21 añade atajos globales, aviso de novedades, cierre automático de la ventana, guardado automático de Opciones y otros ajustes de usabilidad (ver §37). La 2.22 permite subir los adjuntos del correo a Copilot, opcional en cada envío (ver §38).
 
 Plataforma objetivo: Thunderbird ESR 140 (probado en 140.11.1), **Manifest V3**. Decisión explícita del proyecto; ver §2 y el riesgo asociado en §15.
 
@@ -21,7 +21,7 @@ Qué no hace:
 - No envía correos automáticamente. La decisión final es siempre del usuario.
 - No inicia sesión por ti. Reutiliza la sesión de Copilot ya iniciada en el perfil de Thunderbird; la primera vez puede requerir login manual.
 - No incrusta Copilot en un iframe: Microsoft lo bloquea con `X-Frame-Options`/CSP. Por eso se usa una ventana/pestaña propia con content script, no un iframe.
-- No soporta adjuntos ni imágenes: solo el cuerpo textual del mensaje.
+- No envía los adjuntos salvo que el usuario los marque uno a uno en la ventana (desde la v2.22, §38); por defecto solo va el cuerpo textual del mensaje.
 
 ## 2. Requisitos de plataforma
 
@@ -175,7 +175,7 @@ Al recibir `copilotReply { text }`, el background abre `messenger.compose.beginR
 ## 12. Seguridad y protección de datos
 
 - El contenido de los correos solo viaja a Microsoft 365 Copilot, el mismo destino al que el usuario ya envía datos al usar Copilot. Ninguna otra red, ninguna telemetría, ningún tercero.
-- **Relevante para RGPD:** enviar el cuerpo de correos a Copilot implica un tratamiento por parte de Microsoft sujeto a los acuerdos de tu organización. Documentar cualquier cambio en el flujo de datos. La ventana muestra siempre lo que se envía (prompt editable) antes de enviarlo.
+- **Relevante para RGPD:** enviar el cuerpo de correos a Copilot implica un tratamiento por parte de Microsoft sujeto a los acuerdos de tu organización. Documentar cualquier cambio en el flujo de datos. La ventana muestra siempre lo que se envía (prompt editable) antes de enviarlo. Los adjuntos que el usuario marque (§38) se suben a Copilot, que guarda una copia en su OneDrive for Business.
 - Sin `eval`, sin `new Function`. En la UI propia (popup/options) no se usa `innerHTML` con contenido de correos ni de Copilot: el cuerpo se procesa solo con `DOMParser` para extraer texto y se muestra en un `textarea` (`value`, no HTML).
 - El content script interactúa con el DOM de Copilot mediante selectores y eventos; no inyecta HTML remoto en páginas propias.
 - **Degradación segura:** si la automatización falla (interfaz cambiada, sin sesión), el prompt se copia al portapapeles y se enfoca la ventana de Copilot para pegar a mano. Nunca se pierde el trabajo ni se queda en silencio.
@@ -659,3 +659,37 @@ En `runtime.onInstalled` con `reason === "update"`, si cambia la versión mayor 
 Desaparece el botón «Guardar cambios»: un `change` en las pestañas General, Aspecto o Sobre ti llama a `save()` (los textos se guardan al salir del campo). Las acciones que rellenan campos por código (tomar de la identidad, subir un `.css`, «Editar como personalizado», quitar un agente) también guardan. Si un agente manual está incompleto no se guarda nada y se avisa, como antes. Los controles de Privacidad siguen aplicándose al momento por su cuenta.
 
 Sin permisos nuevos (`mailTabs.getSelectedMessages` usa `messagesRead`) ni cambios en lo que viaja a Copilot.
+
+## 38. Adjuntos a Copilot (v2.22)
+
+### 38.1 Flujo de datos (RGPD)
+
+Hasta la 2.21 solo viajaba el texto del correo, dentro del chat. Desde la 2.22 el usuario puede marcar adjuntos para subirlos a Copilot como ficheros. **Copilot guarda una copia de cada fichero subido en el OneDrive for Business del usuario** (carpeta «Archivos de Microsoft Copilot Chat»), sujeta a las políticas de retención y Purview del tenant, hasta que el usuario la borre (Microsoft: los ficheros subidos no se usan para entrenar el modelo). Sigue siendo el mismo destino (Microsoft 365 del usuario), pero deja una copia persistente; por eso:
+
+- Las casillas salen **siempre desmarcadas** y no se recuerdan entre envíos.
+- La ventana explica junto a ellas que se guarda una copia en OneDrive (Copilot muestra además su propio aviso).
+- Las acciones de un clic, los resúmenes y el editor **nunca** suben adjuntos.
+
+### 38.2 Ventana
+
+En modo respuesta, si el correo tiene adjuntos (`messages.listAttachments`), aparece «Adjuntos para Copilot» con una casilla por fichero (nombre y tamaño). `attachmentBlocker(att)` (`common.js`, con tests) deshabilita los que Copilot no admite (extensiones de su selector de ficheros, `UPLOAD_EXTENSIONS`: PDF, Office, texto, CSV, Markdown, HTML, correos `.eml/.msg` e imágenes) y los que pasan de `UPLOAD_MAX_BYTES` (10 MB; Microsoft no publica el límite del chat), con el motivo. `sendToCopilot` lleva `attachments: [partName…]`. El progreso añade el paso «Subiendo adjuntos» solo si hay alguno marcado.
+
+### 38.3 Background
+
+`readAttachments(messageId, partNames)` vuelve a comprobar tipo y tamaño, lee cada fichero (`messages.getAttachmentFile`) y lo pasa como `{ name, type, data: ArrayBuffer }` en el payload `sendPrompt` (`files`). Si alguno no se puede leer, la petición falla con `upload` sin abrir Copilot. Sin permisos nuevos (`messagesRead`).
+
+`ensureCopilotTab` busca además una pestaña de Copilot ya abierta (`findCopilotTabIds`) cuando se ha perdido el id guardado, en vez de abrir otra ventana.
+
+### 38.4 Content script
+
+`attachFiles(files, token)` reproduce «+ Agregar contenido»: crea los `File`, los asigna a `SELECTORS.uploadInput` (`#upload-file-button`, oculto, `multiple`) con un `DataTransfer` y lanza `change`. Después espera (hasta 60 s, cancelable) a que cada fichero tenga su ficha (`SELECTORS.attachmentChip`, `aria-label` = nombre) **lista**: id `SPO_…` (el fichero ya está en OneDrive/SharePoint) o, si Copilot no lo pone, 8 s sin indicador de carga (`SELECTORS.attachmentBusy`) ni texto en su zona `aria-live`. Solo entonces escribe y envía el prompt; si no termina, devuelve `upload` y no envía nada sin los adjuntos. Comprobado a mano en Thunderbird (oct. 2026): la asignación desde el mundo aislado del content script funciona y Copilot muestra la ficha.
+
+### 38.5 Conversión a Markdown o PDF (evaluada, no incluida)
+
+Se valoró convertir los documentos en local antes de enviarlos:
+
+- **A PDF:** no es viable sin un motor de maquetación en la extensión (no hay dependencias en runtime), y no reduce tamaño.
+- **A Markdown, en el prompt:** evitaría la copia en OneDrive. Es viable para `.docx`/`.xlsx`/`.pptx` (ZIP + XML, descomprimible con `DecompressionStream("deflate-raw")`) y trivial para texto/CSV/HTML, pero pierde imágenes, gráficos y formato, y choca con el límite del prompt. No viable para PDF sin un lector de PDF.
+- **A Markdown, subido como `.md`:** Copilot lo admite, pero sigue dejando copia en OneDrive y lee mejor el original.
+
+Queda como posible ampliación «Enviar el texto del adjunto en el prompt (sin copia en OneDrive)» para Office y texto.

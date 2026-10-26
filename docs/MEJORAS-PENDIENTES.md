@@ -51,7 +51,7 @@ Todo lo de las versiones 2.7–2.12 se ha probado en Edge headless, no dentro de
 - [x] Varias versiones para elegir.
 - [x] Responder en el idioma del remitente.
 - [x] Resumen de varios correos.
-- [ ] **Texto de los adjuntos** (`.txt`, `.md`, `.csv`) tras una casilla desactivada por defecto. Pendiente de decisión: cambia lo que viaja a Copilot (RGPD). **A**
+- [x] (v2.22.0, subida del fichero a Copilot; el texto en el prompt queda como opción, spec §38.5) **Texto de los adjuntos** (`.txt`, `.md`, `.csv`) tras una casilla desactivada por defecto. Pendiente de decisión: cambia lo que viaja a Copilot (RGPD). **A**
 - [x] Progreso por pasos con «Cancelar».
 - [x] Iconos SVG en la barra del editor.
 - [x] Asistente de primera vez.

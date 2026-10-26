@@ -19,7 +19,7 @@ Sin API, sin claves y sin telemetría.
 >
 > **[Descargar la última versión (`cothunder.xpi`)](https://github.com/aruetrecic/CoThunder/releases/latest/download/cothunder.xpi)**
 >
-> Versión actual: **[2.21.0](https://github.com/aruetrecic/CoThunder/releases/tag/v2.21.0)** · [descarga directa de la 2.21.0](https://github.com/aruetrecic/CoThunder/releases/download/v2.21.0/cothunder-2.21.0.xpi)
+> Versión actual: **[2.22.0](https://github.com/aruetrecic/CoThunder/releases/tag/v2.22.0)** · [descarga directa de la 2.22.0](https://github.com/aruetrecic/CoThunder/releases/download/v2.22.0/cothunder-2.22.0.xpi)
 >
 > Todas las versiones y sus notas: **[página de Releases](https://github.com/aruetrecic/CoThunder/releases)** · Qué cambia en cada una: **[CHANGELOG](CHANGELOG.md)**
 
@@ -154,7 +154,7 @@ Para crear las tuyas, redacta un mensaje (en Markdown si quieres), ponle el pref
 
 ## Privacidad y seguridad
 
-El contenido de los correos solo viaja a **Microsoft 365 Copilot**, el mismo destino al que ya envías datos al usar Copilot. Sin telemetría, sin terceros, sin claves. La ventana muestra siempre el prompt antes de enviarlo y la primera vez avisa del tratamiento. Opcionalmente, un **registro de actividad local** (solo metadatos).
+El contenido de los correos solo viaja a **Microsoft 365 Copilot**, el mismo destino al que ya envías datos al usar Copilot. Sin telemetría, sin terceros, sin claves. La ventana muestra siempre el prompt antes de enviarlo y la primera vez avisa del tratamiento. Los **adjuntos** solo se envían si los marcas uno a uno, y Copilot guarda una copia en tu OneDrive. Opcionalmente, un **registro de actividad local** (solo metadatos).
 
 **Qué le llega a Copilot y qué no**
 
