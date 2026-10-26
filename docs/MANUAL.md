@@ -137,7 +137,7 @@ La respuesta llega en Markdown (con `#`, `**`, listas, tablas, citas). CoThunder
 
 ## 9. Opciones
 
-Desde **Complementos y temas → CoThunder → Opciones**. La página tiene cinco pestañas: **General** (chat nuevo, editor Markdown y, en *Avanzado*, la dirección de Copilot y la instrucción base), **Aspecto del correo** (tema, color y tu propio tema), **Sobre ti**, **Privacidad** (registro de actividad y diagnóstico) y **Ayuda**. **Guardar cambios**, siempre visible abajo, guarda las tres primeras.
+Desde **Complementos y temas → CoThunder → Opciones**. La página tiene cinco pestañas: **General** (chat nuevo, editor Markdown y, en *Avanzado*, la dirección de Copilot y la instrucción base), **Aspecto del correo** (tema, color y tu propio tema), **Sobre ti**, **Privacidad** (registro de actividad y diagnóstico) y **Ayuda**. Los cambios se **guardan solos** al modificarlos.
 
 ![Opciones de CoThunder, pestaña General](manual/11_opciones.png)
 
@@ -145,7 +145,7 @@ En detalle:
 
 - **URL del chat de Copilot** y **plantilla base del prompt**.
 - **Empezar chat nuevo por defecto**.
-- **Sobre ti (contexto para Copilot)**: nombre, puesto o cargo, organización, qué haces y **cómo escribes** (tratamiento de usted o tú, tono, cómo te despides). Se añade al prompt en los dos modos para que Copilot sepa quién eres y adapte el tono y el rol. Copilot termina en la despedida, **sin firma ni datos de contacto**: los pone la firma de tu identidad de Thunderbird (casilla **Incluir mi firma**). El botón **«Tomar de mi identidad de Thunderbird»** rellena nombre y organización desde tu identidad por defecto (solo los campos vacíos); revisa y pulsa Guardar. Se guarda solo en tu equipo.
+- **Sobre ti (contexto para Copilot)**: nombre, puesto o cargo, organización, qué haces y **cómo escribes** (tratamiento de usted o tú, tono, cómo te despides). Se añade al prompt en los dos modos para que Copilot sepa quién eres y adapte el tono y el rol. Copilot termina en la despedida, **sin firma ni datos de contacto**: los pone la firma de tu identidad de Thunderbird (casilla **Incluir mi firma**). El botón **«Tomar de mi identidad de Thunderbird»** rellena nombre y organización desde tu identidad por defecto (solo los campos vacíos) y lo guarda; revísalo. Se guarda solo en tu equipo.
 - **Registro de actividad (auditoría)**: activar, ver el número de entradas, exportar y vaciar.
 - **Diagnóstico**: copiar o vaciar el registro técnico (sección 13).
 - Enlaces a la **ayuda** y al **asistente de bienvenida**.

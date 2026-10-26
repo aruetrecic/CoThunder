@@ -3,6 +3,19 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.21.0] — 2026-10-26
+
+### Añadido
+- **Atajos globales**: **Ctrl+Alt+P** pregunta a Copilot por el correo abierto o seleccionado y **Ctrl+Alt+U** resume los seleccionados (se pueden cambiar en *Complementos › Gestionar atajos*).
+- **Aviso de novedades** tras actualizar a una versión nueva; al pulsarlo se abren sus notas.
+- **Cerrar la ventana al recibir la respuesta** (opcional, en Opciones › General).
+- **«Usar siempre este estilo»** en el menú Estilo del editor, para dejarlo como predeterminado sin ir a Opciones.
+
+### Cambiado
+- **Opciones se guardan solas** al modificarlas: ya no hay botón «Guardar cambios».
+- **Más opciones**, plegado, resume lo elegido («Más opciones · Formal · Breve · Inglés»).
+- **Redacción en ventana estrecha**: el editor Markdown oculta la vista previa y usa todo el ancho.
+
 ## [2.20.6] — 2026-10-23
 
 ### Corregido

@@ -83,7 +83,27 @@ async function toggleMarkdownPanel(clickedTab) {
   }
 }
 messenger.composeAction.onClicked.addListener((tab) => toggleMarkdownPanel(tab));
-messenger.commands.onCommand.addListener((name) => { if (name === "toggle-markdown") toggleMarkdownPanel(null); });
+messenger.commands.onCommand.addListener(async (name, tab) => {
+  if (name === "toggle-markdown") { toggleMarkdownPanel(null); return; }
+  if (name !== "ask-copilot" && name !== "summarize-copilot") return;
+  const ids = await activeMessageIds(tab);
+  if (name === "ask-copilot") openReplyWindow(ids[0]);
+  else quickAction("summary", ids);
+});
+
+// Correos de la pestaña activa para los atajos globales: la selección de la lista, o el
+// mensaje abierto en su propia pestaña o ventana.
+async function activeMessageIds(tab) {
+  try {
+    if (!tab) [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
+    if (!tab) return [];
+    if (tab.type === "mail") {
+      const sel = await messenger.mailTabs.getSelectedMessages(tab.id);
+      return menuMessageIds({ selectedMessages: sel }, tab);
+    }
+    return menuMessageIds(null, tab);
+  } catch (_) { return []; }
+}
 
 // Al enviar con el panel activo: pide el HTML final al compose script y lo pone
 // como cuerpo del correo. Opción 1 (un solo clic): sin cancel, el envío sale
@@ -189,6 +209,9 @@ function diag(ev, detail) {
     await messenger.storage.local.set({ diagLog: log });
   }).catch(() => {});
 }
+
+// Notas de cada versión (las publica el workflow de release al subir la etiqueta vX.Y.Z).
+const RELEASES_URL = "https://github.com/aruetrecic/CoThunder/releases";
 
 function notify(message) {
   messenger.notifications.create({
@@ -957,8 +980,26 @@ cleanProfileSignature();
 
 messenger.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install" || details.reason === "update") seedTemplates();
+  // Tras una actualización con cambio de versión menor o mayor: aviso de novedades (al pulsarlo,
+  // abre las notas de la versión en el navegador).
+  if (details.reason === "update") {
+    const version = messenger.runtime.getManifest().version;
+    const minor = (v) => String(v || "").split(".").slice(0, 2).join(".");
+    if (minor(details.previousVersion) !== minor(version)) {
+      messenger.notifications.create("cothunder-news", {
+        type: "basic", iconUrl: messenger.runtime.getURL("icon.svg"), title: "CoThunder " + version,
+        message: "CoThunder se ha actualizado. Pulsa aquí para ver las novedades."
+      }).catch(() => {});
+    }
+  }
   // Primera instalación: asistente de bienvenida (sesión de Copilot, tema y agente).
   if (details.reason === "install") {
     messenger.tabs.create({ url: messenger.runtime.getURL("pages/welcome.html") }).catch(() => {});
   }
+});
+
+messenger.notifications.onClicked.addListener((id) => {
+  if (id !== "cothunder-news") return;
+  const version = messenger.runtime.getManifest().version;
+  messenger.windows.openDefaultBrowser(RELEASES_URL + "/tag/v" + version).catch(() => {});
 });

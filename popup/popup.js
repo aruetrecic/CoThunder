@@ -161,6 +161,15 @@
   // «Más opciones» plegado o abierto como lo dejó el usuario.
   try { $("more").open = localStorage.getItem("moreOpen") === "1"; } catch (_) {}
   $("more").addEventListener("toggle", () => { try { localStorage.setItem("moreOpen", $("more").open ? "1" : "0"); } catch (_) {} });
+  // Plegado, el título resume lo elegido («Más opciones · Formal · Breve · Inglés»).
+  const moreSummary = () => {
+    const picked = ["tone", "length", "reply-language", "versions"]
+      .map((id) => $(id))
+      .filter((el) => el && el.selectedIndex > 0 && !(mode === "create" && el.closest(".reply-only")))
+      .map((el) => el.selectedOptions[0].textContent.trim());
+    $("more").querySelector("summary").textContent = ["Más opciones"].concat(picked).join(" · ");
+  };
+  $("more").addEventListener("change", moreSummary);
 
   // Mini editor Markdown reutilizable: cablea los botones de una barra a su textarea
   // (envuelve la selección o prefija las líneas). Se usa en "Prompt a enviar" y "¿Qué quieres crear?".
@@ -292,6 +301,7 @@
     $("includeQuote").checked = prefs.prefQuote;
     $("includeThread").checked = prefs.prefThread;
     if (mode === "create") $("language").value = prefs.prefLanguage;
+    moreSummary();
 
     rebuildPrompt();
     customAgents = prefs.customAgents || [];
@@ -507,6 +517,11 @@
     if (m.stage === "done") setStatus("ok", Number($("versions").value) > 1 && mode === "reply"
       ? "Respuesta recibida: elige una versión en la ventana nueva"
       : "Respuesta recibida: se abre el correo");
+    if (m.stage === "done") {
+      messenger.storage.local.get({ closeOnReply: false }).then((o) => {
+        if (o.closeOnReply) setTimeout(() => window.close(), 1500);
+      }).catch(() => {});
+    }
   });
   $("cancel").addEventListener("click", () => {
     if (!currentToken) return;

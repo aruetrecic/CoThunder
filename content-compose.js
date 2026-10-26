@@ -610,7 +610,11 @@
     themeMenu.setItems(list.map((t) => ({
       text: (current && t.id === current.id ? "✓ " : "\u2003") + t.name,
       onClick: () => { emailTheme = t.id; fillThemeMenu(); renderPreview(); }
-    })));
+    })).concat([{
+      // Guarda el estilo actual como tema por defecto (el mismo ajuste que en Opciones).
+      text: "\u2003Usar siempre este estilo",
+      onClick: () => { messenger.storage.local.set({ emailTheme }).catch(() => {}); }
+    }]));
   }
 
   // Bloques que NO son Markdown del usuario y se conservan tal cual (HTML original): la firma
@@ -916,7 +920,10 @@
       "background:#fff;color:#111;padding:10px;" +
       // El preview no hereda la letra monoespaciada de la zona de escritura: es el correo final.
       "font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;}" +
-      "#" + IDS.preview + " img{max-width:100%;height:auto;}" + TOOLBAR_CSS;
+      "#" + IDS.preview + " img{max-width:100%;height:auto;}" + TOOLBAR_CSS +
+      // Ventana estrecha: el texto ocupa todo el ancho y la vista previa se oculta.
+      "@media (max-width:640px){body{margin-right:0 !important;}#" + IDS.preview + "{display:none;}" +
+      "#" + IDS.toolbar + "{width:100%;}}";
     style.textContent = layout(40);
     (document.head || document.documentElement).appendChild(style);
 

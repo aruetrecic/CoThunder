@@ -47,6 +47,7 @@ mark { background-color: #FCC100; }
   $("newChatByDefault").checked = cfg.newChatByDefault;
   $("mdEditorDefault").checked = cfg.mdEditorDefault;
   $("autoOpenCopilot").checked = cfg.autoOpenCopilot;
+  $("closeOnReply").checked = cfg.closeOnReply;
   $("emailAccent").value = cfg.emailAccent;
   $("emailTheme").value = cfg.emailTheme;
   $("emailCustomCss").value = cfg.emailCustomCss;
@@ -67,7 +68,8 @@ mark { background-color: #FCC100; }
       if (id.organization && !$("userOrg").value.trim()) $("userOrg").value = id.organization;
       // La firma NO se copia al perfil: la añade Thunderbird al correo, y así sus datos de
       // contacto no viajan a Copilot en cada prompt.
-      $("filled").textContent = "Rellenado. Revisa y pulsa Guardar.";
+      $("filled").textContent = "Rellenado y guardado. Revísalo.";
+      save();
       setTimeout(() => { $("filled").textContent = ""; }, 5000);
     } catch (_) {
       $("filled").textContent = "No se pudo leer la identidad.";
@@ -119,7 +121,7 @@ mark { background-color: #FCC100; }
     const del = document.createElement("button");
     del.type = "button"; del.textContent = "Quitar";
     del.setAttribute("aria-label", "Quitar el agente " + n);
-    del.addEventListener("click", () => row.remove());
+    del.addEventListener("click", () => { row.remove(); save(); });
     row.append(name, url, del);
     $("customAgents").appendChild(row);
     return name;
@@ -146,7 +148,9 @@ mark { background-color: #FCC100; }
     return { ok: true, agents };
   };
 
-  $("save").addEventListener("click", async () => {
+  // Guardado automático: cualquier cambio en General, Aspecto o Sobre ti se guarda al momento
+  // (los controles de Privacidad y las herramientas del CSS tienen su propia acción).
+  async function save() {
     const custom = readCustomAgents();
     $("agentsMsg").textContent = custom.ok ? "" : custom.error;
     if (!custom.ok) {
@@ -164,6 +168,7 @@ mark { background-color: #FCC100; }
       newChatByDefault: $("newChatByDefault").checked,
       mdEditorDefault: $("mdEditorDefault").checked,
       autoOpenCopilot: $("autoOpenCopilot").checked,
+      closeOnReply: $("closeOnReply").checked,
       emailAccent: $("emailAccent").value,
       emailTheme: $("emailTheme").value,
       emailCustomCss: $("emailCustomCss").value,
@@ -181,7 +186,12 @@ mark { background-color: #FCC100; }
       ? "Guardado"
       : "Guardado. Aviso: solo el dominio m365.cloud.microsoft tiene permiso; otro dominio no se inyectará";
     setTimeout(() => { $("saved").textContent = ""; }, 4000);
-  });
+  }
+  const NOT_SETTINGS = new Set(["emailCssFile", "emailCssBase", "auditEnabled"]);
+  for (const id of ["panel-general", "panel-look", "panel-me"]) {
+    const panel = $(id);
+    if (panel) panel.addEventListener("change", (e) => { if (!NOT_SETTINGS.has(e.target.id)) save(); });
+  }
 
   // --- Tema del correo: subir CSS desde fichero y descargar plantilla ---
   $("emailCssFile").addEventListener("change", () => {
@@ -191,6 +201,7 @@ mark { background-color: #FCC100; }
     reader.onload = () => {
       $("emailCustomCss").value = String(reader.result || "");
       $("emailTheme").value = "custom";
+      save();
     };
     reader.readAsText(file);
   });
@@ -227,7 +238,8 @@ mark { background-color: #FCC100; }
     $("emailTheme").value = "custom";
     $("emailCustomCss").closest("details").open = true;
     $("emailCustomCss").focus();
-    $("cssHint").textContent = "Copiada a «CSS personalizado»: retócala y pulsa Guardar.";
+    $("cssHint").textContent = "Copiada a «CSS personalizado» y guardada: retócala a tu gusto.";
+    save();
   });
   $("emailCssDownload").addEventListener("click", () => {
     const { file, css } = baseCss();

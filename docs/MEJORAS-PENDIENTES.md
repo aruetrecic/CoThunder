@@ -19,7 +19,7 @@ Todo lo de las versiones 2.7–2.12 se ha probado en Edge headless, no dentro de
 
 ## 3. Editor Markdown (media)
 
-- [ ] **«Usar siempre este estilo»** como última opción del menú 🎨, para guardarlo como predeterminado sin ir a Opciones. **B**
+- [x] **«Usar siempre este estilo»** (v2.21.0) como última opción del menú 🎨, para guardarlo como predeterminado sin ir a Opciones. **B**
 - [ ] **Pegar desde Excel o Calc → tabla Markdown** (el portapapeles trae texto separado por tabuladores), ya alineada. **M**
 - [ ] **Ordenar con imágenes:** hoy se salta los tramos con imágenes insertadas; conservar los `<img>` al reescribir. Renumerar también las listas numeradas (1., 2., 3.). **M**
 - [ ] **Scroll sincronizado** entre el texto y la vista previa en correos largos. **M**
@@ -68,11 +68,11 @@ Todo lo de las versiones 2.7–2.12 se ha probado en Edge headless, no dentro de
 - [x] Un solo indicador de estado y un solo «Abrir Copilot» (v2.19.0).
 - [ ] Pestaña Prompt: resumen de lo que se envía y el texto completo plegado. **M**
 - [x] Iconos Fluent en la interfaz y selector de emoji para el texto de los usuarios (v2.20.0).
-- [ ] «Más opciones» plegado con el resumen de lo elegido («Formal · Breve · Inglés»). **B**
-- [ ] Atajos de teclado globales: preguntar a Copilot y resumir el correo abierto. **B**
-- [ ] Cerrar la ventana sola al abrirse la respuesta (opcional). **B**
-- [ ] Opciones con guardado automático, sin botón Guardar. **B**
+- [x] (v2.21.0) «Más opciones» plegado con el resumen de lo elegido («Formal · Breve · Inglés»). **B**
+- [x] (v2.21.0) Atajos de teclado globales: preguntar a Copilot y resumir el correo abierto. **B**
+- [x] (v2.21.0) Cerrar la ventana sola al abrirse la respuesta (opcional). **B**
+- [x] (v2.21.0) Opciones con guardado automático, sin botón Guardar. **B**
 - [ ] «Guardar como prompt» desde la ventana (crea la plantilla con el prefijo correcto). **M**
 - [ ] Progreso y Cancelar también en las acciones de un clic. **M**
-- [ ] Aviso de «Novedades» tras actualizar. **B**
-- [ ] Editor: ocultar la vista previa o cambiar el reparto en pantallas pequeñas. **B**
+- [x] (v2.21.0) Aviso de «Novedades» tras actualizar. **B**
+- [x] (v2.21.0) Editor: ocultar la vista previa o cambiar el reparto en pantallas pequeñas. **B**

@@ -109,6 +109,8 @@
         <span><strong>Empezar un chat nuevo cada vez</strong><span class="muted">Cada petición parte de una conversación limpia en Copilot.</span></span></label>
       <label class="check"><input id="autoOpenCopilot" type="checkbox">
         <span><strong>Abrir Copilot automáticamente</strong><span class="muted">Al abrir la ventana de CoThunder, si Copilot está cerrado se abre en segundo plano, para que esté listo al enviar.</span></span></label>
+      <label class="check"><input id="closeOnReply" type="checkbox">
+        <span><strong>Cerrar la ventana al recibir la respuesta</strong><span class="muted">Cuando llega la respuesta de Copilot y se abre el correo, la ventana de CoThunder se cierra sola.</span></span></label>
       <label class="check"><input id="mdEditorDefault" type="checkbox">
         <span><strong>Editor Markdown activo al redactar</strong><span class="muted">Escribes a la izquierda y ves el correo maquetado a la derecha. Se alterna con Ctrl+Alt+M.</span></span></label>
 
@@ -273,9 +275,8 @@
   </section>
 
   <div class="savebar">
-    <button id="save" class="primary">Guardar cambios</button>
     <span id="saved" role="status"></span>
-    <span class="note muted">Guarda General, Aspecto y Sobre ti. Lo de Privacidad se aplica al momento.</span>
+    <span class="note muted">Los cambios se guardan solos al modificarlos.</span>
   </div>
 </div>
 <script src="../common.js"></script>

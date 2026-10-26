@@ -114,6 +114,8 @@ const DEFAULTS = {
   mdEditorDefault: true,
   // Al abrir la ventana de CoThunder, abrir Copilot si está cerrado (sin quitarle el foco a la ventana).
   autoOpenCopilot: true,
+  // Cerrar la ventana de CoThunder en cuanto llega la respuesta de Copilot.
+  closeOnReply: false,
   // Perfil del usuario (el mismo en Thunderbird y en Copilot): contexto para enriquecer las respuestas.
   userProfile: { name: "", role: "", org: "", about: "", style: "" },
   // Color de acento del correo (encabezados, tablas y citas del cuerpo Markdown maquetado).
