@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.24.2] — 2026-10-26
+
+### Corregido
+- **Adjuntos para Copilot**: el nombre de cada adjunto sale ahora encima de su desplegable. Antes el desplegable quedaba encima del nombre y parecía pertenecer al adjunto anterior.
+
 ## [2.24.1] — 2026-10-26
 
 ### Corregido

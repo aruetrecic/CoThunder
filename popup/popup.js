@@ -253,7 +253,7 @@
         }
         rebuildPrompt();
       });
-      row.append(sel, name, note);
+      row.append(name, note, sel);
       $("attachmentList").appendChild(row);
     }
     $("attachments").hidden = false;
