@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.25.1] — 2026-10-26
+
+### Cambiado
+- Primera versión que llega por **actualización automática** desde la 2.25.0. Las preferencias se conservan al actualizar, y una prueba automática impide publicar una versión que las borre.
+
 ## [2.25.0] — 2026-10-26
 
 ### Añadido
