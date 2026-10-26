@@ -3,6 +3,12 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.25.4] — 2026-10-26
+
+### Cambiado
+- El **aviso de versión nueva** sale una sola vez por versión, no en cada arranque de Thunderbird.
+- La página de cada versión reúne las **novedades de toda la serie** (por ejemplo, de la 2.25.0 a la 2.25.4), para que veas lo importante aunque te hayas saltado alguna.
+
 ## [2.25.3] — 2026-10-26
 
 ### Cambiado

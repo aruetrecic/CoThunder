@@ -231,6 +231,10 @@ async function checkForUpdate() {
   try {
     const { version } = await (await fetch(LATEST_MANIFEST_URL, { cache: "no-store" })).json();
     if (!isNewerVersion(version, messenger.runtime.getManifest().version)) return;
+    // Una sola vez por versión, para no repetir el aviso en cada arranque.
+    const { updateNotified } = await messenger.storage.local.get({ updateNotified: "" });
+    if (updateNotified === version) return;
+    await messenger.storage.local.set({ updateNotified: version });
     await messenger.notifications.create("cothunder-update", {
       type: "basic", iconUrl: messenger.runtime.getURL("icon.svg"), title: "CoThunder " + version + " disponible",
       message: "Se instalará sola. Para instalarla ya: Complementos y temas › ⚙ › Buscar actualizaciones. Pulsa aquí para ver las novedades."
