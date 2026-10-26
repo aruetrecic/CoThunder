@@ -33,6 +33,11 @@ jobs:
           # Copia con nombre fijo: el README enlaza a releases/latest/download/cothunder.xpi,
           # que así siempre descarga la última versión.
           cp "$XPI" cothunder.xpi
+          # Manifiesto de actualizaciones (gecko.update_url apunta a releases/latest/download/updates.json):
+          # Thunderbird lo consulta y, si hay versión nueva, descarga e instala este .xpi.
+          node -e 'const [v, x] = process.argv.slice(1); console.log(JSON.stringify({ addons: { "cothunder@local": { updates: [{
+            version: v, update_link: "https://github.com/aruetrecic/CoThunder/releases/download/v" + v + "/" + x,
+            applications: { gecko: { strict_min_version: "140.0" } } }] } } }, null, 2))' "$VERSION" "$XPI" > updates.json
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "xpi=$XPI" >> "$GITHUB_OUTPUT"
 
@@ -63,7 +68,7 @@ jobs:
           if [ ! -s RELEASE_NOTES.md ]; then echo "CoThunder ${VERSION} para Thunderbird 140 o superior." > RELEASE_NOTES.md; fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --title "$TITLE" --notes-file RELEASE_NOTES.md
-            gh release upload "$TAG" "$XPI" cothunder.xpi --clobber
+            gh release upload "$TAG" "$XPI" cothunder.xpi updates.json --clobber
           else
-            gh release create "$TAG" "$XPI" cothunder.xpi --title "$TITLE" --notes-file RELEASE_NOTES.md
+            gh release create "$TAG" "$XPI" cothunder.xpi updates.json --title "$TITLE" --notes-file RELEASE_NOTES.md
           fi

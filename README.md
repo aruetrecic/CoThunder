@@ -19,7 +19,7 @@ Sin API, sin claves y sin telemetría.
 >
 > **[Descargar la última versión (`cothunder.xpi`)](https://github.com/aruetrecic/CoThunder/releases/latest/download/cothunder.xpi)**
 >
-> Versión actual: **[2.24.3](https://github.com/aruetrecic/CoThunder/releases/tag/v2.24.3)** · [descarga directa de la 2.24.3](https://github.com/aruetrecic/CoThunder/releases/download/v2.24.3/cothunder-2.24.3.xpi)
+> Versión actual: **[2.25.0](https://github.com/aruetrecic/CoThunder/releases/tag/v2.25.0)** · [descarga directa de la 2.25.0](https://github.com/aruetrecic/CoThunder/releases/download/v2.25.0/cothunder-2.25.0.xpi)
 >
 > Todas las versiones y sus notas: **[página de Releases](https://github.com/aruetrecic/CoThunder/releases)** · Qué cambia en cada una: **[CHANGELOG](CHANGELOG.md)**
 
@@ -54,6 +54,8 @@ La extensión no llama a ninguna API: pilota la web de Copilot en una ventana pr
 1. **[Descarga `cothunder.xpi`](https://github.com/aruetrecic/CoThunder/releases/latest/download/cothunder.xpi)** (siempre es la última versión).
 2. En Thunderbird: **Herramientas › Complementos y temas › ⚙ › Instalar complemento desde archivo…** y elige el fichero.
 3. Pulsa cualquier botón de CoThunder. La primera vez, inicia sesión en Copilot en la ventana que se abre.
+
+**Actualizaciones automáticas** (desde la 2.25.0): Thunderbird comprueba cada día si hay una versión nueva en las Releases de GitHub y la instala sola. Para no esperar: **Complementos y temas › ⚙ › Buscar actualizaciones**. Las versiones anteriores a la 2.25.0 hay que actualizarlas a mano una última vez.
 
 Guía con capturas: [docs/INSTALACION.md](docs/INSTALACION.md).
 
@@ -154,7 +156,7 @@ Para crear las tuyas, redacta un mensaje (en Markdown si quieres), ponle el pref
 
 ## Privacidad y seguridad
 
-El contenido de los correos solo viaja a **Microsoft 365 Copilot**, el mismo destino al que ya envías datos al usar Copilot. Sin telemetría, sin terceros, sin claves. La ventana muestra siempre el prompt antes de enviarlo y la primera vez avisa del tratamiento. Los **adjuntos** solo se envían si lo eliges uno a uno: como **texto extraído en tu equipo** (sin copia en OneDrive) o como fichero (Copilot guarda una copia en tu OneDrive). Opcionalmente, un **registro de actividad local** (solo metadatos).
+El contenido de los correos solo viaja a **Microsoft 365 Copilot**, el mismo destino al que ya envías datos al usar Copilot. Sin telemetría, sin terceros, sin claves. La ventana muestra siempre el prompt antes de enviarlo y la primera vez avisa del tratamiento. Los **adjuntos** solo se envían si lo eliges uno a uno: como **texto extraído en tu equipo** (sin copia en OneDrive) o como fichero (Copilot guarda una copia en tu OneDrive). Opcionalmente, un **registro de actividad local** (solo metadatos). Para **buscar actualizaciones**, Thunderbird consulta las Releases de GitHub: solo pide el fichero `updates.json`, sin ningún dato de tus correos.
 
 **Qué le llega a Copilot y qué no**
 

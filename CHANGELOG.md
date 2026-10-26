@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.25.0] — 2026-10-26
+
+### Añadido
+- **Actualizaciones automáticas**: Thunderbird busca versiones nuevas en las Releases de GitHub y las instala solo (o al pulsar Complementos y temas › ⚙ › Buscar actualizaciones). Esta versión hay que instalarla a mano; las siguientes llegarán solas.
+
 ## [2.24.3] — 2026-10-26
 
 ### Cambiado
