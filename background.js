@@ -222,6 +222,22 @@ function diag(ev, detail) {
 
 // Notas de cada versión (las publica el workflow de release al subir la etiqueta vX.Y.Z).
 const RELEASES_URL = "https://github.com/aruetrecic/CoThunder/releases";
+// Versión publicada: el manifest de main (raw.githubusercontent.com admite CORS, sin permisos nuevos).
+const LATEST_MANIFEST_URL = "https://raw.githubusercontent.com/aruetrecic/CoThunder/main/manifest.json";
+
+// Al abrir Thunderbird: si hay versión nueva, avisa. Thunderbird la instala solo en su comprobación
+// diaria (gecko.update_url); los complementos no pueden forzarla, así que se indica cómo adelantarla.
+async function checkForUpdate() {
+  try {
+    const { version } = await (await fetch(LATEST_MANIFEST_URL, { cache: "no-store" })).json();
+    if (!isNewerVersion(version, messenger.runtime.getManifest().version)) return;
+    await messenger.notifications.create("cothunder-update", {
+      type: "basic", iconUrl: messenger.runtime.getURL("icon.svg"), title: "CoThunder " + version + " disponible",
+      message: "Se instalará sola. Para instalarla ya: Complementos y temas › ⚙ › Buscar actualizaciones. Pulsa aquí para ver las novedades."
+    });
+  } catch (_) { /* sin red o GitHub caído: ya avisará otro día */ }
+}
+messenger.runtime.onStartup.addListener(checkForUpdate);
 
 function notify(message) {
   messenger.notifications.create({
@@ -1034,6 +1050,7 @@ messenger.runtime.onInstalled.addListener((details) => {
 });
 
 messenger.notifications.onClicked.addListener((id) => {
+  if (id === "cothunder-update") messenger.windows.openDefaultBrowser(RELEASES_URL + "/latest").catch(() => {});
   if (id !== "cothunder-news") return;
   const version = messenger.runtime.getManifest().version;
   messenger.windows.openDefaultBrowser(RELEASES_URL + "/tag/v" + version).catch(() => {});

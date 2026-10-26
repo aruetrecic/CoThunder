@@ -212,6 +212,15 @@ test("bodyImages: imágenes incrustadas en el orden de las marcas, con nombre y 
   ]);
 });
 
+test("isNewerVersion compara X.Y.Z por números", () => {
+  const { isNewerVersion } = require("../common.js");
+  assert.equal(isNewerVersion("2.25.2", "2.25.1"), true);
+  assert.equal(isNewerVersion("2.10.0", "2.9.9"), true);
+  assert.equal(isNewerVersion("2.25.1", "2.25.1"), false);
+  assert.equal(isNewerVersion("2.24.9", "2.25.0"), false);
+  assert.equal(isNewerVersion(undefined, "2.25.0"), false);
+});
+
 // Las actualizaciones automáticas (v2.25) conservan storage.local porque el id del complemento no
 // cambia; ningún código puede borrar las preferencias del usuario ni cambiar ese id.
 test("ninguna versión borra las preferencias del usuario al actualizar", () => {

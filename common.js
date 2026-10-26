@@ -786,6 +786,13 @@ async function extractTemplateBody(messageId) {
   return text;
 }
 
+// ¿Es la versión «a» (X.Y.Z) posterior a «b»?
+function isNewerVersion(a, b) {
+  const pa = String(a || "").split(".").map(Number), pb = String(b || "").split(".").map(Number);
+  for (let i = 0; i < 3; i++) if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0);
+  return false;
+}
+
 // Exporta las funciones puras para pruebas en Node. Inerte en Thunderbird, donde no existe `module`.
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
@@ -794,6 +801,6 @@ if (typeof module !== "undefined" && module.exports) {
     detectInjection, normalizeText, buildUserContext,
     detectLanguage, splitVersions, stripCodeFences, versionsInstruction, buildSummaryPrompt, buildImprovePrompt,
     IMPROVE_ACTIONS, QUICK_ACTIONS, LANG_NAMES, copilotErrorText, chatTitle,
-    emailToMarkdown, markdownFileName, buildAskPrompt, formatBytes, attachmentBlocker, attachmentModes, findInlineImages, bodyImages, UPLOAD_MAX_BYTES, UPLOAD_MAX_FILES, ATTACH_TEXT_MAX
+    emailToMarkdown, markdownFileName, buildAskPrompt, formatBytes, attachmentBlocker, attachmentModes, findInlineImages, bodyImages, UPLOAD_MAX_BYTES, UPLOAD_MAX_FILES, ATTACH_TEXT_MAX, isNewerVersion
   };
 }
