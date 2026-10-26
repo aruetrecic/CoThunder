@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Si se añade un fichero de runtime, va aquí y en ningún otro sitio.
-FILES=(manifest.json common.js background.js content-copilot.js content-compose.js markdown.js
+FILES=(manifest.json common.js background.js content-copilot.js content-compose.js markdown.js attachments.js
        themes.js icons.js emoji.js compose.css icon.svg popup options pages)
 
 for f in "${FILES[@]}"; do

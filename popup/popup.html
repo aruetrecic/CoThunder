@@ -170,8 +170,8 @@
 
     <fieldset id="attachments" class="attachments reply-only" hidden>
       <legend>Adjuntos para Copilot</legend>
-      <div id="attachmentList" class="opts"></div>
-      <p class="hint">Los marcados se suben a Copilot, que guarda una copia en tu OneDrive (carpeta «Archivos de Microsoft Copilot Chat»).</p>
+      <div id="attachmentList" class="attachment-list"></div>
+      <p class="hint"><strong>Texto en el prompt</strong>: CoThunder lee el fichero en tu equipo y solo envía su texto (lo ves en la pestaña Prompt). <strong>Subir fichero</strong>: Copilot lo lee entero (también PDF e imágenes) y guarda una copia en tu OneDrive.</p>
     </fieldset>
   </div>
 
@@ -217,6 +217,8 @@
   </div>
 
   <script src="../common.js"></script>
+  <script src="../markdown.js"></script>
+  <script src="../attachments.js"></script>
   <script src="../icons.js"></script>
   <script src="../emoji.js"></script>
   <script src="popup.js"></script>

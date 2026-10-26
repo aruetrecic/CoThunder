@@ -143,3 +143,56 @@ test("attachmentBlocker: tipos que acepta Copilot y tope de tamaño", () => {
   assert.match(attachmentBlocker({ name: "programa.exe", size: 10 }), /no admite/);
   assert.match(attachmentBlocker({ name: "sin-extension", size: 10 }), /no admite/);
 });
+
+test("attachmentModes: texto en local para Office/OpenDocument/texto, subida para PDF e imágenes", () => {
+  const { attachmentModes } = require("../common.js");
+  assert.deepEqual(attachmentModes({ name: "a.docx", size: 100 }), { text: true, upload: true, why: "" });
+  assert.equal(attachmentModes({ name: "a.pdf", size: 100 }).text, false);
+  assert.equal(attachmentModes({ name: "a.odt", size: 100 }).text, true);
+  assert.equal(attachmentModes({ name: "a.odt", size: 100 }).upload, false);
+  assert.equal(attachmentModes({ name: "foto.png", size: 100 }).upload, true);
+});
+
+test("buildComposedPrompt: los adjuntos en texto van como datos, tras el correo", () => {
+  const { buildComposedPrompt } = require("../common.js");
+  const p = buildComposedPrompt({ author: "a@b.c", subject: "S" }, "Cuerpo", {
+    attachments: [{ name: "informe.docx", text: "# Informe\n\nTexto", truncated: true }, { name: "vacio.txt", text: "  " }]
+  });
+  assert.match(p, /ADJUNTOS DEL CORREO[\s\S]*--- ADJUNTO: informe\.docx ---\n# Informe[\s\S]*\[adjunto recortado\]\n--- FIN ADJUNTO ---/);
+  assert.ok(p.indexOf("Cuerpo") < p.indexOf("ADJUNTOS DEL CORREO"));
+  assert.doesNotMatch(p, /vacio\.txt/);
+});
+
+test("attachments.js: ZIP (stored y deflate), texto Windows-1252, compactado y tabla", async () => {
+  const zlib = require("node:zlib");
+  const { readZip, decodeText, compactText, mdTable, colIndex } = require("../attachments.js");
+  // ZIP mínimo escrito a mano: una entrada sin comprimir y otra con deflate.
+  const files = [["a.txt", Buffer.from("hola"), 0], ["b.xml", Buffer.from("<x>ñandú</x>".repeat(20)), 8]];
+  const locals = [], centrals = [];
+  let offset = 0;
+  for (const [name, raw, method] of files) {
+    const data = method ? zlib.deflateRawSync(raw) : raw;
+    const n = Buffer.from(name);
+    const lh = Buffer.alloc(30); lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(method, 8);
+    lh.writeUInt32LE(data.length, 18); lh.writeUInt32LE(raw.length, 22); lh.writeUInt16LE(n.length, 26);
+    const ch = Buffer.alloc(46); ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(method, 10);
+    ch.writeUInt32LE(data.length, 20); ch.writeUInt32LE(raw.length, 24); ch.writeUInt16LE(n.length, 28); ch.writeUInt32LE(offset, 42);
+    locals.push(lh, n, data); centrals.push(ch, n);
+    offset += 30 + n.length + data.length;
+  }
+  const cd = Buffer.concat(centrals);
+  const end = Buffer.alloc(22); end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(files.length, 8);
+  end.writeUInt16LE(files.length, 10); end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(offset, 16);
+  const zipBuf = Buffer.concat([...locals, cd, end]);
+  const zip = readZip(zipBuf.buffer.slice(zipBuf.byteOffset, zipBuf.byteOffset + zipBuf.length));
+  assert.deepEqual(zip.names, ["a.txt", "b.xml"]);
+  assert.equal(await zip.text("a.txt"), "hola");
+  assert.equal(await zip.text("b.xml"), "<x>ñandú</x>".repeat(20));
+  assert.equal(await zip.text("no.txt"), null);
+
+  assert.equal(decodeText(new Uint8Array([0x63, 0x61, 0xf1, 0x61])), "caña");
+  assert.equal(compactText("a   b  \r\n\r\n\r\n\r\n  - c "), "a b\n\n  - c");
+  assert.equal(mdTable([["Nombre", "Edad", ""], ["Ana", "30"], [], ["B|C", ""]]), "Nombre | Edad\n--- | ---\nAna | 30\nB\\|C | ");
+  assert.equal(colIndex("A1"), 0);
+  assert.equal(colIndex("AB12"), 27);
+});

@@ -132,7 +132,7 @@ La respuesta llega en Markdown (con `#`, `**`, listas, tablas, citas). CoThunder
 ## 8. Privacidad y registro de actividad
 
 - El contenido solo viaja a Microsoft 365 Copilot. Sin telemetría ni terceros.
-- Los **adjuntos** solo se envían si los marcas en la ventana («Adjuntos para Copilot», desmarcados por defecto). Copilot guarda una copia de cada uno en tu OneDrive (carpeta «Archivos de Microsoft Copilot Chat»).
+- Los **adjuntos** solo se envían si lo eliges en la ventana («Adjuntos para Copilot», en «No enviar» por defecto). **Texto en el prompt** saca el texto en tu equipo (Word, Excel, PowerPoint, OpenDocument, texto) y solo envía eso; **Subir fichero** manda el fichero y Copilot guarda una copia en tu OneDrive (carpeta «Archivos de Microsoft Copilot Chat»). Las imágenes incrustadas en el cuerpo no se envían.
 - La primera vez, la ventana te avisa del tratamiento.
 - Puedes activar un **registro de actividad local** en Opciones: guarda solo metadatos (fecha, modo y número de destinatarios), nunca el asunto, las direcciones ni el cuerpo. Se puede exportar a JSON y vaciar.
 

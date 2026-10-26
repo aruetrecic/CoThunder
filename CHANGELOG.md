@@ -3,6 +3,11 @@
 Todas las mejoras y correcciones notables de CoThunder. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es/); versionado [SemVer](https://semver.org/lang/es/).
 
+## [2.23.0] — 2026-10-26
+
+### Añadido
+- **Texto de los adjuntos en el prompt**: cada adjunto tiene ahora un desplegable: *No enviar*, *Texto en el prompt* o *Subir fichero*. Con *Texto en el prompt*, CoThunder lee en tu equipo Word, Excel, PowerPoint, OpenDocument (odt/ods/odp), HTML, texto o CSV y envía solo su contenido en Markdown compacto (títulos, listas, negritas y tablas): mucho menos que el fichero y **sin copia en OneDrive**. Lo ves en la pestaña Prompt antes de enviar; si es muy largo se recorta y te propone subir el fichero.
+
 ## [2.22.0] — 2026-10-26
 
 ### Añadido

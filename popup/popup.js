@@ -171,29 +171,70 @@
   };
   $("more").addEventListener("change", moreSummary);
 
-  // Adjuntos del correo que se pueden subir a Copilot: casillas desmarcadas; los que Copilot no
-  // admite o pasan del tope salen deshabilitados con el motivo.
+  // Adjuntos del correo: un desplegable por fichero, siempre en «No enviar». «Texto en el prompt»
+  // extrae el texto en local (attachments.js) y lo añade al prompt, sin subir el fichero ni dejar
+  // copia en OneDrive; «Subir fichero» lo sube a Copilot (PDF, imágenes o cuando el texto no basta).
+  const attachmentTexts = new Map();   // partName → { name, text, total, truncated } | { error }
   const loadAttachments = async () => {
     if (mode !== "reply" || !message) return;
     let list = [];
     try { list = await messenger.messages.listAttachments(message.id); } catch (_) {}
     if (!list.length) return;
     for (const att of list) {
-      const why = attachmentBlocker(att);
-      const label = document.createElement("label");
-      const cb = document.createElement("input");
-      cb.type = "checkbox"; cb.value = att.partName; cb.disabled = !!why;
-      label.append(cb, att.name + " (" + formatBytes(att.size) + ")");
-      if (why) {
-        const note = document.createElement("span");
-        note.className = "hint"; note.textContent = "· " + why;
-        label.append(note);
-      }
-      $("attachmentList").appendChild(label);
+      const modes = attachmentModes(att);
+      const row = document.createElement("div");
+      row.className = "attachment-row";
+      const sel = document.createElement("select");
+      sel.dataset.part = att.partName;
+      sel.setAttribute("aria-label", "Cómo enviar " + att.name);
+      const add = (value, text, enabled) => {
+        const o = document.createElement("option");
+        o.value = value; o.textContent = text; o.disabled = !enabled;
+        sel.appendChild(o);
+      };
+      add("", "No enviar", true);
+      add("text", "Texto en el prompt", modes.text);
+      add("upload", "Subir fichero", modes.upload);
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = att.name + " (" + formatBytes(att.size) + ")";
+      const note = document.createElement("span");
+      note.className = "hint";
+      if (!modes.text && !modes.upload) { sel.disabled = true; note.textContent = "· " + modes.why; }
+      sel.addEventListener("change", async () => {
+        note.textContent = "";
+        if (sel.value === "text") {
+          if (!attachmentTexts.has(att.partName)) {
+            note.textContent = "· leyendo…";
+            try {
+              const file = await messenger.messages.getAttachmentFile(message.id, att.partName);
+              attachmentTexts.set(att.partName, Object.assign({ name: att.name }, await extractAttachmentText(file, att.name)));
+            } catch (e) {
+              console.error("[CoThunder] texto del adjunto:", e);
+              attachmentTexts.set(att.partName, { error: true });
+            }
+          }
+          const t = attachmentTexts.get(att.partName);
+          note.textContent = t.error ? "· no se pudo leer el texto; prueba «Subir fichero»"
+            : !t.text ? "· no tiene texto; prueba «Subir fichero»"
+            : t.truncated ? "· recortado a " + t.text.length.toLocaleString("es-ES") + " de " + t.total.toLocaleString("es-ES") +
+              " caracteres: para que lo lea entero, «Subir fichero»"
+            : "· " + t.text.length.toLocaleString("es-ES") + " caracteres";
+          if (t.text && detectInjection(t.text).detected) note.textContent += " · ⚠️ patrón sospechoso (protegido)";
+        } else if (sel.value === "upload") {
+          note.textContent = "· se guardará una copia en tu OneDrive";
+        }
+        rebuildPrompt();
+      });
+      row.append(sel, name, note);
+      $("attachmentList").appendChild(row);
     }
     $("attachments").hidden = false;
   };
-  const selectedAttachments = () => [...$("attachmentList").querySelectorAll("input:checked")].map((c) => c.value);
+  const attachmentSelects = () => [...$("attachmentList").querySelectorAll("select")];
+  const selectedAttachments = () => attachmentSelects().filter((s) => s.value === "upload").map((s) => s.dataset.part);
+  const promptAttachments = () => attachmentSelects().filter((s) => s.value === "text")
+    .map((s) => attachmentTexts.get(s.dataset.part)).filter((t) => t && !t.error && t.text);
 
   // Mini editor Markdown reutilizable: cablea los botones de una barra a su textarea
   // (envuelve la selección o prefija las líneas). Se usa en "Prompt a enviar" y "¿Qué quieres crear?".
@@ -294,6 +335,7 @@
           userContext, template: cfg.promptTemplate, promptBody, formatBody,
           instructions: $("instructions").value,
           thread: $("includeThread").checked ? threadBody : null,
+          attachments: promptAttachments(),
           tone: $("tone").value, length: $("length").value,
           language: replyLanguage(), versions: Number($("versions").value) || 1
         });
