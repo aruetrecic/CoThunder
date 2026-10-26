@@ -211,3 +211,18 @@ test("bodyImages: imágenes incrustadas en el orden de las marcas, con nombre y 
     [1, "imagen-1.jpg", "1.3", true], [3, "imagen-3.png", "1.2", false], [4, "imagen-4.img", "1.5", false]
   ]);
 });
+
+// Las actualizaciones automáticas (v2.25) conservan storage.local porque el id del complemento no
+// cambia; ningún código puede borrar las preferencias del usuario ni cambiar ese id.
+test("ninguna versión borra las preferencias del usuario al actualizar", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const root = path.join(__dirname, "..");
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
+  assert.equal(manifest.browser_specific_settings.gecko.id, "cothunder@local");
+  const files = ["", "popup", "options", "pages"].flatMap((d) => fs.readdirSync(path.join(root, d))
+    .filter((f) => f.endsWith(".js")).map((f) => path.join(root, d, f)));
+  for (const f of files) {
+    assert.doesNotMatch(fs.readFileSync(f, "utf8"), /storage\.local\.(clear|remove)\s*\(|localStorage\.clear\s*\(/, f);
+  }
+});
